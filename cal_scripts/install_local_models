@@ -1,0 +1,41 @@
+Using your own models in a site-installed version of XSPEC 
+
+To build and use local models in a private directory, after
+XSPEC has been installed perform the standard LHEASOFT setup:
+
+      setenv LHEASOFT /software/lheasoft/Linux_2.4_i686
+      cd $LHEASOFT/BUILD_DIR
+      ./configure
+      source $LHEASOFT/lhea-init.csh
+
+In addition, perform the extra ``developers'' setup: 
+
+      source $LHEASOFT/BUILD_DIR/devinit.csh
+
+this will put the hmake script in your path. 
+Now, to build your local models, type:
+
+      setenv LMODDIR /data1/dasmith/plem
+
+then cd to the directory: 
+
+      cd $LHEASOFT/../src/spectral/xspec/src/local_mod
+
+and type ``hmake''.  This should build your local models in the
+$LMODDIR directory. N.B.  Files named Makefile and setup.dat will be
+copied into the directory given by $LMODDIR, so if you have files with
+those names, please back them up.  Also, note that if there are any
+site-wide installed local models, you will not be able to use these
+unless you copy their code and lmodel.dat entries into your $LMODDIR
+directory.
+
+If all goes well, at the conclusion of this step, $LMODDIR will
+contain a file called libxspec_lfn.so, which is a shared library
+containing the local model code.  Finally add $LMODDIR to the
+LD_LIBRARY_PATH environment variable:
+
+      setenv LD_LIBRARY_PATH "${LMODDIR}:${LD_LIBRARY_PATH}"
+
+This step must be performed manually by the user, but may be added to
+the .login/.profile file.  Note that you must have $MODDIR defined
+whenever you run XSPEC with your local models.

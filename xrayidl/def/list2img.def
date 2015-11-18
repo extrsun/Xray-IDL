@@ -1,0 +1,14 @@
+Rosat standard default parameters for turning photon lists into images
+25
+0,OBSEQ=,Root name of input file
+1,DIR=,Directory containing data file
+3,INSTR=P,Instrument (default is P for PSPC)
+11,ZVAL=INT,Z-axis value (INT=default or PHI)
+12,MAP=IMG,Map by image (IMG=def) or detector (DET) coord.s?
+13,XCEN=DEF,Image X center (enter DEF, LIST, or a number)
+14,YCEN=DEF,Image Y center (enter DEF, LIST, or a number)
+15,PIXEL=UNBL,Above in block/unblocked (BLK or UNBL=def) pixls
+16,XSIZE=512,Image X size (<= 1024)
+17,YSIZE=512,Image Y size (<= 1024)
+18,BLOCKSIZE=DEF,Block size (Enter DEF, LIST or a number)
+24,CHATTER=1,Controls chattiness of program

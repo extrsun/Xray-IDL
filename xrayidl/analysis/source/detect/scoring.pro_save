@@ -1,0 +1,57 @@
+pro scoring,para,proname,fmin,ffdd=ffdd,itmax=itmax,double=double,ptol=ptol $
+,stpmax=stpmax
+;+
+; Minimization with the scoring method and backtracking algorithm
+; para - as input, initial parameter values; as output, parameter values
+; 	which give the minimum function 
+; proname - the procedure name for evaluating function value, derivatives,
+;	and information matrix.
+; fmin - output minimum function value
+; double - if set, double precision for inverting the information matrix
+; stpmax - the maximum step (def stpmax=0.2).
+; ptol - parameter convergence requirement: the maximum fraction of change
+;	of the parameter values in an iteration (def=10^-7).
+; ffdd - the inverse of the information matrix.
+;
+;*CAUTION:
+; para should be carefully normalized to have their values of order unit;
+; otherwise, the stpmax needs to be selected carefully.
+;
+; implemented according to the methods described by C. Sarazin (1980, ApJ
+; 236, 75) and by Press et al. (Numerical Recipes, section 9.7).
+;
+; written by wqd, 9/8/96
+;-
+common fix,fixpv
+
+if n_elements(stpmax) eq 0 then stpmax=0.2 
+if n_elements(itmax) eq 0 then itmax=100
+if n_elements(double) eq 0 then double=0
+for k=1,itmax do begin
+	parao=para
+	call_procedure,proname,parao,ff,ffd,ffdd
+	print,'parao=',parao
+	ffdd=invert(ffdd,status,double=double)
+	if status eq 1 then stop,'singular array: ffdd inverse'
+	if status eq 2 then print,'small pivot element: ffdd inverse'
+	dpara=-ffd##ffdd
+	lnsrch,parao,ff,ffd,dpara,para,fmin,stpmax,check,proname,tolx=ptol 
+		;backtracking
+;	print,'para,ff,ffd,ffdd,fmin ',para,ff,ffd,ffdd,fmin,dpara
+;	if n_elements(fixpv) ne 0 then begin
+;		para=parao+(para-parao)*fixpv
+;		call_procedure,proname,para,fmin
+;		ffd=ffd*fixpv
+;	endif
+
+	print,'para,ff,ffd,fmin',para,ff,ffd,fmin
+;	print,'para-parao = ',para-parao
+	ffdtest=max(abs(ffd)*(abs(para) > 1.))/(abs(ff) > 1.)
+	print,'ffdtest =',ffdtest
+	if check eq 1 then return
+	if !debug eq 1 then stop,'stop inside scoring loop'
+endfor
+stop,'maximum itmax exceeded'
+check=1 ;pass it anyway
+return
+end

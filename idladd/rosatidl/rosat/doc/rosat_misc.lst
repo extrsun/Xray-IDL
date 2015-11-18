@@ -1,0 +1,58 @@
+  
+  MISC :    Miscellaneous procedures (and functions) useful for Rosat data 
+            analysis
+
+    ROSATLIB    :   Add system variables required for Rosat IDL procedures.
+                    Calls ASTROLIB from IDL Astronomical Users' Library.
+
+    CREATE_STRUCT:  Create an IDL structure variable from list of tag names
+                    and data types
+    FILLBOX     :   Calculate the x and y positions of all pixels contained
+                    within a rectangle.
+    FILLREGION  :   Calculate the x and y positions of all pixels
+                    contained within an arbitrary straight-sided region.
+    FILLSIMPLE  :   Calculate the x and y positions of all pixels
+                    contained within an arbitrary, straight-sided,
+                    simple region (i.e., a region where all vertices point 
+                    away from the center).
+    FINDSTR     :   Find all occurences of one substring within another.
+    FITSDUMP    :   Dump the contents of the first n records of all fields
+                    in a FITS table file.
+    GETBORDER   :   Calculate the x and y positions of all pixels along a
+                    straight-sided boundary.
+    GETNOMASP   :   Read nominal aspect information (roll, RA, Dec) from
+                    a Rosat FITS header
+    GETOBIEVR   :   Given up to 5 quantities, find intervals during which
+                    all quantities are nonzero (for plotting event rates
+                    data)
+    GETPLOTINTS :   Find large gaps within a time interval (for plotting)
+    MAKE_CONTINENT: Read ASCII contours and write into a file for CONTINENT
+    MATCH_FILES :   Search a directory for files of a given rootname and
+                    description.
+    NINTREG     :   Return integer values closest to values in X & Y vectors.
+                    Values may be added so that the entire ranges of both 
+                    X & Y are encompassed.
+    PARSE_TIME  :   Convert a (PROS style) ASCII descriptor for time filtering 
+                    into start and stop times
+    RSGETPAR    :   Set values of input parameters for various procedures.
+                    Calls RSGETDEFPAR, RSSETPARVAL.
+    RSGETSEQINFO:   Read sequence information from the sequence header for
+                    a Rosat FITS file
+    RSOBITIMES  :   Read OBI start and end times from a Rosat FITS header
+    SCT2UT      :   Convert spacecraft clock times read from Rosat files 
+                    (given in seconds since launch) to UT 
+    TIMESEQ     :   Convert UT seconds to fractional days, i.e. a sequential 
+                    time vector, using OBINFO
+    TIMESTR     :   Convert start and stop time vectors into a PROS style ASCII
+                    string for time filtering
+    TO_BIN      :   Translate a non-negative decimal integer to a binary string
+    TO_HEX_LARGE:   Translate a non-negative decimal integer to a hexadecimal 
+                    string. Same as but also works for > 128 elements.
+    UT2SCT      :   Convert UT seconds time (seconds from beginning of day)
+                    to spacecraft clock time (seconds from launch) using
+                    structure variable OBINFO
+    WRITESTR    :   Write a vector of ASCII strings to an output file
+                    (one element per line)
+
+***************************************************************************
+

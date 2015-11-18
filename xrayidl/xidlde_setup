@@ -1,0 +1,45 @@
+#! /bin/csh -x
+# Rosat startup script       wqd 7/95; a modified version of JEF  7/92
+# Usage: source rosatidl_setup [too]
+# where tool is for running idltool
+# Assuming that source $rosatdir/rosatidl_setup has been defined in .schrc
+# One can, for example, use
+# rosatidl tool
+#
+setenv itt_DIR /home/sunway/ProgramFiles/itt
+setenv IDL_DIR /home/sunway/ProgramFiles/itt/idl    
+#setenv itt_DIR /home/ljt/ljt/software/rsi
+#setenv IDL_DIR /home/ljt/ljt/software/rsi/idl
+
+#setenv PUBDIR /home/sunway/ProgramFiles/addtion/pub
+#for home
+# setenv PUBDIR ~
+
+setenv IDL_PATH \+$PUBDIR/xrayidl:\+$PUBDIR/idladd/idlastronlib/pro:\+$PUBDIR/idladd/rosatidl:\+$IDL_DIR/lib:\+$IDL_DIR/example:\+$PUBDIR/tara:\+$PUBDIR/ljtastro:\+$PUBDIR/Zhiyuanprocedure:
+
+alias idl $IDL_DIR/bin/idl
+alias idlde $IDL_DIR/bin/idlde 
+alias idldemo $IDL_DIR/bin/idldemo
+alias idldeclient $IDL_DIR/bin/idldeclient
+alias idlhelp  $IDL_DIR/bin/idlhelp
+alias idlrpc $IDL_DIR/bin/idlrpc
+alias insight $IDL_DIR/bin/insight
+#setenv ASTRO_DATA /home/sunway/ProgramFiles/idlastronlib/data
+
+setenv IDL_STARTUP $PUBDIR/xrayidl/xraysysv.pro
+
+#setenv ZDOC $IDL_DIR/xrayidl/doc
+setenv ZDEF $IDL_DIR/xrayidl/def
+setenv ZAUX $IDL_DIR/xrayidl/aux
+setenv EXPLIB $IDL_DIR/xrayidl/experimental
+
+#
+#if ( $# -gt 0 ) idl${1} else idl
+#endif
+idlde
+#
+unsetenv IDL_DIR
+unsetenv IDL_PATH
+unsetenv IDL_STARTUP
+unsetenv ASTRO_DATA
+unsetenv EXPLIB

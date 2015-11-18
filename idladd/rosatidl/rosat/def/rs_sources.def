@@ -1,0 +1,8 @@
+Rosat standard default parameters for reading data in source results files
+12
+0,OBSEQ=,Root name of input file
+1,DIR=,Directory containing data file
+2,DATYP=SRC,Type of data (SRC=def,SKY,FIT,VARY,BKSP,BKRT)
+3,INSTR=P,Instrument (default is P for PSPC)
+4,PROC=US,Format of processed files (US, MPE, TR, or RDF)
+9,CHATTER=1,Controls chattiness of program

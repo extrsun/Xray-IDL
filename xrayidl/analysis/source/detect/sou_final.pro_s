@@ -1,0 +1,42 @@
+;-------------------------------------------
+;count rates in bands (Here default bands are used. Otherwise bands need to be defined)
+map_back,l,xmin,ymin,dim,bmin,bmax,tb,tbs,ba,block=block 
+
+map_ratio,l,cra,cdec,bmin,bmax,ta,ba,tb=block,nra=nra,ndec=ndec,th=slow,inf=soufile,sfrac=asfrac,psffile=bpsffile,radius=radius
+;Small source parameter differences from ml_anal are expected, 
+;because the background maps and source radii are different in different bands.
+;================================
+;Hardness ratio analysis:
+; with option for an output of the final source list into a nice LaTex format
+soufile=soufile+'_ratio'
+hr_out,soufile,hr,hr2,hre,hr2e,sn,outf=soufile+'_out'
+
+;plot color-color diagram:
+!x.style=1
+!y.style=1
+s=where(hre lt 0.2 and hr2e lt 0.2)
+set_plot,'ps'
+plot_xy,hr(s),hr(s)-hre(s),hr(s)+hre(s),hr2(s),hr2(s)-hr2e(s),hr2(s)+hr2e(s),xrang=[-1.2,1.2],yr=[-1.2,1.2],xt='HR1',yt='HR2'
+
+; model hardness ratios
+hr_model,'vp',/noer,thick=3
+hr_model,'vr',/noer
+xyouts,hr(s)-0.15,hr2(s)+0.05,sn(s)
+;ps output
+device,/close
+print,'idl.ps is created for the color-color diagram!'
+$gv idl.ps
+set_plot,'x'
+
+;get the final source info and source-removed mask:
+source_info,sn,sra,sdec,ston,cntr,slow=2.5,souf=soufile,/deg,/deci
+tbs=source_sub_v(tb,nra,ndec,sra,sdec,cntr,block=block,fac=subfac,/deg,perc=asfrac,psffile=psffile,cra=cra,cdec=cdec)
+
+;get the final background map 
+get_bmap,cb,tb,tbs,cbm
+%writefits,evtfname+'_0.fits',cbm,hh ;for later timing analysis
+%writefits,evtfname+'_t0.fits',tb,hh
+%writefits,evtfname+'_t1.fits',ta(*,*,0),hh
+%writefits,evtfname+'_t2.fits',ta(*,*,1),hh
+%writefits,evtfname+'_t3.fits',ta(*,*,2),hh
+end

@@ -1,0 +1,5 @@
+pro accum,vec,avec
+avec=vec
+for n=1L,n_elements(vec)-1L do avec(n)=avec(n-1)+vec(n)
+return
+end

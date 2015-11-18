@@ -1,0 +1,75 @@
+pro sou_dup_info,slist,rslist,dfac=dfac,ndupname=ndupname,outdfile=outdfile,noentry=noentry
+;+
+; Remove duplicate sources (to be called by sou_merge_fits)
+;
+; slist, rslist - input selected and removed duplicate source structures
+; dfac - the factor multiplied to the source error radius (def =1).
+; ndupname - strucuture tag to be used in the output slist, which should not
+;	be presented in the inout slist (Def ='NDUP')
+; outdfile - name of the file to contain the ASCII output of the matching
+;	between slist and rslist.
+; noentry - if set, only the tags ('CNTRM','CNTREM',ndupname) will be added
+; 	used when rslist is empty
+;
+; writen by WQD, May 8, 2002
+;-
+if n_params() eq 0 then begin
+print,'CALLING SEQUENCE - sou_dup_info,slist,rslist,dfac=dfac'
+print,',ndupname=ndupname,outdfile=outdfile,noentry=noentry'
+return
+endif
+
+
+nsel=n_elements(slist)
+if n_elements(ndupname) eq 0 then ndupname='NDUP'
+if keyword_set(noentry) then begin ;just add the tags
+ struct_col_add,slist,replicate(0,nsel,3),['CNTRM','CNTREM',ndupname],[0.,0.,1]
+ return
+endif
+
+sou_struct_out,slist,text
+sou_struct_out,rslist,rtext
+
+get_serr,slist,srs,sradius=sradius,dfac=dfac
+get_serr,rslist,rsrs,sradius=sradius,dfac=dfac
+
+ndup=intarr(nsel)
+cntrbs=fltarr(nsel)
+cntrbes=fltarr(nsel)
+chis=fltarr(nsel)
+if n_elements(outdfile) ne 0 then openw,unoutd,outdfile,/get
+for k=0,nsel-1 do begin
+	; now find all the duplicated sources associated with the unique one
+	; The algorithm (rsrs, srs, dfac should be the exactly same as in 
+	; sou_merge_fits
+	seperr=srs(k)+rsrs
+	trans_dist,slist(k).ra,slist(k).dec,rslist.ra,rslist.dec $
+		,/deg,/das,ang=sep
+	rseln= where((sep^2 lt seperr), nsrsel)  
+	if nsrsel ne 0 then begin
+		;calculate the mean cntr and its error as well as chi^2, ndf
+		avg_least,[slist(k).cntrb,rslist(rseln).cntrb], $
+			[slist(k).cntrbe,rslist(rseln).cntrbe] $
+			,cntrb,cntrbe,chi=chi,ndf=ndf
+		;include these new parameters in the output
+		cntrbs(k)=cntrb
+		cntrbes(k)=cntrbe
+		chis(k)=chi
+		ndup(k)=nsrsel
+		text(k)=text(k)+strtrim(cntrb,2)+' | '+strtrim(cntrbe,2) $
+		+' | '+strtrim(chi,2)+' | '+strtrim(ndf,2)
+	 	texts=' r '+rtext(rseln)+' | ' $
+		+strtrim(sqrt(seperr(rseln)),2)+' | '+strtrim(sep(rseln),2)
+		print,text(k)
+		for n=0,nsrsel-1 do print,texts(n)
+		if n_elements(outdfile) ne 0 then begin
+			printf,unoutd,text(k)
+			for n=0,nsrsel-1 do printf,unoutd,texts(n)
+		endif
+	endif
+endfor
+if n_elements(outdfile) ne 0 then free_lun,unoutd
+struct_col_add,slist,reform([cntrbs,cntrbes,chis,ndup],nsel,4) $
+	,['CNTRM','CNTREM',ndupname],[0.,0.,1]
+return
+end

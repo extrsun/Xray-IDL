@@ -1,0 +1,11 @@
+You may download the data from 
+
+http://cda.harvard.edu:9011/chaser/mainEntry.jsp
+
+There are several ways to download the Chandra data from the web. They may
+result in different directory structures. And the structures may also be
+changed on the CXC side. So you need to make sure that the files are in 
+right directories:
+ls ../primary/*flt* ../primary/*asol*  ../primary/*evt1* ../primary/*evt2*
+ls ../secondary/*bpix*
+

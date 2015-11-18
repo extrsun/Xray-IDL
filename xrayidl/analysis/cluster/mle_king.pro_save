@@ -1,0 +1,161 @@
+pro mle_king,xx,yy,backc,re,para,xo=xo,yo=yo,bet=bet,r_core=r_core,ffdd=ffdd $
+	,fmin=fmin,chn=chn,verb=verb,tc=tc,inpar=inpar
+;+
+; For a large area, one probably needs to consider vignetting effects!
+; When the area is not big enough, the background level cannot be 
+; adequately constrainted. It is better to be fixed with a 1-D fit.
+; The results, beta value, obtained here are not particularly sensitive to the 
+; the background level if the uncertainty of the level is <20% or so.
+;-
+if n_params() lt 1 then begin
+print,'CALLING SEQUENCE - mle_king,list,backc,re,para,xo=xo,yo=yo'
+print,',bet=bet,r_core=r_core,ffdd=ffdd,fmin=fmin,chn=chn,verb=verb'
+return
+endif
+common data,ii,jj,modelc
+ii=xx & jj=yy
+; 
+;set the initial parameters:
+if n_elements(chn) eq 0 then choice=1 else choice=chn
+if n_elements(inpar) eq 0 then begin
+	if n_elements(xo) eq 0 then xo=median(ii) ;initial position
+	if n_elements(yo) eq 0 then yo=median(jj)
+	if n_elements(bet) eq 0 then bet=0.7
+	if n_elements(r_core) eq 0 then begin 
+	  if !instr eq 'p' then r_core=26. else r_core=6. ;unites of pixels
+	endif
+	case choice of
+ 		1: para=float([xo,yo,bet,r_core])
+ 		2: para=float([xo,yo,bet,r_core,backc])
+		3: para=float([xo,yo,bet,r_core,xs,ys,sigma,ns])
+	endcase
+endif else para=inpar
+print,'mle_king: initial para = ',para
+
+;---------------------------------------------
+; scale parameters and set model constants
+if n_elements(tc) eq 0 then tc=n_elements(ii)
+scale=para(3)
+ii=ii/scale
+jj=jj/scale
+case choice of
+ 1: begin
+  	modelc=float([choice,tc,backc,re/scale])
+	scalev=[scale,scale,1.,scale]
+	para=para/scalev
+    end
+
+ 2: begin
+  	modelc=float([choice,tc,re/scale])
+	scalev=[scale,scale,1.,scale,tc]
+	para=para/scalev
+    end
+ 3: begin
+  	modelc=float([choice,tc,re/scale])
+	scalev=[scale,scale,1.,scale,scale,scale,scale,tc]
+	para=para/scalev
+    end
+endcase
+
+; ready for the fit:
+ptol=1.e-4
+proname='scoring_king'
+scoring,para,proname,fmin,ffdd=ffdd
+
+;scale back 
+para=para*scalev 
+np=n_elements(para)
+for j=0,np-1 do begin 
+for i=0,np-1 do begin 
+	ffdd(i,j)=ffdd(i,j)*(scalev(i)*scalev(j)) ;not complete right yet
+endfor & endfor
+
+if keyword_set(verb) ne 0 then print,'para =',para
+if !debug eq 1 then stop,'stop at the end of MLE'
+return
+end
+;=============================================================
+pro scoring_king,xx,ff,ffd,ffdd
+;+
+; xx - input variable vector
+; ff - log likelihood: -alog(total(pp))
+; ffd - derivative of the log likelihood
+; ffdd - information matrix (see Sarazin 1980, ApJ, 236, 75)
+;
+;*Note: 
+; the likelihood dose depend on the number of counts. 
+; The area is normalized so that the plate area = 1 to remove the 
+; dependance on spatial scaling.
+;
+; written by wqd, 9/10/96
+;-
+common data,ii,jj,modelc
+
+nc=modelc(1) 
+np=n_elements(xx)
+ffdk=fltarr(nc,np)
+choice=modelc(0)
+	aas=xx(3)^2	
+	iid=ii-xx(0)
+	jjd=jj-xx(1)
+	rrs=iid^2+jjd^2				
+	rraas=rrs/aas
+	inside=1.+rraas
+	alpha=-3.*xx(2)+0.5
+	alpha1=alpha+1. 
+
+	rrsc=modelc(n_elements(modelc)-1)^2 ;the effective radius of the image
+	insidec=1.+rrsc/aas
+	yysc=rrsc/(rrsc+aas)
+
+;	if alpha1 ge 0. then bfac=1.e10 else $
+;	bfac=beta(1,-alpha1)*ibeta(1,-alpha1,yysc)
+	bfac=ibetam(-alpha1,yysc)
+
+	if choice eq 2 then tb=xx(np-1) else tb=modelc(2)/float(nc)
+	nc = 1.-tb
+	if choice ge 3 then begin
+		sigmas=xx(6)^2
+		iisd=ii-xx(4)
+		jjsd=jj-xx(5)
+		rrss=iisd^2+jjsd^2	
+		rrs2s=rrss/(2.*sigmas)
+		gau=rrsc/(2*sigmas)*exp(-rrs2s)
+		ts=xx(7)*gau
+		nc=nc-xx(7)
+	endif else ts=0.
+	tc=nc*rrsc/(aas*bfac)*inside^alpha
+
+	pp=tb+tc+ts
+	ff=-total(alog(pp))
+	
+	if n_params() ge 2 then begin 
+		;getting derivatives and information matrix
+	 tcpp=tc/pp
+         ffdk(*,0)=tcpp*iid/inside*(2.*alpha/aas)
+	 ffdk(*,1)=tcpp*jjd/inside*(2.*alpha/aas)
+	 ffdk(*,2)=tcpp*(alog(inside)+1./alpha1-insidec^alpha1*alog(insidec) $
+			/(bfac*alpha1))*3.
+	 ffdk(*,3)=tcpp*(1.+alpha*rraas/inside-insidec^(alpha+2.)*yysc^2 $
+			*(aas/rrsc/bfac))*(2./xx(3))
+	 if choice eq 2 then ffdk(*,np-1)=(tc/nc-1.)/pp ;tb to be fitted
+
+	 if choice ge 3 then begin
+	 	tspp=ts/pp
+	 	ffdk(*,4)=tspp*iisd*(-1./sigmas)
+	 	ffdk(*,5)=tspp*jjsd*(-1./sigmas)
+	 	ffdk(*,6)=tspp*(1.-rrs2s)*(2./xx(6))
+	 	ffdk(*,7)=(tc/nc-gau)/pp
+	 endif
+	 ffd=total(ffdk,1)
+	 ffdd=ffdk##transpose(ffdk)
+	endif
+if !debug eq 1 then stop
+return
+end
+;==========================================
+function ibetam,alpha,yysc
+if alpha eq 0. then bfac=alog(1-yysc) else $
+		bfac=(1.-(1.-yysc)^alpha)/alpha
+return, bfac
+end

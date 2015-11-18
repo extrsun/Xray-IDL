@@ -1,0 +1,28 @@
+.run $EXPLIB/readfits_new
+.run $EXPLIB/rsaspect_new
+.run $EXPLIB/rsgetasp_new
+.run $EXPLIB/rsgetaspqu_new
+.run $EXPLIB/rsevrates_new
+.run $EXPLIB/rsgetevr_new
+.run $EXPLIB/rsorbit_new
+;.run $EXPLIB/rsorb_pos_new
+.run $EXPLIB/rschecktsi_new
+.run $EXPLIB/rsgethkb_new
+.run $EXPLIB/rsgethksta_new
+;.run $EXPLIB/make_list_new
+.run $EXPLIB/rs_sources_new
+.run $EXPLIB/match_files2
+
+;modified procedures in the rosat lib
+;
+.run make_list_new_m
+.run make_spec_m
+.run make_pha_m
+.run imdiv_m
+.run rsorb_pos_new_m
+.run rsgetvg_m
+.run gettok_m
+.run rsgetseqinfo_m
+
+
+.run $LOCALLIB/idl/extast_m

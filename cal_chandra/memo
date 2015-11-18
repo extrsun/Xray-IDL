@@ -1,0 +1,29 @@
+;create a model spectrum output:
+cd,!cdir
+In Xspec, use whatever rmf and arf for the chandra instrument
+(e..g, arches.rmf and arches.arf) to create a fake spectrum 
+(I use 100,000 s for the exposure and regroup the fake spectrum to
+reduce the size of the spectrum; set group min 500).
+get into iplot
+wdata filename -5 
+
+PSF:
+read_psf can be used to read the ACIS psf file
+
+psf_bb can be used to generate a file containing the off-source angular 
+radius as the function of off-axis angle and energy-encircled radius
+
+psf_bb,instr='acisi',2,7,outfile='psf_po0.7_acisi_4.dat'
+psf_bb,instr='acisi',1,2,outfile='psf_po0.7_acisi_1.dat'
+psf_bb,instr='acisi',2,4,outfile='psf_po0.7_acisi_2.dat'
+psf_bb,instr='acisi',4,7,outfile='psf_po0.7_acisi_3.dat'
+psf_bb,instr='acisi',1,7,outfile='psf_po0.7_acisi_0.dat'
+
+psf_bb,instr='aciss',1.5,7,outfile='psf_po0.7_aciss_4.dat'
+psf_bb,instr='aciss',0.5,1.5,outfile='psf_po0.7_aciss_1.dat'
+psf_bb,instr='aciss',1.5,3,outfile='psf_po0.7_aciss_2.dat'
+psf_bb,instr='aciss',3,7,outfile='psf_po0.7_aciss_3.dat'
+psf_bb,instr='aciss',0.5,7,outfile='psf_po0.7_aciss_0.dat'
+The output file can be read by psf_params.pro 
+
+

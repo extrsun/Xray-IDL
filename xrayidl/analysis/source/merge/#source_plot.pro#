@@ -1,0 +1,75 @@
+pro source_plot,infile,corner,hdr,slow=slow,flow=flow,psym=psym,radius=radius $
+,symsize=symsize,sou_no=sou_no,s_c=s_c,sra=sra,sdec=sdec,sn=sn,thick=thick,silent=silent,ctype=ctype,fits=fits
+;+
+; plot source position in an existing image
+; infile - the name of the source file
+; corner - a vector containing xmin, xmax, ymin,ymax of the image (normalized
+;	coordinates from cont_grey.pro
+; ctype - if = 1, sra, sdec are assumed to have equinox=2000 and converted into
+;		the galactic coordinates.
+; writen by WQD 4/23/93
+;-
+if n_params() eq 0 then begin
+print,'CALLING SEQUENCE - source_plot,infile,corner,hdr,slow=slow,flow=flow'
+print,',psym=psym,radius=radius,symsize=symsize,sou_no=sou_no'
+print,',s_c=s_c,sra=sra,sdec=sdec,sn=sn,thick=thick,silent=silent,ctype=ctype,fits=fits'
+return
+endif
+if n_elements(thick) eq 0 then thick=1
+if n_elements(s_c) eq 0 then begin
+	if !d.name eq 'X' then s_c=!d.n_colors-1 else s_c=0
+endif
+if n_elements(symsize) eq 0 then symsize=1
+if n_elements(slow) eq 0 then slow=3.5
+if n_elements(psym) eq 0 then psym=7
+crval=sxpar(hdr,'crval*')
+cra=crval(0) & cdec=crval(1)
+naxis=sxpar(hdr,'naxis*')
+xarcmin=naxis(0)*abs(sxpar(hdr,'cdelt1'))*60.
+yarcmin=naxis(1)*abs(sxpar(hdr,'cdelt2'))*60.
+if n_elements(sra) eq 0 then begin
+;--------------------------------------------
+; if the source file is in the fits format:
+ if keyword_set(fits) ne 0 then begin
+	row={sn:0,ra:0.0d,dec:0.0d,snr:0.0,cntr:0.0}
+	sou_fits_info,infile,slist,slow=slow,flow=flow,row=row
+	sn=slist.sn & sra=slist.ra & sdec=slist.dec 
+	sigma=slist.snr & cntr=slist.cntr
+ endif else $
+	source_info,sn,sra,sdec,sigma,cntr $
+	,soufile=infile,slow=slow,flow=flow,/deg
+endif
+if n_elements(ctype) ne 0 then begin
+	if ctype eq 1 then glactc,sra/15.,sdec,2000,sra,sdec,1
+endif
+;assuming that the equinox=2000
+
+asperbin=60.
+xmid=corner(0)+(corner(1)-corner(0))*sxpar(hdr,'crpix1')/float(naxis(0))
+ymid=corner(2)+(corner(3)-corner(2))*sxpar(hdr,'crpix2')/float(naxis(1))
+;xmid=(corner(0)+corner(1))*0.5
+;ymid=(corner(2)+corner(3))*0.5
+xnorm=!size_pixel*(corner(1)-corner(0))/(xarcmin*asperbin)
+ynorm=!size_pixel*(corner(3)-corner(2))/(yarcmin*asperbin)
+;if norm ne ynorm then stop,'x and y axis not consistent'
+
+trans_dist,cra,cdec,sra,sdec,xd,yd,/deg
+if n_elements(radius) ne 0 then begin
+	sel=where((xd*xd+yd*yd)*(!size_pixel/60.)^2 lt radius*radius)
+	xd=xd(sel)
+	yd=yd(sel)
+endif
+xd=xmid+xd*xnorm
+yd=ymid+yd*ynorm
+c=where(xd ge corner(0) and xd le corner(1) and $
+ yd ge corner(2) and yd le corner(3),nc)
+if nc ne 0 then begin
+	if keyword_set(sou_no) ne 0 then begin
+	 xyouts,xd(c),yd(c),sn(c),/normal,size=symsize,alig=0.5,color=s_c
+	endif else $
+	plots,xd(c),yd(c),psym=psym,/normal,symsize=symsize,color=s_c $
+		,thick=thick
+endif
+if keyword_set(silent) eq 0 then print,nc,' sources included in the image'
+return
+end

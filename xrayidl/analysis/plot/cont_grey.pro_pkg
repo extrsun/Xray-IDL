@@ -1,0 +1,1501 @@
+pro cont_grey, im, hdr, im_grey, nx1=nx1,nx2=nx2,ny1=ny1,ny2=ny2, $
+  TYPE=type, PUTINFO=putinfo, XTITLE=xtitle,  $
+  YTITLE=ytitle, NLEVELS = nlevels, MAX_VALUE=max_value, LEVELS=levels, $
+  YMINOR = yminor,follow=follow,colors=colors,interp=interp, $
+  subtitle=subtitle,corner=corner,equi=equi,rimage=rimage, $
+  c_line=c_line,greymin=greymin,greymax=greymax,f_color=f_color, $
+  greylog=greylog,xbar=xbar,xtics = xtics,ytics = ytics,c_labels=c_labels, $
+  spline=spline,c_colors=c_colors,pscolor=pscolor,noerase=noerase, $
+  barshiftx=barshiftx,barshifty=barshifty,barfactor=barfactor, $
+  ntoppix=ntoppix,nbotpix=nbotpix,noimage=noimage, $
+  ntickx=ntickx,nticky=nticky,botlabel=botlabel,toplabel=toplabel, $
+  pthick=pthick,pcs=pcs,xunitlv=xunitlv,yunitlv=yunitlv,xposfac=xposfac $
+ ,yposfac=yposfac
+;+
+; NAME:
+;    CONT_GREY
+; PURPOSE:
+;    Contour plot labeled with astronomical coordinates.  The type of
+;    coordinate display is controlled by the keyword TYPE.  Set TYPE=0
+;    (default) to measure distances from the center of the image.
+;    (CONT_GREY will decide whether the plotting units will be in
+;    arc seconds, arc minutes, or degrees depending on image size.)
+;    Set TYPE=1 for standard RA and Dec labeling.
+; CALLING SEQUENCE:
+;    CONT_GREY, im, hdr, [im_grey,  nx1=nx1,nx2=nx2,ny1=ny1,ny2=ny2,
+;      XTITLE  = , YTITLE = , NLEVELS=
+;      MAX_VALUE=, LEVELS=, TITLE =, SUBTITLE =, FOLLOW = , XMINOR =,
+;      YMINOR = ]
+; INPUTS:
+;    IM      = 2-dimensional image array.
+;    HDR     = FITS header associated with IM, string array, must include
+;              astrometry keywords.   CONT_GREY will also look for the
+;              OBJECT and IMAGE keywords, and print these if found and the
+;              PUTINFO keyword is set.
+;    IM_GREY = 2-dimensional image array, if given, will be used for the
+;              grey-scaled plot.
+; OPTIONAL PLOTTING KEYWORDS:
+;    /nx1,/nx2,/ny1,/ny2
+;            = The coordinates of the lower left and the upper right coners
+;              of the image.
+;    TYPE = the type of astronomical labeling to be displayed.   Either set
+;           TYPE = 0 distance to center of the image is marked in units of
+;                    arcseconds, arcminutes, or degrees;
+;           TYPE = 1 (default) astronomical labeling with Right ascension and
+;                    declination.
+;    PUTINFO = If set then CONT_GREY will add information about the image
+;              to the right of the contour plot.  Information includes image
+;              name, object, image center, image center, contour levels, and
+;              date plot was made.
+;The other keywords XTITLE, YTITLE, NLEVELS, MAX_VALUE, LEVELS,
+;  TITLE, SUBTITLE, FOLLOW, XMINOR, and YMINOR have the same
+;  meaning as in the CONTOUR procedure.
+; colors   = gray scale color index;
+; equi     = the equinox of the coordinate system. Def = J2000;
+; corner   = if set, the output gives the normlized coordinates of
+;            xmin, xmax, ymin, ymax of the image;
+; greymin  = the image value as the lower limit of the grey plot;
+; f_color  = the color of the plot frame. the default=!p.color (e.g., 0);
+; c_line   = vector containing line styles for individual contours with
+;            0 solid line, 1 dash line etc. see contour;
+; spline   = a small value (e.g., 0.001) will give better looking contours
+; c_colors = single value or a vector containing the color index(es) used
+;            to draw contours;
+; pscolor  = a keyword if set indicates a color postscript file is to
+;            be produced;
+; barshiftx, barshifty, barfactor
+;          = the x and y shifts (in normalized coordinates) and multiple
+;            size factor of the color bar (default=1; the same linear size
+;            as the figure). These three parameters are used to locate the
+;            bar in the figure;
+; ntoppix  = the number of top color indexes in the color table used for
+;            other purposes (e.g., drawing  the frame of the figure).  If
+;            the original color table is expanded to more levels (because
+;            of device differences), ntoppix may need to be increased
+;            accordingly.
+;	xunitlv	 - how far above the bottum of the page to
+;	           place the x-axis annotation in normalized units of the 
+;			distance to the x-axis; default is .2;
+;	yunitlv	 - how far from the edge of the plot device to place the y-axis
+;		   annotation in normalized units of the distance to the
+;		   y-axis; default is .3;
+;		  for example, to place the lable to near the left edge of
+;		the page, use yunitlv=0.1
+; NOTES:
+;    (1) The contour plot will have the same dimensional ratio as the input
+;        image array.
+;    (2) To contour a subimage, use HEXTRACT before calling CONT_GREY.
+;
+; To get a contour colors different from that of the axis, the keyword
+; overrun problem of c_colors that is responsible for
+; both axis and contours is solved by calling contour a second time.
+; For device 'ps' c_color=0 (black), =!d.n_colors (white), and
+; for device 'x', it is the reverse. wqd, oct 24 1993.
+; The coordinate ticks (except the top axis) do reflect the true coordinates
+; at the edges of the image and they are calculated with coordinates
+; there although the ticks are not bended to point to proper directions.
+; The ticks with the top axis is same as those at the bottom axis and are
+; therefore not right ones. But I have not yet found a way to redraw
+; the top axis. WQD, Oact 22, 1993
+;
+; PROCEDURES USED:
+;     GREY. CHKIMHD, EXTAST, GETROT, TICPOS, TICLABEL, TIC_ONE, TICS, XYAD
+;     RA_GRID, DEC_GRID, ADSTRING, IMLABEL_MMM, TRANS_DIST,TRANS_LOCT
+; REVISION HISTORY:
+;   Extracted and expanded by wqd (Aug 1992) by including GREY
+; added keywords, pscolor, for a color postscript file
+; keywords: barshiftx, barshifty, barfactor are added
+; wqd, Jan 7, 1994
+;
+;-
+
+if N_params() lt 2 then begin             ;Sufficient parameters?
+  print,'CALLING SEQUENCE - cont_grey,im,hdr, [im_grey, '
+  print,'nx1=nx1,nx2=nx2,ny1=ny1,ny2=ny2,'
+  print,'TYPE=type, PUTINFO=putinfo, XTITLE=xtitle,YTITLE=ytitle'
+  print,',NLEVELS = nlevels,MAX_VALUE=max_value,LEVELS=levels,'
+  print,'YMINOR = yminor,follow=follow,colors=colors,interp=interp'
+  print,',subtitle=subtitle,corner=corner,equi=equi,rimage=rimage'
+  print,',c_line=c_line,greymin=greymin,greymax=greymax,f_color=f_color,greylog=greylog'
+  print,',xbar=xbar,xtics = xtics,ytics = ytics,c_labels=c_labels'
+  print,',spline=spline,c_colors=c_colors,pscolor=pscolor,noerase=noerase'
+  print,',barshiftx=barshiftx,barshifty=barshifty,barfactor=barfactor'
+  print,',ntoppix=ntoppix,nbotpix=nbotpix,noimage=noimage'
+ print,',pthick=pthick,pcs=pcs,xunitlv=xunitlv,yunitlv=yunitlv'
+ print,',xposfac=xposfac,yposfac=yposfac'
+ return
+endif
+if n_elements(c_labels) eq 0 then c_labels=0
+if n_elements(spline) eq 0 then spline=0.005
+check_fits,im,hdr,dimen,/notype     ;Make sure header is appropiate to image
+xsize=dimen(0)
+ysize=dimen(1)
+if n_elements(pthick) ne 0 then begin
+	pthicko=!p.thick
+	!p.thick=pthick
+endif
+if n_elements(pcs) ne 0 then begin
+	pcso=!p.charsize
+	!p.charsize=pcs
+endif
+;**
+;** Set defaults if keywords not set:
+;**
+im_max = max( im, MIN=im_min )         ;** Image MAX and MIN values;
+if not keyword_set(LEVELS) then  $     ;** Default is 6 equally spaced levels;
+   levels = im_min + (findgen(6)+1)*(float(im_max)-im_min)/7.
+if not keyword_set(NLEVELS) then  $        ;Default is NLEVELS = 6
+   nlevels = n_elements(levels)
+if not keyword_set(MAX_VALUE) then max_value = im_max
+if not keyword_set(FOLLOW) then follow = 0
+if n_elements(TYPE) eq 0 then type=1
+if not keyword_set(XMINOR) then $
+       if !X.MINOR eq 0 then xminor = 5 else xminor = !X.MINOR
+if not keyword_set(YMINOR) then $
+       if !Y.MINOR eq 0 then yminor = 5 else yminor = !Y.MINOR
+;if n_elements(nx1) eq 0 then nx1=nint(0.15*!d.x_vsize)/float(!d.x_vsize)
+if n_elements(nx1) eq 0 then nx1=nint(0.2*!d.x_vsize)/float(!d.x_vsize)
+  ;** Chosen to be the default value;
+if n_elements(nx2) eq 0 then nx2=nint(0.98*!d.x_vsize)/float(!d.x_vsize)
+  ;** Could be overruled if noaspect is not set;
+if n_elements(ny1) eq 0 then ny1=nint(0.10*!d.y_vsize)/float(!d.y_vsize)
+if n_elements(ny2) eq 0 then ny2=nint(0.98*!d.y_vsize)/float(!d.y_vsize)
+  ;** Could be overruled if noaspect is not set;
+
+;**
+;** First get the grey-scaled image:
+;**
+if N_params() lt 3 then im_grey=im
+  grey,im_grey,nx1=nx1,nx2=nx2,ny1=ny1,ny2=ny2,interp=interp,rimage=rimage, $
+    greymin=greymin,greymax=greymax,colors=colors,greylog=greylog,xbar=xbar, $
+    pscolor=pscolor,noerase=noerase,corner=corner,barshiftx=barshiftx, $
+    barshifty=barshifty,barfactor=barfactor,ntoppix=ntoppix,nbotpix=nbotpix, $
+    noimage=noimage
+;**
+
+;**
+;** Get RA and DEC information necessary for subtitle string:
+extast,hdr,cd,crpix,crval,noparams       ;Extract astrometry from header
+if noparams LT 0 then $                  ;Does astrometry exist?
+      message,'FITS header does not contain astrometry'
+;
+cd = cd/!RADEG & crval = crval/!RADEG
+ra_cen=crval(0)*!RADEG & dec_cen=crval(1)*!RADEG
+ra_dec = adstring(ra_cen,dec_cen,1)       ;Make a nice string
+
+;** Adjust plotting window so that contour plot will have same dimensional
+;** ratio as the image
+;**
+;xlength = !D.X_VSIZE &  ylength = !D.Y_VSIZE
+;ratio=ylength/float(xlength)
+xsize = fix(xsize)  &   ysize = fix(ysize)
+;xsize1 = xsize-1 & ysize1 = ysize-1
+;xratio = xsize/float(ysize)
+;yratio = ysize/float(xsize)
+
+pos =[nx1,ny1,nx2,ny2]
+if n_elements(xposfac) ne 0 then begin
+	nx=(nx2-nx1)*xposfac
+	nxc=(nx2+nx1)*0.5
+	pos(0)=nxc-0.5*nx
+	pos(2)=nxc+0.5*nx
+endif
+if n_elements(yposfac) ne 0 then begin
+	ny=(ny2-ny1)*yposfac
+	nyc=(ny2+ny1)*0.5
+	pos(1)=nyc-0.5*ny
+	pos(3)=nyc+0.5*ny
+endif
+xmax = pos(2)            ;** added arbitrary
+
+  if n_elements(equi) eq 0 then begin
+    xunits = '!6RIGHT ASCENSION (J2000)'
+    yunits = 'DECLINATION (J2000)'
+     endif else begin
+    xunits = 'RIGHT ASCENSION '+ strtrim(equi,2)
+    yunits = 'DECLINATION '+strtrim(equi,2)
+  endelse
+
+;**
+;** Get default values of XTITLE, YTITLE, TITLE and SUBTITLE
+;**
+if not keyword_set(PUTINFO) then putinfo = 0
+
+if n_elements(xtitle) eq 0 then xtitle=xunits
+
+if n_elements(ytitle) eq 0 then ytitle = yunits
+
+if n_elements(title) eq 0 then title = !P.TITLE
+
+if (n_elements(subtitle) eq 0) and (putinfo lt 1) then $
+  subtitle = '!6'$ ;CENTER:  R.A. '+ strmid(ra_dec,1,13)+'  DEC ' + strmid(ra_dec,13,13) $
+else if n_elements(subtitle) ne 0 then subtitle = subtitle $
+  else subtitle = !P.SUBTITLE
+if n_elements(c_colors) eq 0 then c_colors=!p.color ;black
+if n_elements(f_color) eq 0 then f_color=!p.color
+if n_elements(c_line) eq 0 then c_line=replicate(0,nlevels)
+
+dif=where(c_colors ne f_color,ndif)
+
+;** c_colors are overrunned by f_color if device='ps';
+;** thus we need to draw the countours first:
+if ndif ne 0 then begin
+;** If PS plot output, c_colors=241 (white contours), f_color=0 (black plot).
+  contour,im,/noerase, $
+    POSITION=pos, XSTYLE=5, YSTYLE=5,$
+    XTITLE=xtitle, YTITLE=ytitle, $
+    MAX_VALUE=max_value,SUBTITLE = subtitle, XMINOR = xminor, $
+    FOLLOW = follow,YMINOR = yminor, $
+    LEVELS = levels, NLEVELS = nlevels,c_line=c_line, $
+    c_labels=c_labels,spline=spline,c_colors=c_colors
+    c_levels=[1.e22] ;** equivalent to no contour
+endif else c_levels=levels
+
+contour,im,/noerase, $
+  POSITION=pos, XSTYLE=5, YSTYLE=5, $
+  XTITLE=xtitle, YTITLE=ytitle, $
+  MAX_VALUE=max_value,SUBTITLE = subtitle, XMINOR = xminor, $
+  FOLLOW = follow,YMINOR = yminor, $
+  LEVELS = c_levels, NLEVELS = nlevels,color=f_color,c_line=c_line, $
+  c_labels=c_labels,spline=spline,c_colors=c_colors
+
+;** Run imlabelmm:
+if f_color ge 0 then begin
+if n_elements(c_colors) gt 1 then ic_colors = c_colors(0)
+imlabelmmm,hdr,pos=pos,xtitle=xtitle,ytitle=ytitle,chsize=chsize, $
+  c_colors=ic_colors,f_color=f_color,ntickx=ntickx,nticky=nticky, $
+  botlabel=botlabel,toplabel=toplabel,xunitlv=xunitlv,yunitlv=yunitlv
+endif 
+;**
+;**  Write info about the contour plot if desired:
+;**
+if putinfo GE 1 then begin
+  xmax = xmax +0.05
+  yshift=0.2
+  xyouts,xmax,yshift+0.70,'IMAGE SIZE',/norm,color=f_color
+  xyouts,xmax,yshift+0.65,'X: ' + strtrim(xsize,2),/norm,color=f_color
+  xyouts,xmax,yshift+0.60,'Y: ' + strtrim(ysize,2),/norm,color=f_color
+  minim=min(im_grey(where(im_grey ne 0.)))
+  xyouts,xmax,yshift+0.55,'MIN: ' + strtrim(minim,2),/norm,color=f_color
+  xyouts,xmax,yshift+0.50,'MAX: ' + strtrim(max(im_grey),2),/norm,color=f_color
+  xyouts,xmax,yshift+0.45,strmid(!STIME,0,17),/norm,color=f_color
+  xyouts,xmax,yshift+0.40,'CONTOUR LEVELS:',/norm,color=f_color
+  for i = 0,(nlevels < 9)-1 do $
+    xyouts,xmax,yshift+0.35-0.05*i,string(i,'(i2)') + ':'+string(levels(i)), $
+      /NORM,COLOR=F_COLOR
+endif
+if n_elements(pthicko) ne 0 then begin
+	!p.thick=pthicko
+endif
+if n_elements(pcso) ne 0 then begin
+	!p.charsize=pcso
+endif
+;stop,'End of cont_grey.'
+
+return
+end
+
+
+;==================================================================
+;+
+; NAME:
+;	GREY
+; PURPOSE:
+;	Plot grey scale image in normalized coordinates. Overlaid contours 
+; can be obtained by calling cont_grey instead
+;
+; CATEGORY:
+;	General graphics.
+; CALLING SEQUENCE:
+;	GREY, a
+; INPUTS:
+;	A = 2 dimensional array to display as a greyscale plot
+;
+; KEYWORD PARAMETERS:
+;	/nx1,/nx2,/ny1,/ny2  = The coordinates of the lower left and the upper
+;                            right coners of the image
+;	/NOASPECT = set to retain image's dimension ratio.  Otherwise,
+;	the image's aspec ratio is retained. Assumes square
+;		pixels.  
+;	/INTERP = set to bi-linear interpolate if image is resampled.
+;       /COLORS = color desired for contour plot. 
+;	rimage - if non zero, the grey scale will be generated with a
+;	random generator (using plot_rimage). The value of rimage is used
+;	as the maximum expected number points per pixel
+;
+;	pscolor - a keyword if set indicates a color postscript file is to
+;		be produced.
+;	barshiftx, barshifty, barfactor - the x and y shifts (in normalized
+;	coordinates) and multiple size factor of the color bar (default=1;
+;	the same linear size as the figure). These three parameters are
+;	used to locate the bar in the figure.
+;	ntoppix - the number of top color indexes in the color table
+;	used for other purposes (e.g., drawing  the frame of the figure)
+;	If the original color table is expanded to more levels (because
+;	of device differences), ntoppix may need to be increased accordingly.
+;
+; OUTPUTS:
+;	No explicit outputs.
+; COMMON BLOCKS:
+;	none.
+; SIDE EFFECTS:
+;	The currently selected display is affected.
+; RESTRICTIONS:
+;	None that are obvious.
+; PROCEDURE:
+;       Use normalized coordinates instead of device coordinates
+;	the plot window.
+; SUBROUTINES CALLED:
+; 	bscale,index_conv
+; MODIFICATION HISTORY:
+;     writen on Aug 19 1992 (WQD) 
+; 	add the option to use the random number generator for a better
+;	look of an image, Aug. 1993 (wqd)
+; added keywords, pscolor, for a color postscript file
+; keywords: barshiftx, barshifty, barfactor are added 
+; wqd, Jan 7, 1994
+;-
+pro grey, aa, nx1=nx1,nx2=nx2,ny1=ny1,ny2=ny2, NOASPECT = noaspect, INTERP = interp, COLORS  = colors, device=device,rimage=rimage,greymin=greymin,greymax=greymax,greylog=greylog,xbar=xbar,pscolor=pscolor,noerase=noerase,corner=corner,barshiftx=barshiftx,barshifty=barshifty,barfactor=barfactor,ntoppix=ntoppix,nbotpix=nbotpix,noimage=noimage
+common colors,r_orig,g_orig,b_orig,r_curr,g_curr,b_curr
+;
+if (n_params() eq 0) then begin
+print,' grey, aa, [nx1,nx2,ny1,ny2,noaspect,interp,colors,device,rimage'
+print,',greymin,greymax,greylog,xbar,pscolor,noerase,corner'
+print,',barshiftx,barshifty,barfactor,ntoppix,nbotpix]'
+return
+endif
+;
+a=aa
+
+if keyword_set(greylog) ne 0 then a=alog10(a > 1.e-10)
+
+if n_elements(greymin) eq 0 then begin 
+	greymin=min(a)
+endif else begin
+	if  keyword_set(greylog) ne 0 then greymin=alog10(greymin)
+	c=where(a ne 0,nc)
+	if n_elements(nc) ne 0 then a(c)=a(c) > greymin 
+endelse
+if n_elements(greymax) eq 0 then begin 
+	greymax=max(a)
+endif else begin
+	if  keyword_set(greylog) ne 0 then greymax=alog10(greymax)
+	a=a < greymax
+endelse
+if n_elements(nx1) eq 0 then nx1=0. ; ;chosen to be the default value
+if n_elements(nx2) eq 0 then nx2=1.  ;could be overruled if noaspect is not set
+if n_elements(ny1) eq 0 then ny1=0.
+if n_elements(ny2) eq 0 then ny2=1.  ;could be overruled if noaspect is not set
+if keyword_set(device) ne 0 then begin
+	dname=!d.name
+	set_plot,device
+	device,/color
+endif
+if n_elements(ntoppix) eq 0 then ntoppix=1 
+	;reserved the highest pixel value for other uses (e.g., contours)
+if n_elements(nbotpix) eq 0 then nbotpix=1 ;to make the background not white
+;
+;on_error,2                      ;Return to caller if an error occurs
+sz = size(a)			;Size of image
+if sz(0) lt 2 then message, 'Parameter not 2D'
+;  
+colorsav = !color               ;save colors to restore later
+mx = !d.n_colors-1		;Brightest color
+if (!d.name ne 'PS' or keyword_set(pscolor) ne 0) $
+	and n_elements(r_curr) ne 0 then begin
+	tvlct,r_orig,g_orig,b_orig
+endif else begin
+	colors=indgen(!d.n_colors-ntoppix) 
+	tvlct,colors,colors,colors
+;	loadct_self,14
+endelse
+contour,[[0,0],[1,1]],/nodata, xstyle=4, ystyle = 4,noerase=noerase
+;
+swx=(nx2-nx1)*!d.x_vsize        
+swy=(ny2-ny1)*!d.y_vsize
+dxa=nx1*!d.x_vsize
+dya=ny1*!d.y_vsize
+six = float(sz(1))		;Image sizes
+siy = float(sz(2))
+aspi = six / siy		;Image aspect ratio
+aspw = swx / swy		;Window aspect ratio
+f = aspi / aspw			;Ratio of aspect ratios
+ ;
+  if keyword_set(noaspect) ne 1 then begin	;Retain aspect ratio?
+				;Adjust window size
+	if f ge 1.0 then swy = swy / f else swx = swx * f
+  endif
+nx2=nx1+swx/!d.x_size
+ny2=ny1+swy/!d.y_size
+corner=[nx1,nx2,ny1,ny2]
+if keyword_set(noimage) ne 0 then return
+if n_elements(rimage) ne 0 then begin
+	plot_rimage,bscale(a,greymin,greymax,ntoppix=ntoppix,nbotpix=nbotpix) $
+		*(rimage/238.),nx1,nx2,ny1,ny2
+	goto,done
+endif
+if (!d.flags and 1) ne 0 then begin	;Scalable pixels?
+  	if !d.name eq 'PS' and keyword_set(pscolor) eq 0 then begin
+		tv,!d.n_colors-ntoppix-bscale(a,greymin,greymax $
+		,ntoppix=ntoppix,nbotpix=nbotpix),dxa,dya, $
+		xsize = swx, ysize = swy, /device
+	endif else begin
+		tv,bscale(a,greymin,greymax,ntoppix=ntoppix,nbotpix=nbotpix) $
+		,dxa,dya,xsize = swx, ysize = swy, /device
+	endelse
+endif else begin	;Not scalable pixels	
+	tv,poly_2d(bscale(a,greymin,greymax,ntoppix=ntoppix,nbotpix=nbotpix), $
+		[[0,0],[six/swx,0]], [[0,siy/swy],[0,0]], $
+		keyword_set(interp),swx,swy),dxa,dya
+endelse			
+
+if n_elements(barshiftx) eq 0 then barshiftx=0
+if n_elements(barshifty) eq 0 then barshifty=0
+if n_elements(barfactor) eq 0 then barfactor=1.
+if barfactor ne 0 then begin ; get the color bar
+ bsx=barshiftx*!d.x_size
+ bsy=barshifty*!d.x_size
+
+ if !d.name eq 'PS' then begin
+   if n_elements(xbar) ne 0 then begin
+	index_conv,lindgen((!d.n_colors-(ntoppix+nbotpix))*20) $
+		,[!d.n_colors-(ntoppix+nbotpix),20],index
+	index=index+nbotpix
+	bar=fltarr(!d.n_colors-(ntoppix+nbotpix),20)
+	if keyword_set(pscolor) eq 0 then $
+		bar(*)=(!d.n_colors-(ntoppix+nbotpix)-index(0,*)) else $
+		bar(*)=index(0,*)
+	tv,bar,bsx+dxa,bsy+2+dya+swy,xsize =barfactor*swx, ysize = 0.05*swy, $
+		 /device 
+   endif else begin
+	index_conv,indgen((!d.n_colors-(ntoppix+nbotpix))*20) $
+		,[20,!d.n_colors-(ntoppix+nbotpix)],index
+	index=index+nbotpix
+	bar=fltarr(20,!d.n_colors-(ntoppix+nbotpix))
+	if keyword_set(pscolor) eq 0 then $
+		bar(*)=(!d.n_colors-(ntoppix+nbotpix)-index(1,*)) else $
+		bar(*)=index(1,*)
+	tv,bar,bsx+dxa+swx,bsy+dya+2,xsize =0.05*swx, ysize =barfactor*swy,$
+		 /device 
+
+   endelse
+ endif else begin
+   if n_elements(xbar) ne 0 then begin
+	iswx=fix(swx*barfactor)
+	factor=(!d.n_colors-(ntoppix+nbotpix))/(swx)
+	index_conv,lindgen(iswx*20),[iswx,20],index
+	bar=fltarr(iswx,20)
+	bar(*)=index(0,*)*factor+nbotpix
+	tv,bar,bsx+dxa,bsy+2+dya+swy
+   endif else begin
+	iswy=fix(swy*barfactor)
+	factor=(!d.n_colors-(ntoppix+nbotpix))/(swy)
+	index_conv,indgen(iswy*20),[20,iswy],index
+	bar=fltarr(20,iswy)
+	bar(*)=index(1,*)*factor+nbotpix
+	tv,bar,bsx+2+dxa+swx,bsy+dya
+   endelse
+ endelse
+endif
+	
+;
+done:
+if !debug gt 1 then stop
+!color = colorsav
+if keyword_set(device) ne 0 then begin
+	device,/close
+	set_plot,dname
+endif
+return
+end
+;==============================
+pro imlabelmmm,hdr,pos=pos,xtitle=xtitle,ytitle=ytitle,chsize=chsize, $
+  c_colors=c_colors,f_color=f_color,ntickx=ntickx,nticky=nticky, $
+  xunitlv=xunitlv,yunitlv=yunitlv,toplabel=toplabel,botlabel=botlabel
+;+
+; NAME:
+;       IMLABELMMM
+;
+; PURPOSE:
+;       To label a cont_grey image with right ascension and declination
+;	grid lines using the astrometry info present in the header.  Unlike
+;	imlabel.pro upon which this has a remote resemblance to, IMLABELMMM
+;	will plot astrometrically-correct grids that include a celestial pole.
+;  	Many errors in imlabel.pro have been corrected
+;	Set !grid = 1 to make a grid, and !grid = 0 for regular tick marks.  
+;* SEQUENCE:
+;	IMLABELMMM, hdr, pos =, [ XTITLE =, YTITLE =, CHSIZE =, C_COLORS =,
+;	  F_COLOR =, NTICKX =, NTICKY =, XUNITLV =, YUNITLV =, POLE =,
+;	  TOPLABEL =, BOTLABEL = ]
+;
+; INPUTS:
+;	hdr      - FITS image header array;
+;	pos	 - coordinates of lower left and upper right corners of plot
+;		   in normalized coordinates;
+;	c_colors - contour color;
+;	f_color	 - plot color;
+;
+; OPTIONAL INPUTS:
+;	xtitle	 - x-axis annotation;
+;	ytitle	 - y-axis annotation;
+;	chsize - scale factor for size of character labels (def = 1.0)
+;	ntickx/y - number of x- or y-ticks; setting one of these parameters
+;		   but not the other will result the tick spacing in the
+;		   other axis to be the same; default is a tick spacing that
+;		   gives the x-axis 10 tick marks.
+;	xunitlv	 - how far below the x-axis to place the x-axis annotation
+;		   in normalized units of the space from the x-axis to the
+;		   edge of the plot device; default is .00;
+;	yunitlv	 - how far to the left of the y-axis to place the y-axis
+;		   annotation in normalized units of the space from the
+;		   y-axis to the edge of the plot device; default is .4;
+;	toplabel - default = 0, meaning RA labels are not plotted along top
+;		   axis; set = 1 to turn on top axis label plotting;
+;	botlabel - default = 1, meaning RA labels are plotted along bottom
+;		   axis; set = 0 to turn off bottom axis label plotting.
+;
+; OUTPUTS:
+;	None
+;
+; SYSTEM VARIABLES: 
+;	The system variable !GRID should be set to 1 to display 
+;	full grid lines, or set to 0 to see just tic marks.
+;
+; RESTRICTIONS:
+;	The rotation angle must be 0 (north is up) in the image.
+;	IMLABELMMM has not been tested for REALLY large areas, such
+;	as those where constant RA grid lines start to wrap around.
+;
+;*Subroutines called:
+; bracket_v.pro.
+;
+; REVISION HISTORY:
+;	Written by kachun 13 July, 1994; program is similar in some ways
+;	to the original imlabel except that this has corrected astrometry,
+;	and the program can create grids at high latitudes.
+;-
+
+;** Check for required param
+
+ npar = N_params()
+ if npar eq 0 then begin
+   print,'Syntax - IMLABELMMM, hdr, pos =, [ XTITLE =, YTITLE =, CHSIZE = ]'
+   print,'   C_COLORS =, F_COLOR =, NTICKX =, NTICKY =, XUNITLV =, YUNITLV ='
+   return
+ endif
+
+if n_elements(toplabel) eq 0 then toplabel = 0
+if n_elements(botlabel) eq 0 then botlabel = 1
+if n_elements(xunitlv) eq 0 then xunitlv = .2
+if n_elements(yunitlv) eq 0 then yunitlv = .3
+if n_elements(c_colors) eq 0 then c_colors = 241 ;Assume white.
+
+nx1 = pos(0) & ny1 = pos(1)
+nx2 = pos(2) & ny2 = pos(3)
+
+;** Define constants to renormalize plots:
+
+dx = nx2 - nx1 & dy = ny2 - ny1
+
+;** Check to see if IMLABELMMM has header hdr with given parameters (1,7,1):
+
+ zparcheck,'IMLABELMMM',hdr,1,7,1,'FITS header array'
+
+;** Define some variables:
+
+  if n_elements(chsize) eq 0 then chsize = !p.charsize
+  plint = 500 ;; (Arbitrary size of vectors to plot when calculating lines
+              ;;  of constant RA and dec.)
+
+;** Get size of image in pixels from header:
+
+xsize = sxpar(hdr,'NAXIS1')
+ysize = sxpar(hdr,'NAXIS2')
+
+extast, hdr, cd, crpix, crval, noparams
+if noparams lt 0 then $               ;** Does astrometry exist?
+  message,'FITS header does not contain astrometry'
+
+;** Redefine astrometry into display pixels (do everything in normalized
+;** coordinates):
+crval = crval/!radeg & cd = cd/!radeg
+
+;** Check on center RA and DEC coordinates [note that xy2ad input crpix
+;** is in SDAS FORTRAN format with array beginning at (1,1) and inputs
+;** x and y are in IDL format with array beginning at (0,0)]:
+
+  xy2ad, crpix(0)-1., crpix(1)-1., cd, crpix, crval, a, d
+  a = a*!radeg
+  d = d*!radeg
+  if abs(d) eq d then declin = 'pos' else declin = 'neg'
+  radec, a, d, i1, i2, i3, i4, i5, i6
+  acen = string(i1,format='(I2)') + ':' + string(i2,format='(I2)') + ':' + $
+         string(i3,format='(F5.1)')
+  dcen = string(i4,format='(I3)') + ':' + string(i5,format='(I2)') + ':' + $
+         string(fix(i6),format='(I2)')
+  cen = 'CENTER PIXEL:  R A: ' + acen + '  DEC: ' + dcen
+  print, cen
+
+;** Get pixel size in arcseconds:
+
+  pixsize = abs(sxpar(hdr,'CDELT1'))
+  pixsize = pixsize * 3600.
+  crval = crval*!radeg
+
+;** Check to see if a celestial pole is within the image boundaries (currently
+;** the southern celestial pole will be plotted around if both poles are
+;** present in the image):
+
+  n_pole = 0 & s_pole = 0
+  trans_dist, a, d, 0., +90., pxval, pyval, pixsize = pixsize, /deg
+  trans_dist, a, d, 0., -90., nxval, nyval, pixsize = pixsize, /deg
+  if abs(pxval) lt xsize*.5 and abs(pyval) lt ysize*.5 then n_pole = 1 else $
+    if abs(nxval) lt xsize*.5 and abs(nyval) lt ysize*.5 then s_pole = -1 else $
+    pole = 0
+  if n_pole eq 1 and s_pole eq 0 then begin
+    pole = n_pole
+    print,'North celestial pole is in image.'
+  endif
+  if s_pole eq -1 and n_pole eq 0 then begin
+    pole = s_pole
+    print,'South celestial pole is in image.'
+  endif
+  if n_pole eq 1 and s_pole eq -1 then begin
+    print,'WARNING:  both celestial poles are in image; program not yet able to
+    print,'          handle this.'
+  endif
+
+;** Find range of RA and DEC that we'll have to worry about; range in
+;** RA will be range of RA along top axis [for (+) declinations] or along
+;** bottom axis [for (-) declinations]; range in DEC will be minmax of DEC
+;** along vertical line running through reference pixel.  (Assumes that
+;** reference pixel is at the CENTER of the image.)
+
+;** Find minimum and maximum DEC along line at constant
+;** RA intersecting reference pixel:
+
+  trans_loct, 0, -crpix(1), crval(0), crval(1), ra0, dec0, /deg, pixsize=pixsize
+  trans_loct, 0,  ysize-crpix(1), crval(0), crval(1), ra0, dec1, /deg, pixsize=pixsize
+
+;** Find RA and DEC at the lower left, upper left, and lower right corners
+;** of the image:
+
+  trans_loct, -crpix(0), -crpix(1), crval(0), crval(1), botmin, leftmin, /deg, $
+    pixsize = pixsize
+  trans_loct,  xsize-crpix(0), -crpix(1), crval(0), crval(1), botmax, rightmin, /deg,$
+    pixsize = pixsize
+  trans_loct, -crpix(0),  ysize-crpix(1), crval(0), crval(1), topmin, leftmax, /deg, $
+    pixsize = pixsize
+
+  ;** Find range of RA and DEC if no pole is in the image:
+  if pole eq 0 then begin
+
+    minra = min([botmin,botmax,topmin,ra0])
+    maxra = max([botmin,botmax,topmin,ra0])
+    rasize = maxra - minra
+
+    mindec = min([leftmin,leftmax,rightmin,dec0,dec1])
+    maxdec = max([leftmin,leftmax,rightmin,dec0,dec1])
+    decsize = maxdec - mindec
+
+  ;** Find range of RA and DEC if a pole is in the image:
+  endif else begin
+
+    if pole eq 1 then begin
+      maxdec = 90.
+      mindec = min([leftmin,leftmax,rightmin,dec0,dec1])
+    endif
+    if pole eq -1 then begin
+      mindec = -90.
+      maxdec = max([leftmin,leftmax,rightmin,dec0,dec1])
+    endif
+    decsize = maxdec - mindec
+
+    maxra = 360.
+    minra = 0.
+    rasize = maxra - minra
+
+  endelse
+
+  ;** Define vector (of arbitrary size plint = 100) of RA and DEC values:
+
+  ravec = minra + findgen(plint+1)*rasize/plint
+  decvec = mindec + findgen(plint+1)*decsize/plint
+
+;** Find approximate pixel interval between tick marks; use inputs ntickx
+;** and nticky for number of ticks if present:
+
+  if n_elements(ntickx) eq 0 and n_elements(nticky) eq 0 then begin
+    pixx = fix(xsize/10)
+    pixy = fix(xsize/10)
+  endif else if n_elements(ntickx) ne 0 and n_elements(nticky) eq 0 then begin
+    pixx = fix(xsize/ntickx)
+    pixy = fix(xsize/ntickx)
+  endif else if n_elements(ntickx) eq 0 and n_elements(nticky) ne 0 then begin
+    pixx = fix(ysize/nticky)
+    pixy = fix(ysize/nticky)
+  endif else begin
+    pixx = fix(xsize/ntickx)
+    pixy = fix(ysize/nticky)
+  endelse
+
+;** Determine tic size and label units:
+
+   tics, min([botmin,botmax]), max([botmin,botmax]), xsize, pixx, raincr, /RA
+   tics, min([leftmin,leftmax]), max([leftmin,leftmax]), ysize, pixy, decincr
+   numtica = rasize / (raincr*360./24./60.) + 1
+   numticd = decsize / (decincr/60.) + 1
+
+;** Determine pos and value at 1st tic
+
+   tic_one, minra, pixx, raincr, botmin2, xtic1, /RA
+   tic_one, mindec, pixy, decincr, leftmin2, ytic1
+
+;** Create tic labels; first define sign of RA and DEC increments:
+
+;   radir = abs(botmax-botmin)/abs(botmax-botmin)
+;   decdir = abs(leftmax-leftmin)/abs(leftmax-leftmin)
+;   ticlabels, botmin2, numtica, radir*raincr, ticlabx, /RA
+;   ticlabels, leftmin2, numticd, decdir*decincr, ticlaby
+   ticlabels, botmin2, numtica, raincr, ticlabx, /RA
+   ticlabels, leftmin2, numticd, decincr, ticlaby
+
+   if n_elements(xtitle) ne 0 then xunits = xtitle else xtitle = ''
+   if n_elements(ytitle) ne 0 then yunits = ytitle else xtitle = ''
+
+;** Label tic marks in ra and dec
+
+   ;** Get and plot constant DEC lines (remember that decincr is in arcmin;
+   ;** program assumes DEC increase upwards (north) in plot):
+
+   n = 0
+   ytold = 0.
+   for m=0,numticd-1 do begin
+
+     ;** Create vector consisting of constant DEC values:
+;     constdec = replicate(leftmin2+decdir*decincr*fix(m)/60., plint+1)
+     constdec = replicate(leftmin2+decincr*fix(m)/60., plint+1)
+     ;** Calculate x and y pixel positions of the grid line with constant DEC:
+     trans_dist, a, d, ravec, constdec, xval, yval, pixsize=pixsize, /deg
+     xval = xval + crpix(0) - 1 & yval = yval + crpix(1) - 1
+     xdis = nx1 + dx*xval/(xsize-1) & ydis = ny1+dy*yval/(ysize-1)
+     if !grid eq 1 then plots, xdis, ydis, /normal, color=c_colors, noclip=0
+
+     ;** Find normalized coordinate values of the tick mark:
+
+     if min(xdis) lt nx1 then begin
+
+       ;** Find bins closest to the edge:
+       bracket_v, xdis, nx1, i_values=i_values, m_values=m_values
+       if total(i_values) ne -1 then niv = n_elements(i_values(*,0)) else $
+         niv = 0
+       if total(m_values) ne -1 then nmv = n_elements(m_values) else nmv = 0
+
+       yt1_vec = fltarr(niv+nmv)
+
+       ;** Interpolate between the bins closest to edge to find out
+       ;** where to place the tick mark:
+       if niv ne 0 then $
+         for l=0,niv-1 do begin
+           linterp, xdis(i_values(l,0):i_values(l,1)), $
+             ydis(i_values(l,0):i_values(l,1)), nx1, yt1
+           yt1_vec(l) = yt1
+         endfor
+       if nmv ne 0 then $
+         for l=0,nmv-1 do begin
+           linterp, xdis(m_values(l,0):m_values(l,1)), $
+             ydis(m_values(l,0):m_values(l,1)), nx1, yt1
+           yt1_vec(niv+l) = yt1
+         endfor
+
+       ysel = where(yt1_vec ge ny1 and yt1_vec le ny2,nysel)
+
+       if nysel ne 0 then begin
+
+         yt1_vec = yt1_vec(where(yt1_vec ge ny1 and yt1_vec le ny2))
+         yt1 = min(yt1_vec(where(yt1_vec gt ytold)))
+         ytold = yt1
+
+         ;** Label tick marks (every other tick):
+
+         if total( where(ydis gt ny1) ) gt 0 and (n eq 0) and $
+           (m/2. eq float(m/2)) then begin
+             label = strtrim(ticlaby(m/2.),2)
+             xyouts, nx1*.95, yt1, label, /normal, size=chsize*0.9, $
+               color=f_color, alignment=1.0
+             n = 1
+         endif else n = 0
+
+       endif
+
+     endif else nysel = 0
+
+     ;** Plot tick marks if no grid is plotted:
+
+     if !grid eq 0 and nysel ne 0 then $
+       plots, [nx1,nx1+dx/50.], [yt1,yt1], /normal, color=f_color
+
+   endfor
+
+   ;** Get and plot constant RA lines (remember that raincr is in minutes;
+   ;** program assumes RA increases towards the left (east) in plot):
+
+   n = 0
+   for m=0,numtica-1 do begin
+
+     ;** Create vector consisting of constant RA values:
+;     constra = replicate(botmin2+radir*raincr*fix(m)*360./24./60., plint+1)
+     constra = replicate(botmin2+raincr*fix(m)*360./24./60., plint+1)
+     ;** Calculate x and y pixel positions of the grid line with constant RA:
+     trans_dist, a, d, constra, decvec, xval, yval, pixsize=pixsize, /deg
+     xval = xval + crpix(0) - 1 & yval = yval + crpix(1) - 1
+     xdis = nx1 + dx*xval/(xsize-1) & ydis = ny1 + dy*yval/(ysize-1)
+     if !grid eq 1 then plots, xdis, ydis, /normal, color=c_colors, noclip=0
+
+     ;** Find normalized coordinate values of the tick mark:
+
+     ;** Plot RA labels along bottom axis if parameter is set:
+     if botlabel eq 1 then begin
+
+       if min(ydis) lt ny1 then begin
+
+         ;** Find bins closest to bottom edge:
+         bracket_v, ydis, ny1, i_values=i_values, m_values=m_values
+         if total(i_values) ne -1 then niv = n_elements(i_values(*,0)) else $
+           niv = 0
+         if total(m_values) ne -1 then nmv = n_elements(m_values) else nmv = 0
+ 
+         xt1_vec = fltarr(niv+nmv)
+ 
+         ;** Interpolate between the bins closest to edge to find out
+         ;** where to place the tick mark:
+         if niv ne 0 then $
+           for l=0,niv-1 do begin
+             linterp, ydis(i_values(l,0):i_values(l,1)), $
+               xdis(i_values(l,0):i_values(l,1)), ny1, xt1
+             xt1_vec(l) = xt1
+           endfor
+         if nmv ne 0 then $
+           for l=0,nmv-1 do begin
+             linterp, ydis(m_values(l,0):m_values(l,1)), $
+               xdis(m_values(l,0):m_values(l,1)), ny1, xt1
+             xt1_vec(niv+l) = xt1
+           endfor
+
+         xsel = where(xt1_vec ge nx1 and xt1_vec le nx2,nxsel)
+
+         if nxsel ne 0 then begin
+
+           xt1_vec = xt1_vec(xsel)
+           xt1 = xt1_vec
+
+           ;** Label tick marks (every other tick):
+
+           if total( where(xdis gt nx1) ) gt 0 and (n eq 0) and $
+             (m/2. eq float(m/2)) then begin
+               label = strtrim(ticlabx(m/2),2)
+               xyouts, xt1, ny1*.60, label, /normal, size=chsize*0.9, $
+                 color=f_color, alignment=0.5
+               n = 1
+           endif else n = 0
+
+         endif
+
+       endif else nxsel = 0
+
+       ;** Plot tick marks if no grid is plotted:
+
+       if !grid eq 0 and nxsel ne 0 then $
+         plots, [xt1,xt1], [ny1,ny1+dx/50.], /normal, color=f_color
+
+     endif
+
+     ;** Plot RA labels along top axis if parameter is set:
+     if toplabel eq 1 then begin
+
+       if max(ydis) gt ny2 then begin
+
+         ;** Find bins closest to top edge:
+         bracket_v, ydis, ny2, i_values=i_values, m_values=m_values
+         if total(i_values) ne -1 then niv = n_elements(i_values(*,0)) else $
+           niv = 0
+         if total(m_values) ne -1 then nmv = n_elements(m_values) else nmv = 0
+ 
+         xt1_vec = fltarr(niv+nmv)
+ 
+         ;** Interpolate between the bins closest to edge to find out
+         ;** where to place the tick mark:
+         if niv ne 0 then $
+           for l=0,niv-1 do begin
+             linterp, ydis(i_values(l,0):i_values(l,1)), $
+               xdis(i_values(l,0):i_values(l,1)), ny2, xt1
+             xt1_vec(l) = xt1
+           endfor
+         if nmv ne 0 then $
+           for l=0,nmv-1 do begin
+             linterp, ydis(m_values(l,0):m_values(l,1)), $
+               xdis(m_values(l,0):m_values(l,1)), ny2, xt1
+             xt1_vec(niv+l) = xt1
+           endfor
+         xt1_vec = xt1_vec(where(xt1_vec ge nx1 and xt1_vec le nx2))
+         xt1 = xt1_vec
+
+         xsel = where(xt1_vec ge nx1 and xt1_vec le nx2,nxsel)
+
+         if nxsel ne 0 then begin
+
+           ;** Label tick marks (every other tick):
+ 
+           if total( where(xdis gt nx1) ) gt 0 and (n eq 0) and $
+             (m/2. eq float(m/2)) then begin
+               label = strtrim(ticlabx(m/2),2)
+               xyouts, xt1, ny2*1.01, label, /normal, size=chsize*0.9, $
+                 color=f_color, alignment=0.5
+               n = 1
+           endif else n = 0
+
+         endif
+ 
+       endif else nxsel = 0
+ 
+     ;** Plot tick marks if no grid is plotted:
+
+     if !grid eq 0 and nxsel ne 0 then $
+       plots, [xt1,xt1], [ny2,ny2-dx/50.], /normal, color=f_color
+ 
+    endif
+
+   endfor
+
+ ;** Place x label:
+
+ if botlabel eq 1 then $
+   xyouts, nx1+.5*dx, xunitlv*ny1, xunits, size=chsize*1.00, $
+     color=f_color, alignment=0.5, /normal
+ if botlabel eq 0 and toplabel eq 1 then $
+   xyouts, nx1+.5*dx, ny2*1.05, xunits, size=chsize*1.00, $
+     color=f_color, alignment=0.5, /normal
+
+ ;** Place y label:
+
+ xyouts, yunitlv*nx1, ny1+.5*dy, yunits, size=chsize*1.00, $
+    orientation=90.0, color=f_color, alignment=0.5, /normal
+
+ ;** Plot box:
+
+ plots, [nx1,nx1], [ny1,ny2], /normal, color=f_color
+ plots, [nx1,nx2], [ny1,ny1], /normal, color=f_color
+ plots, [nx2,nx2], [ny1,ny2], /normal, color=f_color
+ plots, [nx1,nx2], [ny2,ny2], /normal, color=f_color
+
+;stop,'End of imlabelmmm.pro.'
+ return
+ end
+;=========================
+FUNCTION BSCALE,IMAGE,IMIN,IMAX,ntoppix=ntoppix,nbotpix=nbotpix
+;-
+; modified version of the original procedure writen by J. Saken
+; ntoppix - the number of highest intensity pixels reserved for other uses
+; WQD, Oct. 11, 1993
+;+
+on_error,2
+if n_elements(nbotpix) eq 0 then nbotpix=0
+if n_elements(ntoppix) eq 0 then ntoppix=0
+IF n_elements(imin) eq 0  THEN IMIN=MIN(IMAGE)
+IF n_elements(imax) eq 0 THEN IMAX=MAX(IMAGE)
+;
+JUNK = CHECK_MATH(TRAP=0, 0,1)
+ARRAY = (!D.N_COLORS-ntoppix-1) * (IMAGE-IMIN)/(IMAX-IMIN) > nbotpix
+;(!D.N_COLORS-ntoppix-1)
+JUNK = CHECK_MATH(TRAP=0, 0,1)
+RETURN,ARRAY
+END
+;======================
+pro index_conv,indexo,dim,indexv,choice=choice
+;+
+; convert an index vector in an array into indexes in individual dimensions
+; of the array or vice versa
+;
+; indexo - vector containing the index vector of the array
+; dim - a vector containing number of elements in individual dimensions
+; indexv - an array of dimension of n_elements(dim) * n_elements(indexo)
+;		containing the indexes in individual dimensions
+; choice - def=0 from array index to dimensional indexes
+; 		otherwise, do the reverse
+;
+; writen by wqd, Aug. 16, 1993
+;-
+if n_params() eq 0 then begin
+print,'CALLING SEQUENCE - index_conv,indexo,dim,indexv,choice=choice'
+return
+endif
+;
+if n_elements(choice) eq 0 then choice=0
+if choice ne 0 then begin
+	sz=size(indexv)
+	indexo=transpose(indexv(0,*))
+	frac=1L
+	for k=1,n_elements(dim)-1 do begin
+		frac=frac*dim(k-1)
+		indexo=indexo+indexv(k,*)*frac
+	endfor
+stop
+endif else begin
+	ndim=n_elements(dim)
+	sz=n_elements(indexo)
+	index=indexo
+	indexv=lonarr(ndim,sz)
+	for k=0,ndim-2 do begin
+		frac=dim(k)
+		indexv(k,*)=index mod frac
+		index=index/frac
+	endfor
+	indexv(ndim-1,*)=index
+endelse
+end
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+;===========================
+;.......................................................................
+pro trans_loct,xdis,ydis,oxcen,oycen,xfar,yfar,degree=degree,das=das,pixsize=pixsize
+;.......................................................................
+;	Subroutine LOCT finds the location of a far point
+;	which is XDIS and YDIS pixels away from center point
+;	(XCEN,YCEN). It is the reverse subroutine of DIST.
+;	The calling format of this subroutine is:
+;	"call loct (xdis,ydis,xcen,ycen,xfar,yfar)"
+;	XFAR and YFAR are the right ascension and declination of
+;	the far point. They are the output of this subroutine.
+; 	pixsize - in units of arcsec
+;.......................................................................
+if(n_params() eq 0) then begin
+   print,'CALL SEQUENCE - trans_loct, xdis,ydis,xcen,ycen,XFAR,YFAR,degree=degree,das=das,pixsize=pixsize'
+   print,' '
+   print,'xdis,ydis ---- vectors (pixel, or arcsec if das is set'
+   print,'xcen,ycen ---- scalars (radian)'
+   print,'XFAR,YFAR ---- vectors (radian)'
+   print,'if keyword degree set, radian --> degree' 
+   return
+endif
+;
+xdis=float(xdis)
+ydis=float(ydis)
+if n_elements(xdis) eq 0 then begin
+print,'the vector xdis is empty'
+return
+endif
+;......................................................................
+;	First, Let's define a parameter for later use. This uses a
+;	pre-defined system valuable !size_pixel (in arcseconds)
+;
+	if n_elements(pixsize) eq 0 then pixsize=!size_pixel
+	if keyword_set(degree) ne 0 then trans=(!pi/180.) else trans=1.
+	xcen=oxcen*trans
+	ycen=oycen*trans
+	radpix=648000./!pi
+	if keyword_set(das) eq 0 then radpix=radpix/pixsize
+;	
+;	We set up a spherical surface with radius equal to one.
+;	Center point and far point are on the surface. Then the
+;	distance between far point and center point on the surface
+;	is the square root of sum of square of the two distances.
+;
+	dispix=sqrt(xdis^2+ydis^2)
+;
+;	This distance can not exceed half circle which is 
+;       648000./!size_pixel pixels.
+;
+	if keyword_set(das) eq 0 then dispix = dispix <  (648000./!size_pixel) $
+	else dispix = dispix <  648000.
+;
+;	This distance is equivalent to the angle between the
+;	center point and far point except the fact of RADPIX.
+;
+	angle=dispix/radpix
+;
+;	Now we calculate the sine of this angle for further use.
+;
+	sang=sin(angle)
+;
+;	Find the two normal distances from the far point to
+;	the two great circle planes parallel or perpendicular
+;	to the meridian and passing center point.
+;
+;	If the angle between the two points is very small, then we
+;	can consider the spherical surface as a plane in small area.
+;
+;	xnorm=xdis/radpix
+;	ynorm=ydis/radpix
+;
+;	Otherwise
+;
+;	c=where(angle GE 0.001,count)
+;	if count NE 0 then begin
+;		xnorm(c)=xdis(c)*sang(c)/dispix(c)
+;		ynorm(c)=ydis(c)*sang(c)/dispix(c)
+;	endif
+	xnorm=imdiv(xdis*sang,dispix)
+	ynorm=imdiv(ydis*sang,dispix)
+	dispix=0. ;will no longer be used
+	sang=0.
+;
+;	Now we can calculate the normal distance
+;	from the far point to equator plane which
+;	is the sine of the declination of far point.
+;
+	syfar=sin(ycen)*cos(angle) + ynorm*cos(ycen)
+	angle=0. ;will no longer be used
+; ynorm is assumed to be positive in the direction of the north?
+;
+;	Then the YFAR is simply worked out.
+;
+	syfar=(((syfar < 1.0) +1.) > 0.) -1.
+	yfar=asin(syfar)
+	cyfar=cos(yfar)
+	xfar=yfar*0.0
+;
+	c=where(cyfar EQ 0.0,count)
+	if count ne 0 then begin
+	xfar(c)=xcen
+	if count EQ n_elements(xfar) then return
+	endif
+;
+;	The difference of XFAR and XCEN is calculated.
+;
+;	difx=xfar*0.0
+;	c=where (cyfar NE 0.0)
+;	difx(c)=(((xnorm(c)/cyfar(c) < 1.) +1.) > 0.) -1.
+;	difx(c)=asin(difx(c))
+	difx=(((imdiv(xnorm,cyfar) < 1.) +1.) > 0.) -1.
+	difx=asin(difx)
+;
+;	This diference could be great than
+;	half pi if cosine of it is negative.
+;
+;	acos=(ynorm+syfar*cos(ycen))*sin(ycen) 
+		;there is problem in this statemnet. But this is not used
+		; for difx < pi
+;	sign=where(acos LT 0.0,count)
+;stop
+;	if count NE 0 then difx(sign)=!pi-difx(sign)
+;
+	ynorm=0. ;will no longer be used
+	xfar=xcen-difx
+	difx=0. ;will no longer be used
+;
+;	Right ascension is aranged from zero to two pi.
+;
+	c=where (xfar LT 0.0,count)
+ 	if count NE 0 then xfar(c)=xfar(c)+2.0*!pi
+	c=where (xfar GT 2.0*!pi,count)
+	if count NE 0 then xfar(c)=xfar(c)-2.0*!pi
+
+	if keyword_set(degree) ne 0 then begin
+		xfar=xfar*(180./!pi)
+		yfar=yfar*(180./!pi)
+	endif
+;
+;	Return to the calling routine.
+;
+	return
+;
+	end
+;
+;.......................................................................
+;
+;		
+pro trans_dist,oxcen,oycen,oxfar,oyfar,xdis,ydis,degree=degree,das=das,pixsize=pixsize
+;.......................................................................
+;
+;	Subroutine DIST calculates the distance XDIS and YDIS from
+;	center point (XCEN,YCEN) to far point (XFAR,YFAR) in both X
+;	and Y directions in pixels of !size_pixel arc seconds. It is the
+;	reverse subroutine of LOCT. X and Y directions are defined
+;	as perpendicular to and parallel to the meridian passing
+;	center point. The calling format of this subroutine is:
+;	"call dist (xcen,ycen,xfar,yfar,xdis,ydis)"
+; 	pixsize - in units of arcsec
+;.......................................................................
+if(n_params() eq 0) then begin
+   print,'CALL SEQUENCE - trans_dist,oxcen,oycen,oxfar,oyfar,XDIS,YDIS,degree=degree,das=das,pixsize=pixsize'
+   print,' '
+   print,'XDIS,YDIS ---- vectors (pixel, or arcsec if das is set)'
+   print,'xcen,ycen ---- scalars (radian)'
+   print,'xfar,yfar ---- vectors (radian)'
+   print,'if keyword degree is set, radian --> degree'
+   return
+endif
+;
+	if n_elements(pixsize) eq 0 then pixsize=!size_pixel
+if n_elements(oxfar) eq 0 then begin
+print,'the vector xfar is empty'
+return
+endif
+;......................................................................
+;	First, Let's define a parameter for later use. This uses a
+;	pre-defined system valuable !size_pixel
+;
+	if keyword_set(degree) ne 0 then trans=(!pi/double(180.)) else trans=1.
+		xcen=oxcen*trans
+		ycen=oycen*trans
+		xfar=oxfar*trans
+		yfar=oyfar*trans
+ 
+	radpix=648000./!pi
+	if keyword_set(das) eq 0 then radpix=radpix/pixsize
+;	
+;	We set up a spherical surface with radius equal to
+;	one. Center point and far point are on the surface.
+;	The distance from far point to the great circle
+;	plane passing center point and poles is as follow.
+;
+	xnorm=cos(yfar)*sin(xcen-xfar) ; the west is possitive
+;
+;	The distance from far point to the great circle
+;	plane passing center point and perpendicular
+;	to the one mentioned above is as follow.
+;
+	ynorm=cos(ycen)*sin(yfar)
+	ynorm=ynorm-sin(ycen)*cos(yfar)*cos(xcen-xfar)
+; now it is the order of IDL array data format, i.e. the north is possitive
+;
+;	The distance from far point to the line of radius
+;	passing center point is the square root of the
+;	sum of square of the above two normal distances.
+;
+	sang=xnorm*xnorm
+	sang=sqrt(sang+ynorm*ynorm)
+;
+;	This distance is also the sine of the angle between
+;	far point and center point viewed from the origin.
+;
+	angle=asin(sang < 1.0)
+;
+;	This angle could be great than half
+;	pi if cosine of it is less than zreo.
+;
+	cang=sin(ycen)*sin(yfar)
+	cang=cang+cos(ycen)*cos(yfar)*cos(xcen-xfar)
+	c=where(cang LT 0.0,count)
+	if count ne 0 then angle(c)=!pi-angle(c)
+	c=0
+;
+;	Now convert the angle into pixels.
+;
+	angle=angle*radpix
+;
+;	For small SANG, there are two cases. Far point is
+;	near center point or on the opposite side of it.
+;
+;	When the far point is near the center, the spherical
+;	surface is approximately a plane in that small ares.
+;
+	xdis=xnorm*radpix
+	ydis=ynorm*radpix
+;
+;	If far point is on the opposite side of the spherical
+;	surface, it is really unimportant. But we still
+;	calculate it to complete the whole spherical surface.
+;
+if !debug eq 1 then stop
+	c=where(cang LT 0.0,count)
+	cang=0
+	if count NE 0 then begin
+
+		phi=tan(imdiv(abs(ynorm(c)),xnorm(c)))
+		c2=where (xnorm(c) EQ 0.0,count)
+		if count NE 0 then  phi(c2)=!pi/2.0
+
+		xdis(c)=cos(phi)*angle(c)
+		ydis(c)=sin(phi)*angle(c)
+		phi=0
+		c2=where (xnorm(c) LT 0.0,count) 
+		if count NE 0 then xdis(c(c2))=-xdis(c(c2))
+		c2=where (ynorm(c) LT 0.0,count)
+		if count NE 0 then ydis(c(c2))=-ydis(c(c2))
+	endif
+;
+;	For large SANG, we need to treat in a different way.
+;	The X and Y components of this distance are proportional
+;	to XNORM and YNORM respectively. 
+;
+	c=where (sang  GE 0.001,count) 
+	if count NE 0 then begin
+		xdis(c)=xnorm(c)*angle(c)/sang(c)
+		ydis(c)=ynorm(c)*angle(c)/sang(c)
+	endif
+if !debug eq 1 then stop
+
+;
+;	Return to the calling routine.
+;
+	return
+	end
+;
+;.......................................................................
+;
+;	  	END OF SUBROUTINE DIST
+;
+;.......................................................................
+;END OF SUBROUTINE LOCT
+;
+;.......................................................................
+pro plot_rimage,image,cor
+;-
+; get an intensity image with number of randum points per pixel proportional
+; to the intensity
+; image - the input intensity image (the intensity should be scaled properly)
+; nx1,nx2,ny1,ny2 - the normalized corner positions
+;+
+if n_params() eq 0 then begin
+print,'CALLING SEQUENCE - plot_rimage,image,nx1,nx2,ny1,ny2'
+return
+endif
+
+im=image
+sz=size(im)
+xpixn=(cor(1)-cor(0))/sz(1)
+ypixn=(cor(3)-cor(2))/sz(1)
+
+loc=lindgen(sz(1),sz(2))
+i=float(loc mod sz(1))
+j=float(loc/sz(1))
+sel=where(im lt 1. and im gt 0., nsel) 
+if nsel ne 0 then begin 
+	poisson,im(sel),ran,seed
+	im(sel)=ran
+endif
+im=nint(im)
+c=where(im gt 0,nc)
+tc=total(im(c))
+x=fltarr(tc)
+y=fltarr(tc)
+;
+kk=0L
+for k=0L,nc-1L do begin
+	loc=c(k)
+	nk=im(loc)
+	x(kk:kk+nk-1)=i(loc)+randomu(seed,nk)
+	y(kk:kk+nk-1)=j(loc)+randomu(seed,nk)
+	kk=kk+nk
+endfor
+x=cor(0)+x*xpixn
+y=cor(2)+y*ypixn
+plots,x,y,psym=3,/normal
+
+end
+;=============================
+pro bracket_v,xdis,nx1,i_values=i_values,m_values=m_values
+;**
+;** Subroutine written originally for imlabelmmm to find where in xdis the
+;** valuenx1 is located or bracketed.  The values in the vector xdis smoothly
+;** change and xdis does not have to be monotonic.  For instance if nx1 = .5
+;** and xdis = [0.,.3,.7,1.3,.9,.5,.2], then bracket_v will return i_values
+;** equal to [1,2] (since xdis(1) and xdis(2) bracket nx1) and m_values
+;** equal to 5 (since xdis(5) = nx1).
+;**
+;** If no matches are found, m_values = -1 is returned; if no bracketing
+;** values are found, i_values = -1 is returned.
+;**
+;** INPUTS:
+;**		xdis	 - vector containing values to search in;
+;**		nx1	 - value to match;
+;**
+;** OUTPUTS:
+;**		i_values - array containing xdis bin numbers that contain
+;**			   values that bracket nx1;
+;**		m_values - array containing xdis bin numbers that contain
+;**			   values that match nx1.
+;**
+;** Written by kachun 12 July, 1994.
+
+sel0 = where(xdis ge nx1)
+sel1 = where(xdis le nx1)
+
+;** Check to see if nx1 is a value in xdis:
+
+match,sel0,sel1,match0,match1
+
+if (total(match0) ne -1) and (total(match1) ne -1) then $
+  m_values = sel0(match0) else m_values = -1
+
+;** Find bracketing values of nx1:
+
+;** Do special case where xdis has only two values (the match subroutine
+;** won't work properly with vectors less than 3 bins in size):
+if n_elements(xdis) eq 2 then begin
+  if min(xdis) lt nx1 and max(xdis) gt nx1 then begin
+    i_values = intarr(1,2)
+    i_values(0,0) = where(xdis eq min(xdis))
+    i_values(0,1) = where(xdis eq max(xdis))
+  endif else i_values = -1
+  return
+endif
+
+match,sel0+1,sel1,match0,match1 ;** Matches are match0 and match1
+match,sel0-1,sel1,match2,match3 ;** Matches are match2 and match3
+
+;** Create vector that will contain bracketing values:
+
+m_size = 0
+if total(match0) ne -1 then nmatch0 = n_elements(match0) else nmatch0 = 0
+if total(match2) ne -1 then nmatch2 = n_elements(match2) else nmatch2 = 0
+m_size = nmatch0 + nmatch2
+i_values = intarr(m_size,2)
+
+if nmatch0 ne 0 then begin
+  i_values(0:nmatch0-1,0) = sel0(match0)
+  i_values(0:nmatch0-1,1) = sel1(match1)
+endif
+
+if nmatch2 ne 0 then begin
+  i_values(nmatch0:*,0) = sel0(match2)
+  i_values(nmatch0:*,1) = sel1(match3)
+endif
+
+;** Remove any bins in i_values that contain matches in m_values:
+
+for j=0,n_elements(m_values)-1 do begin
+  selm = where(i_values(*,0) eq m_values(j))
+  if total(selm) ne -1 then i_values(selm,*) = -10
+  seln = where(i_values(*,1) eq m_values(j))
+  if total(seln) ne -1 then i_values(seln,*) = -10
+endfor
+
+sel = where(i_values(*,0) ne -10,nsel)
+
+if nsel ne 0 then begin
+
+  temp = intarr(nsel,2)
+
+  for j=0,nsel-1 do temp(j,*) = i_values(sel(j),*)
+
+  ;** Reorder any bins so that temp(i,0) < temp(i,1) for any value of i:
+  for j=0,nsel-1 do $
+    if temp(j,0) gt temp(j,1) then begin
+      temp0 = temp(j,0)
+      temp1 = temp(j,1)
+      temp(j,0) = temp1
+      temp(j,1) = temp0
+    endif
+
+endif else temp = -1
+
+i_values = temp
+
+return
+end
+

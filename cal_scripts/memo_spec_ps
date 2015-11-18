@@ -1,0 +1,107 @@
+;=========================================================================
+#Requirements:
+# 1)  ciao and ftools are runnig
+# 2)  move to a directory called spec_ps under MAINDIR or a subdirectory 
+# 	furhter down (one source per directory may be a good idea).
+#
+# written by wqd, June 6, 2003
+;=========================================================================
+#first set up ardlib to use the bad pixel file for your observation
+acis_set_ardlib ../cal/bpixfile.fits
+plist ardlib | more
+
+#define the input event and output spectrum file root names:
+set event_root=evt2file_new_clean
+set spec_root=ds9
+
+set MAINDIR=/d1/n3556
+
+#event 2 file location:
+set datadir=$MAINDIR/xdata
+
+#source removed event 2 file location (from diffuse study; see memo_spec_d):
+set datadir_sd=$MAINDIR/spec
+
+set eventfile=${datadir}/${event_root}.fits
+set eventfile_sd=${datadir_sd}/${event_root}_sd.fits
+$PUBDIR/cal_scripts/assign_bpix.e $MAINDIR/cal/bpixfile.fits
+
+set reg_s=${spec_root}.reg
+set reg_b=${spec_root}_b.reg
+
+#use ds9 to create a region file (def: ${spec_root}.reg) to define the source
+# and a background region (def: ${spec_root}_b.reg); saved in the ciao format.
+# The backg region (e.g., an annulus) should be large enough to contain
+# meaningful number of counts. It is OK to include regions with source 
+# removed. psextract seems to correct the area removed automatically.
+ds9  $eventfile_sd &
+
+#find where the aoff file is:; no longer used
+#find $MAINDIR -name 'pcad*asol*' -print
+#If the output is a single file; no longer used
+#find $MAINDIR -name 'pcad*asol*' -exec ln -s {} asolfile \;
+#psextract demands a different name for asolfile, if events differs bgevents
+
+ln -s ../cal/asol_file asol_file
+ln -s asol_file basol_file
+
+#the following seems to have some problem on gcs (library problem?)
+punlearn psextract
+pset psextract events="${eventfile}[sky=region($reg_s)]"
+pset psextract bgevents="${eventfile_sd}[sky=region($reg_b)]"
+pset psextract root=${spec_root}
+pset psextract asol=@asol_file
+pset psextract bgasol=@basol_file
+pset psextract gtype=NUM_CTS
+pset psextract gspec=15
+pset psextract clobber=yes
+pset psextract mode=h
+psextract verbose=2
+#-------------------------------------
+#Using the new mkacisrmf to make a more consistent and accurate (10-15% improvement) to generate rmf:
+#(CIAO 3.2 acis_process_events uses the gain file that is consistent with mkacisrmf!)
+
+set gfile = `dmkeypar ${eventfile} gainfile echo+`
+#Modify the output from psextract and run:
+mkacisrmf infile=$CALDB/data/chandra/acis/cpf/p2_resp/acisD2000-01-29p2_respN0002.fits \
+      outfile=ds9.rmf wmap=none energy=0.1:11.0:0.01 channel=1:1024:1 chantype=pi \
+      ccd_id=7 chipx=176 chipy=240 gain=$gfile
+
+#there is a grid size difference between arf and rmf files. The workaround is to generate (or regenerate) arf later:
+
+mkarf detsubsys=ACIS-S3 outfile=ds9.arf asphistfile="ds9.asphist" sourcepixelx=4037.4856391 sourcepixely=4088.7686774 grating=NONE obsfile="ds9.asphist" maskfile=NONE engrid="grid(ds9.rmf[MATRIX][cols ENERG_LO,ENERG_HI])" clobber=yes
+#-----------------------------------
+#http://cxc.harvard.edu/ciao/threads/apply_acisabs/ ;no longer used 4/20/04
+#correct for the ACIS sensitivity degration:
+#ln -s /net1/hobby/software/ciao_3.0.2/contrib/bin/interpreted/acisabs.sl apply_acisabs
+#mv ${spec_root}.arf ${spec_root}_pre_abs.arf
+#apply_acisabs ${spec_root}_pre_abs.arf ${spec_root}.arf
+#===================================================================
+grppha ${spec_root}.pi ${spec_root}_g.pi
+reset group
+group min 25
+exit
+
+#===================================================================
+#spectral fits:
+xspec
+data ds9_g.pi
+setplot e
+ig bad 
+ig **-0.3 8.-**
+cpd /xw
+mo po wa
+
+fit 20 0.05
+plot ld 
+
+iplot
+la f
+la t
+time off
+lw 3
+plot
+hard
+
+#===================================================================
+

@@ -1,0 +1,139 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+  <meta content="text/html; charset=ISO-8859-1"
+ http-equiv="content-type">
+  <title>memo_id</title>
+</head>
+<body>
+<div style="text-align: center;"><span style="font-weight: bold;">Memo
+on the identifications of X-ray sources</span><br>
+</div>
+<br style="color: rgb(255, 0, 0);">
+<span style="color: rgb(255, 0, 0);">Search for counterparts in the NED
+(extragalactic) and SIMBAD (Galactic) databases:</span><br>
+<br>
+This step should be done after the astrometry correction if possible.<br>
+<br>
+example: <br>
+prepare for a SIMBAD web submission, run the IDL command<br>
+<br>
+search_input,xls.ra,xls.dec,sqrt(xls.perr^2+xls.psyserr^2)*3,ch=0 <br>
+<br>
+where xls is the x-ray source list structure and a 3sigma search radius
+including<br>
+the so-called systematic uncertainties.<br>
+<br>
+Inputs: X-ray source list and 2mass or other object list<br>
+Outputs: a latex table of the IDs, a fits file of the X-ray sources
+including the IDs<br>
+<br>
+;==================================================<br>
+<span style="color: rgb(255, 0, 0);">Find the 2MASS counterparts for
+astrometry correction</span>, which may not work in<br>
+the crowded regions such as Galactic center and core regions of galaxies<br>
+<br>
+;in the sou directory, after running the source detection<br>
+instr='aciss' &nbsp;&nbsp; &nbsp;<br>
+cenvset,instr<br>
+;dhrch=2 ;!!!<br>
+.run sou_final<br>
+;---------------------<br>
+;read 2mass objects in to a structure, e.g.,<br>
+row={ra:0.0,dec:0.0,j:0.0,h:0.0,k:0.0} ;desireable quanitities<br>
+tagin=['RAJ2000','DEJ2000','JMAG','HMAG','KMAG'];corresponding 2mass
+tag names<br>
+maindir='~/data/ic10/' <br>
+list_xray,maindir+'mdata/2mass_asu.fit',ols,row=row,tagin=tagin<br>
+;print,tag_names(ols)<br>
+<br>
+;read X-ray sources into a structure:<br>
+soufile='evt2file_new_clean_map70BSH_hr'<br>
+;soufile='pn_map70BSH_hr' <br>
+sou_fits_info,soufile,xls,/all,nsel=ns<br>
+<br>
+;find the matches:<br>
+perr=sqrt(xls.perr^2+(xls.psyserr-0.2)^2)*2 <br>
+msr=(perr &gt; 1.) &lt; 2 ;arcsec -
+for acis<br>
+;msr=(perr &gt; 2.) &lt; 4. ;for epic
+<br>
+match_obj,xls,ols,msr,outv,offset,mx,mo,mmn=mmn,nmatch=nmatch<br>
+;----------------------<br>
+;estimate the chance coincidence in the above matching:<br>
+mrslo=msr+2.<br>
+match_obj,xls,ols,15.,mmn=mmn,mrslo=mrslo<br>
+print,'# of expected chance coincidence='
+,total(mmn)*total(msr^2)/total(15.^2-mrslo^2)<br>
+;--------------------------<br>
+;output the ID in a latex table:<br>
+ora=ols(mo).ra &amp; odec=ols(mo).dec<br>
+match_out,xls(mx).sn,ora,odec,offset,outv,perr=perr(mx)<br>
+$more id_out.tex&nbsp;&nbsp;&nbsp;&nbsp; &nbsp;<br>
+<br>
+;include the ID info in the source fits list:<br>
+slist=xls<br>
+xoutv=strarr(ns)<br>
+xodec=dblarr(ns)<br>
+xora=dblarr(ns)<br>
+xoutv(mx)=outv &amp; xora(mx)=ora &amp; xodec(mx)=odec<br>
+struct_col_add,slist,reform([xora,xodec],ns,2),['ora','odec'],[0.0d,0.0d]<br>
+struct_col_add,slist,xoutv,'outv',['']<br>
+sou_struct_fits,slist,soufile+'_id'<br>
+<br>
+;The way to read the info back:<br>
+sou_fits_info,soufile+'_id',slist,/all<br>
+outv=slist.outv<br>
+s=where(strtrim(outv,2) ne '')<br>
+outv=outv(s) &amp; ora=slist(s).ora &amp; odec=slist(s).odec <br>
+print,outv,ora,odec<br>
+;=================================================================<br>
+;visualize the overlay of the sources and objects<br>
+file_params,maindir+'xdata/'+evtfname+'.fits',dhdr,cra,cdec<br>
+crval=[cra,cdec] ;PN aiming point<br>
+o=readfits(maindir+'mdata/2mass_k.fits',oh)<br>
+if !instr eq 'epic' then fac=0.3 else fac=1<br>
+<br>
+set_plot,'ps'<br>
+device,bits=8,/land,color=1,xsize=16.,ysiz=14,yoff=26,xoff=2<br>
+loadct_self,18<br>
+cont_grey,o-median(o),oh,cor=cor,/noc,greymin=1,greymax=1e2,greyl=2,/ps,barf=0.,thick=2,f_c=0&nbsp;&nbsp;
+;,xuni=0.07<br>
+source_plot,'',cor,oh,psym=6,sym=2,sra=ora,sdec=odec,s_c=!d.n_colors-1&nbsp;&nbsp;
+&nbsp;<br>
+plot_reg,cor,oh,soufile+'.reg',crval=crval,fac=fac<br>
+device,/close<br>
+$gv idl.ps &amp;<br>
+$mv idl.ps sou_id.ps<br>
+;==================================================<br>
+;Website to get the 2MASS point object database:<br>
+<a href="http://vizier.u-strasbg.fr/">http://vizier.u-strasbg.fr/</a><br>
+<br>
+Need to get the rough center RA and Dec of the field <br>
+Decimal: select<br>
+diminsion: 32' is suggested for the EIPC field<br>
+Target dimension: box<br>
+Maximum Entries per table: 9999<br>
+Output layout: Fits<br>
+...<br>
+;---------------------------------------------------------<br>
+;acknowledgement for the use of the 2mass data:<br>
+"This publication makes use of data products from the Two Micron All
+Sky Survey, which is a joint project of the University of Massachusetts
+and the Infrared Processing and Analysis Center/California Institute of
+Technology, funded by the National Aeronautics and Space Administration
+and the National Science Foundation."<br>
+<br>
+The same website can be used to get the optical scan database:<br>
+But only the northern sky (excluding Galactic plane, though)&nbsp;
+seems to be available.<br>
+<br>
+The basic <a href="http://www.ast.cam.ac.uk/%7Eapmcat/">APM catalog</a>
+is to have a red-band (E) plate limit of&nbsp;&nbsp;&nbsp; m(r)=20.0<br>
+The blue band (O) limit was defined with<br>
+&nbsp;&nbsp;&nbsp; respect to the red limit; for the 428 fields
+available in March 1999,<br>
+&nbsp;&nbsp;&nbsp; this has a range of m(o)=20.6--21.3(&plusmn;1\u03c3
+range).
+</body>
+</html>

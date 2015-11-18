@@ -1,0 +1,39 @@
+
+  "UTIL"   (for Astronomical Utilities)
+
+  "ASTR"   (for FITS Astrometry and Calibration)
+
+  "DAOPH"  (for DAOPHOT-Type Photometr)
+
+  "DATAB"  (for Database Procedures)
+
+  "DTIO"   (for Disk and Tape I/O)
+
+  "FITSIO" (for FITS IO)
+
+  "FITSA"  (for FITS ASCII Table I/O)
+
+  "FITSB"  (for FITS 3D Binary Table I/O)
+
+  "GRDISP" (for Procedures Dealing with Graphics Devices)
+
+  "IMDISP" (for Image Display)
+
+  "IMG"    (for Image Manipulation)
+
+  "MATH"   (Mathematical Functions and Procedures)
+
+  "MISC"   (for Miscellaneous Non-Astronomy Procedures)
+
+  "PLOT"   (for Plot Manipulation)
+
+  "SDASA"  (for STSDAS ASCII Image Manipulation)
+                            
+  "SDASB"  (for STSDAS (Binary) Table I/O)
+
+  "SPEC"   (for Spectral (One-dim.) Analysis)
+
+  "STRUC"  (for Procedures Dealing with Structures)
+
+  "TV"     (for TV Display Procedures)
+

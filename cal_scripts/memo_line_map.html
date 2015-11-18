@@ -1,0 +1,62 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+  <meta content="text/html; charset=ISO-8859-1"
+ http-equiv="content-type">
+  <title>memo_line_map</title>
+  <meta content="Daniel Wang" name="author">
+</head>
+<body>
+instr='acisi_low'<br>
+cenvset,instr<br>
+list_xray,'gcdeep_events.fits',mlist,hdr=h1<br>
+;======================================================<br>
+;setup various parameters (including band weights for exposure maps):<br>
+sou_det_params,instr,dim,block,ccd,bmin,bmax <br>
+&nbsp;
+<br>
+;copied from the creation of the merged events and exposure maps<br>
+mblock=3<br>
+mdim=long([1,1]*1024)<br>
+detagname='m'<br>
+xmin=1<br>
+ymin=1<br>
+window,xs=mdim(0),ys=mdim(1)<br>
+loadct_self,18<br>
+list_image,mlist,xmin,ymin,cb,mdim(0),mdim(1),block=mblock,det=detagname,emin=6550,emax=6850<br>
+tv,bscale(cb,0,2)<br>
+;----------------------------------------<br>
+bmin=[5.0,6.25,6.6]*1000<br>
+bmax=[6.2,6.55,8.5]*1000<br>
+;---------------------<br>
+nb=3<br>
+csa=intarr(mdim(0),mdim(1),nb)<br>
+for k=0,nb-1 do begin
+list_image,mlist,xmin,ymin,cb,mdim(0),mdim(1),block=mblock,det=detagname,emin=bmin(k),emax=bmax(k)
+&amp; csa(*,*,k)=cb<br>
+<br>
+<br>
+list_sel,'flist.dat',mblist,msel,ftail='.fits',fdir=fdir,souf=soufile,subfac=subfac,eband=eband,mdim=mdim,mblock=mblock,bmin=bmin,bmax=bmax,detagname=detagname,cim=bsa,bexpt=bexpt
+<br>
+ts=tsim(*,*,3)<br>
+adp_ew,csa,bsa,ts,0.25,ew,ewe,gslo=2.,ftonth=[0.3,0.3,0.3,0.3],mfile='/d2/arches/Daniel/gamma_count.dat'<br>
+frac=0.25<br>
+image_compa,csa,cs,frac<br>
+image_compa,bsa,bs,frac<br>
+bs=bs/frac^2<br>
+filter=image_comp(tim(*,*,0),frac)<br>
+ts=image_comp(tsim(*,*,3),frac)<br>
+adp_ew,cs,bs,ts,0.25,ew,gslo=2.,ftonth=[0.3,0.3,0.3,0.1],filter=filter,mfile='/d2/arches/Daniel/gamma_count.dat',index=index,pimmid=pimmid,exptc=exptc,rewa=rewa,rindex=rindex<br>
+<br>
+grey,ew,greymin=0.1,greymax=0.8<br>
+grey,imdiv(pimmid,exptc)*1.e5,greymin=0.1,greymax=0.8<br>
+trans=1.e3*(60./(!size_pixel*mblock/frac))^2<br>
+immid=imdiv(ew*pimmid,exptc)*trans<br>
+grey,immid,greymin=0.01,greymax=0.8,greylo=1&nbsp;&nbsp;&nbsp; <br>
+get_fitshead,immid,sh,mh,del=!size_pixel*mblock/frac/3600.<br>
+lev=[1,2,3,4,5,6,7]*0.1<br>
+cont_grey,immid,sh,cor=cor,greymin=0.01,greymax=1,greylo=1,mr=0,f_c=!d.n_colors-1,thick=2,c_c=(!d.n_colors-1),/ps,/def,lev=lev,/noim<br>
+source_plot,soufile,cor,sh,slow=0,probth=probth,/fits,s_c=!d.n_colors-1,slist=slist,sym=1,psym=7<br>
+<br>
+</body>
+</html>

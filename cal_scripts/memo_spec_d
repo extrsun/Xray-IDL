@@ -1,0 +1,349 @@
+;=========================================================================
+#Requirements:
+# 1)  ciao and ftools are runnig
+# 2)  move to a directory called spec under MAINDIR as defined below
+;=========================================================================
+#first define the input event and output spectrum file root names:
+set event_root=evt2file_new_clean
+set spec_root=cluster
+
+set MAINDIR=../
+set datadir=$MAINDIR/xdata
+set asphistfile=$MAINDIR/cal/${event_root}_asphist.fits
+$PUBDIR/cal_scripts/assign_bpix.e $MAINDIR/cal/bpixfile.fits
+set eventfile=${datadir}/${event_root}.fits
+#===================================================================
+#include only the interested ccds
+#set ccd_id="7"
+set ccd_id="0,1,2,3"
+#set band="300:12000"
+
+set source_reg=../sou/${event_root}_map70BSH_hr.reg
+#---------------
+#dmcopy "${eventfile}[grade=0,2,3,4,6][ccd_id=$ccd_id][energy=$band]" ${event_root}_s.fits clobber=yes
+dmcopy "${eventfile}[grade=0,2,3,4,6][ccd_id=$ccd_id]" ${event_root}_s.fits clobber=yes
+
+set eventfile=${event_root}_s.fits
+
+#get only the diffuse emission
+dmcopy "${eventfile}[exclude sky =region($source_reg)]" ${event_root}_sd.fits clobber=yes
+set eventfile=${event_root}_sd.fits
+
+#get corrresponding blank-sky data (see memo_back), used first by spec_weight.csh
+#ds9  b${eventfile} &
+#dmcopy "../back/b${event_root}.fits[grade=0,2,3,4,6][ccd_id=$ccd_id][energy=$band]" b${event_root}_s.fits clobber=yes
+dmcopy "../xdata/b${event_root}.fits[grade=0,2,3,4,6][ccd_id=$ccd_id]" b${event_root}_s.fits clobber=yes
+#for ccd7 only
+#dmcopy "../back/b${event_root}_ccd7.fits[grade=0,2,3,4,6][ccd_id=$ccd_id][energy=$band]" b${event_root}_s.fits clobber=yes
+
+dmcopy "b${event_root}_s.fits[exclude sky =region($source_reg)]" b${event_root}_sd.fits clobber=yes
+#===================================================================
+set reg_s=${spec_root}.reg
+set reg_b=${spec_root}_b.reg
+#use ds9 to create a region file (def: ${spec_root}.reg) to define the source
+# and a background region (def: ${spec_root}_b.reg); saved in the ciao format.
+#you may want to select the band to optimize the diffuse X-ray signal (e.g.) 
+dmcopy "${eventfile}[energy="300:1500"]" test.fits clobber=yes
+
+ds9  test.fits &
+#===================================================================
+#produce the weight map of the difuse source spectrum, the energy band may
+#needs to be changed to maximize the S/N ratio of the interested emission.
+#For hard diffuse emission such as a cluster, for example:
+$PUBDIR/cal_scripts/spec_weight.csh "500:4000" "${spec_root}" "${event_root}_sd" "./"
+#for soft diffuse emission such as the hot ISM (ACIS-S):
+ $PUBDIR/cal_scripts/spec_weight.csh "300:1500" "${spec_root}" "${event_root}_sd" "./"
+#error might appear if the exposure for the backg data is not in the right
+#format (e.g., 3.8E5). Check the file:
+fv cluster.wmap
+#===================================================================
+# do the steps separately:
+
+punlearn dmextract
+pset dmextract infile="${eventfile}[sky =region($reg_s)]"
+pset dmextract outfile=${spec_root}_s.pi
+pset dmextract opt=pha1
+pset dmextract clobber=yes
+pset dmextract mode=h
+dmextract
+mkwarf infile=${spec_root}.wmap outfile=${spec_root}.warf weightfile=${spec_root}.wfef spectrumfile="" egridspec="0.224004:11:0.01" clobber=yes
+mkrmf infile="CALDB" outfile=${spec_root}.wrmf axis1=energy=0.224004:11.0:0.01 axis2=pi=1:1024:1 logfile=.psp.mlog weights=${spec_root}.wfef clobber=yes verbose=2
+
+# or do them together, although the low energy limit set in acisspec may be problematic
+punlearn acisspec
+pset acisspec soufile1="${eventfile}[sky=region($reg_s)]"
+pset acisspec root=$spec_root
+pset acisspec souwmap1=${spec_root}.wmap
+pset acisspec mode=h
+pset acisspec clobber = yes
+acisspec verbose=2 
+#===================================================================
+
+#get the background spectrum with arf and rmf
+punlearn dmextract
+pset dmextract infile="${eventfile}[sky =region($reg_b)]"
+pset dmextract outfile=${spec_root}_b.pi
+pset dmextract opt=pha1
+pset dmextract clobber=yes
+pset dmextract mode=h
+dmextract
+#===================================================================
+#If arf is produced with ciao later than v3.0.2, no need for the following:
+#correct for the low energy sensitivity degration of the CCDs:
+#http://cxc.harvard.edu/ciao/threads/apply_acisabs/
+#correct for the ACIS sensitivity degration:
+#ln -s /net1/hobby/software/ciao_3.0.2/contrib/bin/interpreted/acisabs.sl apply_acisabs
+#punlearn apply_acisabs
+#mv ${spec_root}_sou.warf ${spec_root}_sou_pre_abs.warf
+#apply_acisabs ${spec_root}_sou_pre_abs.warf ${spec_root}_sou.warf
+
+#===================================================================
+# The above method uses the off-source spectrum for the on-source background 
+# subtraction. This is problematic for a large diffuse source. The off-source 
+# region, which may be even in separate chips, can be significantly 
+# different from the on-source region. To account for this background 
+# differences, we possibly need to renormalize the off-source background spectrum
+# to make the on- and off-source spectra statistically consistent with each other.
+;----------------------------------------------------------------------
+# First, we obtain the same on- and off-source spectra from the blank-sky
+# data. At this point (Jan 10, 2003) acisspec does not like the Maxim's 
+# blank-ksy data files (see ticket answer). But the following is sufficient:
+
+#on-source spectrum
+punlearn dmextract
+pset dmextract infile="b${event_root}_sd.fits[sky =region($reg_s)][bin pi=1:1024:1]"
+pset dmextract outfile=b${spec_root}_s.pi
+pset dmextract opt=pha1
+pset dmextract clobber=yes
+pset dmextract mode=h
+dmextract
+
+#If the off-source blank-sky spectrum is to be shared with a previous features, 
+# you may, for example,
+ln -s bcluster_b.pi b${spec_root}_b.pi
+#With the link, you should not change the exposure; otherwise, you need to copy it.
+
+#for a new off-source blank-sky spectrum
+punlearn dmextract
+pset dmextract infile="b${event_root}_sd.fits[sky =region($reg_b)][bin pi=1:1024:1]"
+pset dmextract outfile=b${spec_root}_b.pi
+pset dmextract opt=pha1
+pset dmextract clobber=yes
+pset dmextract mode=h
+dmextract
+;------------------------------------------------------------
+#Second, find the normlization factor and check the statistical consistency:
+# In IDL:
+;--------------------
+spec_root='cluster' ;change the name accordingly!
+bs_norm,'b'+spec_root+'_s.pi','b'+spec_root+'_b.pi',spec_root+'_sou.wrmf',bexpt,cbg,bbg,glo,ghi,eflo=[0.4],efhi=[7],psfile='spec_comp.ps',fnorm=fnorm
+
+# The file spec_root+'_sou.wrmf in the above program is used only for reading 
+# the channel boundaries. Other wrmf for the same instrument will just be fine.
+# Check the output parameters "after norm: chi2,dof, and sigma =" to see if the fit
+# is acceptable (e.g., sigma < 2 may be considered to be acceptable).
+# If a certain energy range (e.g., due to a strong line) causes a bad fit, you may
+# redefine eflo and efhi too exclude it from this check and subsequent spectral
+# fits.The printed value for the parameter "fnorm" should be used to correct for
+# (divide) the exposure of the background spectrum (e.g., ${spec_root}_b.ps):
+fv  ${spec_root}_b.ps
+#==========================================================================
+#The above background subtraction approach (#1) may be the simplest for a diffuse
+# source spectral analysis, but may not work. Here are several situations I have 
+#considered:
+
+Approach #2:
+ When no suitable off-source background region can be found (e.g., a galaxy
+fills the intire chip 7), one may use the on-source blank-sky spectrum as
+an estimate of the background. But we may normalize the blank-sky spectrum
+if an energy range is not contaminated by the source (e.g., the diffuse halo 
+thermal X-ray emission around a spiral galaxy is very much confined in the 
+< 2 keV range. We can then try to match the two on-source spectra in this
+energy range. For example,
+
+bs_norm,spec_root+'_sou.pi','b'+spec_root+'_s.pi',spec_root+'_sou.wrmf',bexpt,cbg,bbg,glo,ghi,eflo=[3.],efhi=[7.],psfile='spec_comp.ps',fnorm=fnorm
+
+#The potential problem with this approach is that we have to make the assumption
+#that the similarity of the spectral shapes extends to the energy range that is
+#not used in the fit and is where the diffuse spectral analysis is to be carried 
+#out. This may not be a good assumption. But this may be the only choice.
+;------------------------------------------------------------
+Approach #3:
+If the on- and off-source spectra in approach 1 are quite different (a case 
+that I have not met), the simple normalization does not work. In this case, 
+one may try the renormalization similar to approach 1. But here you fit the two 
+off-source spectra. using the IDL program:
+
+bs_norm,spec_root+'_b_sou.pi','b'+spec_root+'_b.pi',spec_root+'_sou.wrmf',bexpt,cbg,bbg,glo,ghi,eflo=[0.4],efhi=[7.],psfile='spec_ref_comp.ps',fnorm=fnorm
+
+#If the fit is satisfactory, divide the exposure in b'+spec_root+'_s.pi by 1./fnorm to
+# get the normlized on-source blank-sky background. This b'+spec_root+'_s.pi should then
+#be used for the on-source background subtraction.
+#Compared to approach 1, you may be more easily get a good fit between the 
+#two spectra since they are from the same detector region. But approach 3 
+#does not allow for the error propagation, whereas in approach 1 the fit  uses
+#the blank-sky data which have high counting statistics and the off-source
+#counting statistics is properly propagated into the XSPEC.
+;------------------------------------------------------------
+Approach #4: 
+
+The same as Approach #3. But the statistical error in the off-source 
+spectral substraction cannot be neglected and/or the normalization fits are not 
+acceptable. you may do a joint fit of the on- and off-source spectra (with the 
+corresponding blank-sky spectra subtracted) in XSPEC. This approach in principle 
+accounts for both the background difference and error propagation accurately,
+but is a bit more difficult to use. Now we need the arf and rmf files for the
+off-source spectrum. 
+#-----------------------------------
+punlearn acisspec
+pset acisspec soufile1="${eventfile}[sky=region($reg_b)]"
+pset acisspec root=${spec_root}_b
+pset acisspec clobber = yes
+pset acisspec mode=h
+pset acisspec verbose=2
+acisspec 
+#-----------------------------------
+#No longer needed, the correction is now apllied automatically in acisspec, see http://cxc.harvard.edu/ciao/threads/aciscontam/index.html#new_arf
+#apply the low energy sensitivity degradation correction to the off-source arf file:
+# mv ${spec_root}_b_sou.warf ${spec_root}_b_sou_pre_abs.warf
+# apply_acisabs ${spec_root}_b_sou_pre_abs.warf ${spec_root}_b_sou.warf
+#-----------------------------------
+#group the source spectrum:
+
+#for a diffuse feature, first use the IDL sp_group to produce a group file
+#The outputs should be used in IDL (for example)
+spec_root='cluster'
+;spec_root='disk'
+bspec=spec_root+'_bgd.pi' ;for approach 1
+;bspec='b'+spec_root+'_s.pi' ;for approach 2-4
+sp_group,spec_root+'_sou.pi',bspec,ctonth=4,fout=spec_root+'_sou_g.grp'
+#for approach 4, you also need
+sp_group,spec_root+'_b_sou.pi','b'+spec_root+'_b.pi',ctonth=2,fout=spec_root+'_b_sou_g.grp'
+
+#Then exit from the IDL, run the FTOOLS command to regroup the spectra, using
+# the abobe group file. (need to change the group file name accordingly):
+rm ${spec_root}_sou_g.pi
+grppha ${spec_root}_sou.pi ${spec_root}_sou_g.pi 
+group cluster_sou_g.grp
+show group
+exit
+#for approach 3 or 4, further use "chkey backfile bcluster_s.pi" before exit
+
+#for approach 4, you also need
+rm ${spec_root}_b_sou_g.pi
+grppha ${spec_root}_b_sou.pi ${spec_root}_b_sou_g.pi 
+group cluster_b_sou_g.grp
+chkey backfile bcluster_b.pi
+show group
+exit
+
+#=======================================================================
+#run xspec in another window (just an example here, changing file names, 
+# models etc, accordingly). 
+xspec
+da cluster_sou_g.pi 
+ig **-0.4 8.-**
+mo me wa 
+
+fit 20 0.05
+
+setplot e
+cpd /xw
+plot
+flux 0.5 4
+#=======================================================================
+
+#For the approach 4, the norm of the non-background model(s) should be
+#set equal to 0 for the data set 2. The choice of the background is tricky, 
+# depending on whether
+#or not the access is due to particles or due to X-rays: po/b is appropriate 
+# for particles; me maybe for X-rays:
+xspec
+da 1:1 cluster_sou_g.pi
+da 2:2 cluster_b_sou_g.pi
+ig **-0.4 8.-**
+mo me wa po/b
+
+new 3 0.03 0.001 -10 -10 10 10
+fit
+
+setplot e
+cpd /xw
+plot
+flux 0.5 4
+
+;======================================================================
+Here is an example output from XSPEC for approach 4:
+ telescope = CHANDRA , instrument = ACIS , channel type = PI
+  Current data file : cluster_sou_g.pi
+   with integration time    8.0540E+04
+          effective area     1.000
+    selected region area    2.0291E-03
+  Background file : bcluster_b.pi
+   with integration time    5.5000E+05
+      and effective area     1.000
+    selected region area    5.8516E-03
+  No current correction
+  Response (RMF) file    : cluster_sou.wrmf
+  Auxiliary (ARF) file    : cluster_sou.warf
+ Weighting method is standard
+  Noticed channels     4 to   161
+  File observed count rate    6.1038E-02+/-1.01185E-03 cts/s( 75.0% total
+  Model predicted rate :   0.5879E-01
+
+ Information for file   2
+  belonging to plot group   2, data group   2
+ telescope = CHANDRA , instrument = ACIS , channel type = PI
+  Current data file : cluster_b_sou_g.pi
+   with integration time    8.0540E+04
+          effective area     1.000
+    selected region area    5.8516E-03
+  Background file : bcluster_b.pi
+   with integration time    5.5000E+05
+      and effective area     1.000
+    selected region area    5.8516E-03
+  No current correction
+  Response (RMF) file    : cluster_b_sou.wrmf
+  Auxiliary (ARF) file    : cluster_b_sou.warf
+ Weighting method is standard
+  Noticed channels     3 to    10
+  File observed count rate    4.6329E-03+/-9.21273E-04 cts/s(  7.7% total
+  Model predicted rate :   0.4895E-02
+
+  Model:  ( ( meka[1] )wabs[2] ) + powerlaw/b[3]
+  ---------------------------------------------------------------------------
+  ---------------------------------------------------------------------------
+  Model:  ( ( meka[1] )wabs[2] ) + powerlaw/b[3]
+  Model Fit Model Component  Parameter  Unit     Value                    Data
+  par   par comp                                                          group
+    1    1    1   meka       kT       keV        3.157     +/-  0.2569       1
+    2    2    1   meka       nH       cm-3       1.000     frozen            1
+    3    3    1   meka       Abundanc           0.2993     +/-  0.8598E-01   1
+    4    4    1   meka       Redshift           0.2500     frozen            1
+    5    5    1   meka       norm               6.2855E-04 +/-  0.6599E-04   1
+    6    6    2   wabs       nH       10^22     9.8793E-02 +/-  0.1309E-01   1
+    7    8    3   powerlaw/b PhoIndex          -5.5786E-02 +/-  0.2518       1
+    8    9    3   powerlaw/b norm               5.5622E-04 +/-  0.4764E-03   1
+    9    1    4   meka       kT       keV        3.157     = par   1         2
+   10    2    4   meka       nH       cm-3       1.000     = par   2         2
+   11    3    4   meka       Abundanc           0.2993     = par   3         2
+   12    4    4   meka       Redshift           0.2500     = par   4         2
+   13    7    4   meka       norm                0.000     frozen            2
+   14    6    5   wabs       nH       10^22     9.8793E-02 = par   6         2
+   15    8    6   powerlaw/b PhoIndex          -5.5786E-02 = par   7         2
+   16    9    6   powerlaw/b norm               5.5622E-04 = par   8         2
+  ---------------------------------------------------------------------------
+  ---------------------------------------------------------------------------
+ Chi-Squared =      173.5304     using   166 PHA bins.
+ Reduced chi-squared =      1.084565     for    160 degrees of freedom
+ Null hypothesis probability = 0.220
+ 1     2.75226         3.59869
+    3    0.164922        0.453448
+    6    7.925481E-02    0.120520
+
+
+flux 0.5 8
+ Model flux  1.5322E-04 photons ( 3.9138E-13 ergs)cm**-2 s**-1 (  0.500-  8.000) 
+ Model flux  1.9749E-04 photons ( 4.4669E-13 ergs)cm**-2 s**-1 (  0.500-  8.000) DtSet
+#===================================================================
+

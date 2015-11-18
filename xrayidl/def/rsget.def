@@ -1,0 +1,10 @@
+Rosat standard default parameters for reading data in ancilliary files
+12
+0,OBSEQ=,Root name of input file
+1,DIR=,Directory containing data file
+2,EXTYP=,Extension type of input file (e.g., CAS, ASP)
+3,INSTR=P,Instrument (default is P for PSPC)
+4,PROC=US, Format of processed files (def=US, or MPE)
+8,TRIM=Y,Trim data to Good Time Intervals? Y(es) or N(o)
+9,CHATTER=1,Controls chattiness of program
+10,READORB=Y,Read corresponding orbit data? Y(es) or N(o)

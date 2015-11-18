@@ -1,0 +1,204 @@
+30c30
+< common func_para,choice,dvs,mas,ttv,wws,ops,para,tcr,masn
+---
+> common func_param,choice,dvs,mas,ttv,wws,ops,para,tcr,masn,nb
+33d32
+< if choice eq 1 then parav=fltarr(7,mit) else parav=fltarr(6,mit)
+39a39,43
+> dvsz=size(dv)
+> if dvsz(0) eq 2 then nb=dvsz(2) else nb=1
+> if choice eq 1 then parav=fltarr(7,mit) else parav=fltarr(5+nb,mit)
+> 
+> op=fltarr(dvsz(1),nb)
+41c45,48
+< sh_opac,nhv*0.01>0.,op,bchn,opf=opfile,/nolog,/noim
+---
+> for k=0,nb-1 do begin
+>   sh_opac,nhv*0.01>0.,op1,bchn+k,opf=opfile,/nolog,/noim
+>   op(*,k)=op1
+> endfor
+44c51
+< if n_elements(selo) eq 0 then selo=lindgen(n_elements(dv))
+---
+> if n_elements(selo) eq 0 then selo=lindgen(dvsz(1))
+47c54,55
+< wws=1.
+---
+> ;wws=fltarr(nsel,nb)+1.
+> wws=1./(dv(selo,*)^2> 1.e-10)
+52,54c60,62
+< 	dvs=dv(seln)
+< 	ops=op(seln)
+< 	mas=ma(seln,*)
+---
+> 	dvs=dv(seln,*)
+> 	ops=op(seln,*)
+> 	mas=ma(seln,*,*)
+64,69c72,89
+< 	ratio=(dvs-tcr)*wws
+< 	ratioth=ratioth > rlo*0.9999 ;so ratioth will not be much below rlo
+< ;	print,'ttmin,chi,para = ',ttmin,chi,para
+< ;   	imm=imd*0.
+< ; 	imm(imsel(seln))=tcr
+< ; 	tv,bscale(imm,0.,5),k
+---
+> ;	wws=1./(dvs > 1.e-10)
+> 	ratioa=abs((dvs-tcr)*wws)
+> 	ratio=ratioa(*,0)
+> 	if nb gt 1 then for kb=1,nb-1 do ratio=ratio > ratioa(*,kb)
+> if !debug eq 3 then begin
+> if nb eq 2 then begin
+> 	print,'ttmin,chi,para = ',ttmin,chi,para
+>    	imm=imd*0.
+> 	imm(imsel(seln))=tcr(*,0)
+>  	tv,bscale(imm,0.,5),k
+>  	imm(imsel(seln))=tcr(*,1)
+>  	tv,bscale(imm,0.,5),k+1
+> 	imdn=imd*0.
+> 	imdn(imsel(seln))=dv(seln,0)
+> 	tv,bscale(imdn,0,5),k+2
+> 	imdn=imd*0.
+> 	imdn(imsel(seln))=dv(seln,1)
+> 	tv,bscale(imdn,0,5),k+3
+71c91,94
+< 	ss=where(abs(ratio) le ratioth,nsel)
+---
+> endif
+> endif
+> 	ratioth=ratioth > rlo*0.9999 ;so ratioth will not be much below rlo
+> 	ss=where(ratio le ratioth,nsel)
+73c96
+< 	wws=wws(ss)^2
+---
+> 	wws=wws(ss,*)^2
+76c99
+<  imm(imsel(seln))=tcr(ss)
+---
+>  imm(imsel(seln))=tcr(ss,0)
+82c105
+<  if k eq 1 then ratioth=ratioth < max(abs(ratio))*rd
+---
+>  if k eq 1 then ratioth=ratioth < max(ratio)*rd
+102c125
+< common func_para,choice,dvs,mas,ttv,wws,ops,para,tcr,masn
+---
+> common func_param,choice,dvs,mas,ttv,wws,ops,para,tcr,masn,nb
+107,110c130,134
+< 	get_masn,mas,ttv,tt,masn
+< 	fit_linear,dvs,ops,masn,wws,para,choice=choice
+< 	get_tcr,para,masn,ops,tcr,choice=choice
+< 	chi=total((dvs-tcr)^2*wws)
+---
+> 	get_masn,mas,ttv,tt,masn,nb=nb
+> 	fit_linear,dvs,ops,masn,wws,para,choice=choice,nb=nb
+> 	get_tcr,para,masn,ops,tcr,choice=choice,nb=nb
+> 	chi=0.
+> 	for kb=0,nb-1 do chi=chi+total((dvs(*,kb)-tcr(*,kb))^2*wws(*,kb))
+112c136
+< if !debug eq 1 then stop
+---
+> if !debug eq 1 then print,'powell ',chi,tt,para
+117c141
+< pro fit_linear,dv,op,ma,ww,para,choice=choice
+---
+> pro fit_linear,dv,op,ma,ww,para,choice=choice,nb=nb
+119,120c143,144
+< sz=size(ma)
+< if sz(0) eq 2 then nt=sz(2) else nt=1
+---
+> ;sz=size(ma)
+> ;if sz(0) eq 2 then nt=sz(2) else nt=1
+123,125c147,149
+< tdop=total(dvww*op)
+< tdp=fltarr(nt)
+< for k=0,nt-1 do tdp(k)=total(dvww*ma(*,k))
+---
+> tdop=fltarr(nb)
+> for k=0,nb-1 do tdop(k)=total(dvww(*,k)*op(*,k))
+> tdp=total(dvww*ma)
+128,133c152,156
+< top2=total(op*opww)
+< topp=fltarr(nt) 
+< tp2=fltarr(nt)
+< for k=0,nt-1 do begin
+< 	topp(k)=total(opww*ma(*,k))
+< 	tp2(k)=total(ww*ma(*,k)^2)
+---
+> top2=fltarr(nb)
+> topp=fltarr(nb) 
+> for k=0,nb-1 do begin
+> 	topp(k)=total(opww(*,k)*ma(*,k))
+> 	top2(k)=total(op(*,k)*opww(*,k))
+136,145c159,166
+< if choice eq 1 then begin ;including a local component
+<  td=total(dvww)
+<  tww=total(ww)
+<  top=total(opww)
+<  para=fltarr(3,nt)
+<  for k=0,nt-1 do begin
+< 	tp=total(ww*ma(*,k))
+< 	bb=[td,tdop,tdp(k)]
+< 	aa=[[tww,top,tp],[top,top2,topp(k)],[tp,topp(k),tp2(k)]]
+< 	para(*,k)=cramer(aa,bb,/double)
+---
+>  bb=tdp
+>  aa=fltarr(nb+1,nb+1)
+>  aa(nb,nb)=total(ww*ma^2)
+>  for k=nb-1,0,-1 do begin
+> 	bb=[tdop(k),bb]
+> 	aa(k,k)=top2(k)
+> 	aa(nb,k)=topp(k)
+> 	aa(k,nb)=topp(k)
+147,154c168
+< endif else begin ;only the corona and extragalactic components
+<  para=fltarr(2,nt)
+<  for k=0,nt-1 do begin
+< 	bb=[tdop,tdp(k)]
+< 	aa=[[top2,topp(k)],[topp(k),tp2(k)]]
+< 	para(*,k)=cramer(aa,bb,/double)
+<  endfor
+< endelse
+---
+>  para=cramer(aa,bb,/double)
+159,160c173,174
+< pro get_masn,mas,ttv,tt,masn
+< 
+---
+> pro get_masn,mas,ttv,tt,masn,nb=nb
+> if n_elements(nb) eq 0 then nb=1
+164,165c178,180
+< masn=((ttv(indhi)-tt)/(ttv(indhi)-ttv(indlo)))*mas(*,indlo)+ $
+< ((tt-ttv(indlo))/(ttv(indhi)-ttv(indlo)))*mas(*,indhi)
+---
+>  masn=((ttv(indhi)-tt)/(ttv(indhi)-ttv(indlo)))*mas(*,indlo,*)+ $
+>  ((tt-ttv(indlo))/(ttv(indhi)-ttv(indlo)))*mas(*,indhi,*) 
+> if nb ne 1 then masn=reform(masn,n_elements(masn)/nb,nb)
+169c184
+< pro get_tcr,para,masn,ops,tcr,choice=choice,nhv=nhv,opfile=opfile,bchn=bchn
+---
+> pro get_tcr,para,masn,ops,tcr,choice=choice,nhv=nhv,opfile=opfile,bchn=bchn,nb=nb
+172a188
+> if n_elements(nb) eq 0 then nb=1
+175,178c191,196
+< 	if n_elements(opfile) eq 0 then $
+< 		opfile='/home/wqd/rosatdata/shadow/test.'
+< 		;opfile='/home/wqd/rosatdata/shadow/vp_a1.0_'
+< 	sh_opac,nhv*0.01>0.,ops,bchn,opf=opfile,/nolog,/noim
+---
+>  ops=fltarr(n_elements(nhv),nb)
+>  if n_elements(opfile) eq 0 then opfile='/home/wqd/rosatdata/shadow/test.'
+>  for k=0,nb-1 do begin
+>   sh_opac,nhv*0.01>0.,op1,bchn+k,opf=opfile,/nolog,/noim
+>   ops(*,k)=op1
+>  endfor
+180,183c198,202
+< if n_elements(choice) eq 0 then choice=0
+< if choice eq 1 then $
+< 	tcr=para(0)+para(1)*ops+para(2)*masn else $
+< 		tcr=para(0)*ops+para(1)*masn 
+---
+> 	if nb eq 1 then tcr=para(0)*ops+para(1)*masn else begin
+> 		npara=n_elements(para)
+> 		tcr=para(npara-1)*masn
+> 		for kb=0,nb-1 do tcr(*,kb)=tcr(*,kb)+para(kb)*ops(*,kb)
+> 	endelse

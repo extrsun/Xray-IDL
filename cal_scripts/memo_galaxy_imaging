@@ -1,0 +1,71 @@
+;Imaging analysis of Chandra data on galaxies
+;=============================================================================
+; written by wqd, May 29, 2003
+;=============================================================================
+; Part 1: csmoothed X-ray images (a modified version of memo_anal)
+;=============================================================================
+;basic setup
+instr='aciss'                   ;change to the appropriate instrument
+cenvset,instr
+gradec=[167.879042,55.674111] ;Galaxy center position from Ms. Tara (or NED)
+soufile='evt2file_new_clean_map70BSH_hr'
+cd,'../images' ;which may have been produced during the basic analysis
+evtroot='evt2file_new_clean' 
+;-----------------------
+;If the count (ca), background (ba), and exposure (ta) maps are yet to be 
+;produced. If nofits keyword is set, no fits files will be produced.
+imdim=600      
+maindir='../../' ;the relative dir location of the top level of the obs.
+evt_image,evtroot,instr,ca,ta,ba=ba,datadir=maindir+'xdata/',hdr=mh,xmin=xmin,ymin=ymin,list=l,gradec=gradec,imdim=imdim 
+;,bfname='../../back/bevt2file_new_clean_ccd'+strtrim([6,7,8],2)+'.fits' ;/nofits
+;The produced fits files can be adaptively smoothed with CIAO mcsmooth, 
+; following memo_analysis:
+$PUBDIR/cal_scripts/mcsmooth.e "1 2 3 4" 2.5 3.5 0 &
+;-----------------------
+;Now read in the smoothed
+t=readfits('t_4.fits')
+edge=[44+10,44+40]
+     edge=[50,90,420,460]
+read_mimages,4,mh,fs,a,mv,cor=cor,edge=edge,mdim=mdim,filter=t ;,bnorm=1,/bfoff
+;for 1+2,3, 4 bands
+amv=-(mv(0))*0.85 ;such numerical values may be adjusted to reach a desirable contrast 
+a(*,*,0)=bscale(alog10(fs(*,*,0)+amv),alog10(mv(0)+amv),alog10((mv(0)+amv)*100))
+amv=-mv(1)*0.85
+a(*,*,1)=bscale(alog10(fs(*,*,1)+amv),alog10(mv(1)+amv),alog10((mv(1)+amv)*1000))
+amv=-(mv(2)+mv(3))*0.85
+a(*,*,2)=bscale(alog10(fs(*,*,2)+fs(*,*,3)+amv),alog10(mv(2)+mv(3)+amv),alog10((mv(2)+mv(3)+amv)*2000))
+cont_grey,a,mh,cor=cor,true=3,mr=0,/ps,/nocon,/full,f_c=-1,barf=0. 
+
+;to raise the diffuse emission contrast by removing background constants for a better logrithmic scalling:
+;for 1+2,3, 4 bands
+amv=-(mv(0)+mv(1))*0.9 ;such numerical values may be adjusted to reach a desirable contrast 
+a(*,*,0)=bscale(alog10(fs(*,*,0)+fs(*,*,1)+amv),alog10(mv(0)+mv(1)+amv),alog10((mv(0)+mv(1)+amv)*80))
+amv=-mv(2)*0.3
+a(*,*,1)=bscale(alog10(fs(*,*,2)+amv),alog10(mv(2)+amv),alog10((mv(2)+amv)*20))
+amv=-mv(3)*0.1
+a(*,*,2)=bscale(alog10(fs(*,*,3)+amv),alog10(mv(3)+amv),alog10((mv(3)+amv)*5))
+cont_grey,a,mh,cor=cor,true=3,mr=0,/ps,/nocon,/full,f_c=-1,barf=0.
+ ;----------------------------- 
+cast,'../../mdata/N3556C20NW.FITS',mh,outa=r
+cont_grey,r,mh,a,cor=cor,true=3,mr=0,/ps,/full,f_c=-1,barf=0,lev=[1,2,3,4,6,10,15,30,50,100,200]*0.0002,c_c=255
+scale='1''
+ scale_plot,cor,mh,0.08,0.94,1,scale,thick=2,char=cs,color=255
+ s=tvrd(0,0,true=3)
+write_jpeg,'n3556_rgb_r.jpg',s,true=3,qua=100
+
+f=total(fs(*,*,0:1),3)
+ cont_grey,r,mh,f,cor=cor,mr=0,/ps,/full,f_c=-1,barf=0.,greymin=2,greymax=100,greylo=1,lev=[1,2,3,4,6,10,15,30,50,100,200]*0.0002,c_c=255
+;----------------------------- 
+cast,'../../mdata/dss2_blue.fits',mh,outa=o
+cont_grey,f,mh,o,cor=cor,mr=0,/ps,/full,f_c=-1,barf=0.,greymin=1.e4,greymax=5e4,greylo=2,lev=[1,2,3,4,6,10,15,25,50,100]*0.2+2.6,c_c=255
+;----------------------------
+device,bits=8,/land,color=1,xsize=16.*mdim(0)/mdim(1),ysiz=16,yoff=26,xoff=2 
+
+fh=total(fs(*,*,2:3),3)
+cont_grey,fh,mh,cor=cor,mr=0,/ps,/full,f_c=-1,barf=0.,greymin=1.e4,greymax=5e4,greylo=2,lev=[1,2,3,4,6,10,15,25,50,100]*1+3.5,c_c=255,/noim
+fb=total(fs,3)
+cont_grey,fb,mh,cor=cor,mr=0,/ps,/full,f_c=-1,barf=0.,greymin=1.e4,greymax=5e4,greylo=2,lev=[1,2,3,4,6,10,15,25,50,100]*2+6,c_c=255,/noim
+
+source_plot,soufile,cor,mh,/fits,probth=probth,psym=6,sym=2
+source_plot,soufile,cor,mh,/fits,probth=probth,psym=6,sym=1,/sou
+

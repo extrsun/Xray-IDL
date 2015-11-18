@@ -1,0 +1,18 @@
+Rosat standard default parameters for contructing Rosat point spread function
+25
+3,INSTR=P,Instrument (default is P for PSPC)
+4,SPFIL=,(Full) name of input spectral file (or NONE)
+5,SPTYP=QDP,Type of input spectral file (def=QDP, PROS, PHA)
+6,IMGFIL=,(Full) name of output PSF image (or NONE)
+7,PROFTAB=NONE,(Full) name of output profile table (or NONE)
+9,CHATTER=1,Controls chattiness of program
+10,XCEN=0,Central X value for field (0=on axis)
+11,YCEN=0,Central Y value for field (0=on axis)
+12,PIXEL=UNBL,Pixel convention (UNBL=unblocked, BL=blocked)
+13,BLOCK=1,Blocking factor (def = 1)
+16,EMIN=0.07,Minimum channel energy (in keV)
+17,EMAX=3.00,Maximum channel energy (in keV)
+19,NBINS=51,Number of spatial bins in PSF image 
+20,BINSIZ=15,Size of PSF bin (in arcsec)
+23,BINRAT=11,Ratio of number internal pixels to PSF bins
+24,RESCL=Y,Rescale so peak = 1 (def=Y, or N)

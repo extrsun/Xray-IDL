@@ -1,0 +1,28 @@
+
+  TV Display Procedures from Astronomical Users' Library   November, 1993
+                   
+    BLINK       :   To allow the user to alternatively examine two or more 
+                    windows within a single window
+    COMBINE_VEL :   Combine current color table with the velocity table of 
+                    LOAD_VEL
+    CURS        :   Change the shape of the X windows cursor
+    CURVAL      :   Interactive display of image intensities and astronomical 
+                    coordinates
+    FORM_INT    :   Scale an intensity image into a byte array for use with 
+                    COMBINE_VEL
+    FORM_VEL    :   Scale a velocity image into a byte array for use with 
+                    COMBINE_VEL
+    LOAD_VEL    :   Load a color table to show velocities (blue - positive, 
+                    red - negative)
+    LOOKUP      :   Read and load color-tables from a database
+    MODI_LUT    :   Program for interactive change of displaycolors in 
+                    common block colors
+    PIXCOLOR    :   Set specified pixel values to a specified color
+    SIGRANGE    :   Find range of pixel values which contain 90% of the image 
+                    values
+    TVBOX       :   Draw a box of specified size on the image display
+    TVCIRCLE    :   Draw a circle of specified radius on the image display
+    TVELLIPSE   :   Draw an ellipse of specified axes on the image display
+    TVLASER     :   Prints screen onto a Postscript laser printer
+    TVLIST      :   Display intensity values surrounding the cursor position
+

@@ -1,0 +1,300 @@
+pro get_serr,slist,srs,sradius=sradius,dfac=dfac
+;+
+; get the source error radius in square
+; slist -input source list
+; srs - output  source error radius in square
+; sradius - systematic error (minimum radius) of the source positions
+;	in units of arcsec. Set sradius=0 equivalent to no systematic error
+;	if not given, the systematic error from the source list is used
+; dfac - the factor multiplied to the source error radius (def =1).
+; 
+; writen by WQD, May 17, 2002
+;-
+if n_params() eq 0 then begin
+print,'CALLING SEQUENCE - get_serr,slist,srs,sradius=sradius,dfac=dfac'
+return
+endif
+srs=slist.perr
+;systematic position error:
+if n_elements(sradius) gt 0 then psyserr=sradius $ ;in arcsec
+  else psyserr=slist.psyserr 
+srs=srs^2+psyserr^2
+if n_elements(dfac) ne 0 then srs=dfac^2*srs
+;print,'sradius = ',sradius
+if !debug eq 1 then stop
+return
+end
+;===========================================================================
+pro sou_dup_info,slist,rslist,sradius=sradius,rsradius=rsradius,dfac=dfac,name_tags=name_tags,outdfile=outdfile,noentry=noentry,obsid=obsid
+;+
+; Remove duplicate sources (to be called by sou_merge_fits)
+;
+; slist, rslist - input selected and removed duplicate source structures
+; sradius - systematic error (minimum radius) of the source positions
+;	in units of arcsec. Set sradius=0 equivalent to no systematic error
+;	if not given, the systematic error from the source list is used
+; dfac - the factor multiplied to the source error radius (def =1).
+; name_tags - strucuture tag to be used in the output slist. Only the names
+; 	need to be changed so that they are unique
+;	 (Def =['CNTRM','CNTREM','CHIS','NDUP'])
+; outdfile - name of the file to contain the ASCII output of the matching
+;	between slist and rslist.
+; noentry - if set, only the tags name_tags will be added
+; 	used when rslist is empty
+; obsid - if given, obs_id will be modified to include the IDs of the
+;         observations in which duplicated sources are detected
+; 
+; writen by WQD, May 8, 2002
+; add the keyword obsid, by wqd, Apr 22, 2005
+;-
+if n_params() eq 0 then begin
+print,'CALLING SEQUENCE - sou_dup_info,slist,rslist,dfac=dfac'
+print,',name_tags=name_tags,outdfile=outdfile,noentry=noentry,obsid=obsid'
+return
+endif
+nsel=n_elements(slist)
+if n_elements(name_tags) eq 0 then name_tags=['CNTRM','CNTREM','CHIS','NDUP']
+format_tags=[0.,0.,0.,1]
+ ntag=n_elements(name_tags)
+if keyword_set(noentry) then begin ;just add the tags
+ struct_col_add,slist,replicate(0,nsel,ntag),name_tags,format_tags
+ return
+endif
+
+sou_struct_out,slist,text
+sou_struct_out,rslist,rtext
+
+get_serr,slist,srs,sradius=sradius,dfac=dfac
+get_serr,rslist,rsrs,sradius=rsradius,dfac=dfac
+;get_serr,rslist,rsrs,dfac=dfac
+
+if !debug eq 1 then stop
+cntrbs=fltarr(nsel)
+cntrbes=fltarr(nsel)
+chis=fltarr(nsel)
+ndup=intarr(nsel)
+
+if n_elements(outdfile) ne 0 then openw,unoutd,outdfile,/get
+for k=0,nsel-1 do begin
+	; now find all the duplicated sources associated with the unique one
+	; The algorithm (rsrs, srs, dfac should be the exactly same as in 
+	; sou_merge_fits
+	seperr=srs(k)+rsrs
+	trans_dist,slist(k).ra,slist(k).dec,rslist.ra,rslist.dec $
+		,/deg,/das,ang=sep
+	rseln= where(sep^2 lt seperr, nsrsel)  
+	if nsrsel ne 0 then begin
+            if keyword_set(obsid) then begin
+                str=strcompress(slist(k).obs_id,/rem)
+                for kk=0,nsrsel-1 do begin
+                    newob=strcompress(rslist(rseln(kk)).obs_id,/rem)
+                    if strpos(str,newob) eq -1 then $
+                      str=str+','+newob
+                endfor 
+                slist(k).obs_id=str
+            endif
+                ;calculate the mean cntr and its error as well as chi^2, ndf
+		avg_least,[slist(k).cntrb,rslist(rseln).cntrb], $
+			[slist(k).cntrbe,rslist(rseln).cntrbe] $
+			,cntrb,cntrbe,chi=chi,ndf=ndf
+		;include these new parameters in the output
+		cntrbs(k)=cntrb
+		cntrbes(k)=cntrbe
+		chis(k)=chi
+		ndup(k)=nsrsel
+		text(k)=text(k)+strtrim(cntrb,2)+' | '+strtrim(cntrbe,2) $
+		+' | '+strtrim(chi,2)+' | '+strtrim(ndf,2)
+	 	texts=' r '+rtext(rseln)+' | ' $
+		+strtrim(sqrt(seperr(rseln)),2)+' | '+strtrim(sep(rseln),2)
+;		print,text(k)
+;		for n=0,nsrsel-1 do print,texts(n)
+		if n_elements(outdfile) ne 0 then begin
+			printf,unoutd,text(k)
+			for n=0,nsrsel-1 do printf,unoutd,texts(n)
+		endif
+	endif
+endfor
+
+if n_elements(outdfile) ne 0 then free_lun,unoutd
+struct_col_add,slist,reform([cntrbs,cntrbes,chis,ndup],nsel,ntag) $
+	,name_tags,format_tags
+
+return
+end
+;===========================================================================
+pro sou_sdb_info,slist,rslist,dfac=dfac,sradius=sradius,rsradius=rsradius
+;+
+; Add source detection information in multiple bands
+;
+; slist, rslist - input selected and removed duplicate source structures
+; dfac - the factor multiplied to the source error radius (def =1).
+; sradius - systematic error (minimum radius) of the source positions
+;	in units of arcsec. Set sradius=0 equivalent to no systematic error
+;	if not given, the systematic error from the source list is used
+; 
+; writen by WQD, May 12, 2002
+;-
+if n_params() eq 0 then begin
+print,'CALLING SEQUENCE - sou_sdb_info,slist,rslist,dfac=dfac,sradius=sradius,rsradius=rsradius'
+return
+endif
+sou_struct_out,slist,text
+sou_struct_out,rslist,rtext
+
+get_serr,slist,srs,sradius=sradius,dfac=dfac
+get_serr,rslist,rsrs,sradius=rsradius,dfac=dfac
+;get_serr,rslist,rsrs,dfac=dfac
+
+nsel=n_elements(text)
+
+for k=0,nsel-1 do begin
+	; now find all the duplicated sources associated with the unique one
+	; The algorithm (rsrs, srs, dfac should be the exactly same as in 
+	; sou_merge_fits
+	seperr=srs(k)+rsrs
+	trans_dist,slist(k).ra,slist(k).dec,rslist.ra,rslist.dec $
+		,/deg,/das,ang=sep
+	rseln= where((sep^2 lt seperr), nsrsel)  
+	if nsrsel ne 0 then begin
+	 print,text(k)
+	 for n=0,nsrsel-1 do begin
+	  slist(k).sdb=slist(k).sdb+', '+rslist(rseln(n)).sdb
+	   print,'r ',rtext(rseln(n))
+	   print,'sep, sqrt(seperr) = ',sep(rseln(n)), sqrt(seperr(rseln(n)))
+	  print,slist(k).sdb
+if !debug eq 3 then stop
+	 endfor
+	endif
+    endfor
+if !debug eq 2 then stop
+return
+end
+;===========================================================================
+pro sou_merge_fits,infile,outfile,slist=slist,outslist=outslist $
+,slow=slow,flow=flow,probth=probth,rsch=rsch,sradius=sradius,dfac=dfac $
+,nosort=nosort,radius=radius $
+,name_tags=name_tags,outrfile=outrfile,outdfile=outdfile,sdb=sdb,ns=ns,obsid=obsid
+;+
+; Remove duplicate sources
+;
+; infile - input source file name
+; slow, flow - S/N and flux selection criteria for the sources to be merged
+; probth - upper limit of the probability threshold for the source selection
+; rsch - 1: use the centroid error in the input file; 2: use the
+; 	psf radius; others: use the provided rfix radius (arcsec). (def=1). 
+; sradius - systematic error (minimum radius) of the source positions
+;	in units of arcsec. Set sradius=0 equivalent to no systematic error
+;	if not given, the systematic error from the source list is used
+; dfac - the factor multiplied to the source error radius (def =1).
+; radius - off-axis radius (arcmin) within which sources are selected
+; nosort - if set, no sorting of perr will be performed beform merging
+; sbd - if set, the merge is for sources detected in different bands
+; slist - input source list, if given, overriding infile
+; name_tags - strucuture tag to be used in the output slist. Only the names
+; 	need to be changed so that they are unique
+;	 (Def =['CNTRM','CNTREM','CHIS','NDUP'])
+;
+;*outputs:
+; outfile - output file name to contain the merged source list
+; outslist - output source structure
+; ns - number of selected sources
+;
+;*example
+; sou_merge_fits,soufile,soufile+'m',probth=-7
+;
+;*NOTE:
+; writen by WQD, April 24, 2002
+; include the offaxis systematic errors. wqd, May 8, 2002
+;-
+if n_params() eq 0 then begin
+print,'CALLING SEQUENCE - sou_merge_fits,infile,outfile,slist=slist,'
+print,'outslist=outslist,slow=slow'
+print,',flow=flow,probth=probth,rsch=rsch,sradius=sradius'
+print,',dfac=dfac,nosort=nosort,radius=radius,ns=ns'
+return
+endif
+
+if n_elements(slist) eq 0 then $
+ sou_fits_info,infile,slistn,/all,slow=slow,flow=flow,probth=probth,nsel=ns $
+ else begin
+    ns=n_elements(slist)
+    slistn=slist
+endelse
+if ns eq 0 then begin
+	goto,output ; with empty outslist
+endif
+
+if n_elements(sradius) eq 0 then sradius=fltarr(n_elements(slistn))
+
+; select sources within the off-axis radius if specified:
+if n_elements(radius) then begin 
+	sel=where(slistn.offaxis le radius,ns)	
+	if ns eq 0 then goto,output
+	slistn=slistn(sel)
+        sradius=sradius(sel)
+endif
+;arrange the sources according to the position quality:
+if keyword_set(nosort) eq 0 then begin
+    ss=sort(slistn.perr)
+    slistn=slistn(ss)
+    sradius=sradius(ss)
+endif
+get_serr,slistn,srs,sradius=sradius,dfac=dfac
+; exclude duplicate sources
+rsel=intarr(ns)
+sra=slistn.ra
+sdec=slistn.dec
+sou_struct_out,slistn,text
+for k=ns-1,1,-1 do begin 
+	trans_dist,sra(k),sdec(k),sra(0:k-1),sdec(0:k-1),/deg,/das,ang=sep
+	seperr=srs(0:k-1)+srs(k) ;> ssysr(k)
+	sel= where(sep^2 lt seperr, nsel) 
+	if nsel ne 0 then begin
+		print,'k= ',k, text(k)
+		print,sep(sel),sqrt(seperr(sel))
+		print,text(sel)
+		rsel(k)=1
+	endif
+    endfor
+
+sel=where(rsel eq 0,nsel)
+if nsel eq 0 then begin
+	ns=0
+	goto,output ; with empty outslist
+endif
+if nsel ne ns then begin
+    rsel=where(rsel eq 1)
+    rslist=slistn(rsel)
+    rsradiusn=sradius(rsel)
+endif
+
+slistn=slistn(sel)
+sradiusn=sradius(sel)
+; output the new source list:
+ss=sort(slistn.ra)
+slistn=slistn(ss)
+sradiusn=sradiusn(ss)
+
+print,'The number of sources is ',nsel
+
+if nsel ne ns then begin
+	if n_elements(outrfile) ne 0 then sou_struct_fits,rslist,outrfile
+	;output the duplicate source information
+	if keyword_set(sdb) eq 0 then $
+	  sou_dup_info,slistn,rslist,sradius=sradiusn,dfac=dfac,rsradius=rsradiusn $
+		,name_tags=name_tags,outdfile=outdfile,obsid=obsid $
+	else sou_sdb_info,slistn,rslist,sradius=sradiusn,rsradius=rsradiusn $
+                          ,dfac=dfac ;,obsid=obsid
+endif else begin ;just add the empty columns
+	if keyword_set(sdb) eq 0 then $
+		sou_dup_info,slistn $
+		,name_tags=name_tags,outdfile=outdfile,/noentry
+    endelse
+slistn.sn=lindgen(nsel)+1
+output:
+if n_elements(outfile) ne 0 then sou_struct_fits,slistn,outfile,nrow=ns
+if ns ne 0 then outslist=slistn else outslist=-1 ;which leads to error if
+	; used without checking if ns=0
+return
+end
+

@@ -1,0 +1,36 @@
+.r EWmap.pro
+.r writeimgfits.pro
+.r variablebin.pro
+leftfile="/home/ljt/ljt/data/AboutSNR/SNR/UNREDUCTED/Kes27/secondary/acisf03852_2.05-2.2keV_bin10.fits"
+rightfile="/home/ljt/ljt/data/AboutSNR/SNR/UNREDUCTED/Kes27/secondary/acisf03852_2.7-3keV_bin10.fits"
+linefile="/home/ljt/ljt/data/AboutSNR/SNR/UNREDUCTED/Kes27/secondary/acisf03852_2.2-2.7keV_bin10.fits"
+totalbandfile="/home/ljt/ljt/data/AboutSNR/SNR/UNREDUCTED/Kes27/secondary/acisf03852_bin10.fits"
+outputEWfits="/home/ljt/ljt/data/AboutSNR/SNR/UNREDUCTED/Kes27/secondary/Kes27_S_EWmap.fits"
+outputCfits="/home/ljt/ljt/data/AboutSNR/SNR/UNREDUCTED/Kes27/secondary/Kes27_S_C.fits"
+leftenergy=[2.05,2.2]
+rightenergy=[2.7,3.0]
+lineenergy=[2.2,2.7]
+xrange=[272,557]
+yrange=[260,540]
+mincounts=10
+initialbin=32
+backgroundtype=0
+imagetype=0
+binpara=intarr(8)
+binpara[0:1]=xrange[0:1]
+binpara[2:3]=yrange[0:1]
+binpara[4]=mincounts
+binpara[5]=initialbin
+binpara[6]=backgroundtype
+binpara[7]=imagetype
+EWmaptype=1
+image2=EWmap(leftfile,rightfile,linefile,leftenergy,rightenergy,lineenergy,$
+             binpara,EWmaptype)
+EWimg=image2.EWmaps
+Cimg=image2.continuummap
+uselessforhead=mrdfits(totalbandfile,0,totalbandfitshead)
+zoomx=xrange[1]-xrange[0]+1
+zoomy=yrange[1]-yrange[0]+1
+toolandtime='TOOL  :EWmap.pro-IDL,  2006-02-16   '
+writeimgfits,EWimg,outputEWfits,totalbandfitshead,zoomx,zoomy,toolandtime
+writeimgfits,Cimg,outputCfits,totalbandfitshead,zoomx,zoomy,toolandtime

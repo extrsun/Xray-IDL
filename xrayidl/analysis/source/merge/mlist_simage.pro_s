@@ -1,0 +1,51 @@
+pro mlist_simage,hdr,listm,hdrs,images,lists,scrval=scrval $
+,detagname=detagname,sel=sel,emin=emin,emax=emax,fid=fid,pixsize=pixsize $
+,refp=refp,crval=crval
+;+
+; cast a n event list from an off-set observation to a norminal pointing 
+; direction
+;
+; hdr - fits header of the event file to be merged
+; refp - (x, y) reference pixel position. If given, overriding hdr.
+; crval - two element vector of RA and Dec (deg). If given, overriding hdr
+; listm - list of events
+; hdrs - fits header of a subset image
+; lists - subset of the event list
+; scrval - two element vector of RA and Dec (deg). If given, overriding hdrs
+; detagname - prefix of the coordinates (def =''; e.g., 'm' for merged list)
+; sel - index for the selected events
+; fid - observation file name (e.g., 2269). If given, select only the events 
+;	from the file from a merged event list
+; pixsize - pixel size in units (arcseconds; def = !size_pixel)
+; 
+; written by wqd 5/3/02
+;-
+if n_params() eq 0 then begin
+print,'CALL SEQUENCE - mlist_simage,hdr,listm,hdrs,images,lists'
+print,',scrval=scrval,detagname=detagname,sel=sel,emin=emin,emax=emax,fid=fid'
+print,',pixsize=pixsize,refp=refp,crval=crval'
+return
+endif
+if N_elements(pixsize) eq 0 then pixsize=!size_pixel
+if n_elements(refp) eq 0 then refp=sxpar(hdr,'crpix*')
+;refp=refp(n_elements(refp)-2:*)
+if n_elements(crval) eq 0 then crval=sxpar(hdr,'crval*')
+;crval=crval(n_elements(crval)-2:*)
+
+if N_elements(scrval) eq 0 then scrval=sxpar(hdrs,'crval*')
+refps=sxpar(hdrs,'crpix*')
+naxis=sxpar(hdrs,'NAXIS*')
+cdelt=sxpar(hdrs,'cdelt*')
+if total(cdelt) gt 1.e-10 then stop,'cdelt(0) ne  cdelt(1)' else $
+	block=nint(cdelt(1)*3600d/pixsize)
+trans_dist,crval(0),crval(1),scrval(0),scrval(1),xp,yp,/deg,pixsize=pixsize
+xmins=nint(refp(0)+xp-refps(0))
+ymins=nint(refp(1)+yp-refps(1))
+if !debug eq 2 then stop
+list_image,listm,xmins,ymins,images,naxis(0),naxis(1),block=block $
+	,detagname=detagname,sel=sel,emin=emin,emax=emax,fid=fid
+stop
+if !debug eq 2 then stop
+return
+end
+

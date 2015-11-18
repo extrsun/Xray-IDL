@@ -1,0 +1,74 @@
+pro psf_params,dis,rs,cntr,gsigma,perclimit=perclimit,psffile=psffile,gfrac=gfrac,cntrth=cntrth
+;+
+; get the on-source radius based the encircled energy radii of 
+; the PSF or the size of the Gaussian component.
+;
+; dis - off-axis distances (arcmin) of  sources
+; rs - output source radii (in units of data pixels)
+; psffile -  the file name of the PSF file (including the directory)
+;		needed for PSPC sources
+; gsigma,gfrac - the Gaussian size and count fraction of the PSF 
+; perclimit - scalar or vector containing the fraction(s) of the PSF energy 
+; 		for calculating rs
+;
+; The PSF file can be produced by psf_frac.pro in ~/rosatshell
+; 
+; 
+; writen by wqd, June 2, 2001
+;-
+if n_params() eq 0 then begin
+print,'psf_params,dis,rs,gsigma,cntr,perclimit=perclimit,psffile=psffile,gfrac=gfrac,cntrth=cntrth'
+return
+endif
+
+case strupcase(!instr) of
+	'P': begin ;PSPC
+		if n_elements(perclimit) eq 0 then perclimit=0.85
+		detect_params,dis,rs,psffile=psffile,perclimit=perclimit $
+		,gsigma=gsigma,gfrac=gfrac
+		rs=rs*60./!size_pixel ;in units of pixels
+		gsigma=gsigma/!size_pixel ;in units of pixels
+		end
+	 'H': begin ;RHRI
+	  	if n_elements(perclimit) eq 0 then begin
+		 perclimit=0.5
+		 stop,'assuming perclimit = ',perclimit, ' Is this is OK?'
+	 	endif
+	 	theta=findgen(40)/2.
+	 	psf_hri_frac,theta,offs,frac=perclimit,s2v=s2v
+	 	s2v=s2v*2.
+	 	offs=offs/!size_pixel ; in units of pixels
+	 	linterp,theta,offs,dis,rs
+	 	linterp,theta,s2v,dis,gsigma
+		end
+	 'ACISI': begin ;Chandra ACIS
+;		perclimit=0.9
+;		stop,'assuming perclimit = ',perclimit, ' Is this is OK?'
+;		rs=((3.45*(dis-4.)+8.) > (4.4+3.6/4.*dis)) ; in data pixels
+;		read_psf_bb,dis,rs,psffile=psffile,perclimit=perclimit
+;		rs=1.+10*((dis < 15.)*0.1)^2
+		rs=1.+10*((dis < 15.)*0.1)
+		rs=rs/!size_pixel
+;		gsigma=rs/2.5
+		end
+	 'ACISS': begin ;Chandra ACIS
+		read_psf_bb,dis,rs,psffile=psffile,perclimit=perclimit
+		rs=rs/!size_pixel
+		end
+	 'HRC': begin ;Chandra HRC
+		perclimit=0.9
+		print,'sorry! no information yet'
+		retall
+		stop,'assuming perclimit = ',perclimit, ' Is this is OK?'
+		end
+	else: stop,'which instrument is this?'
+endcase
+if n_elements(cntr) ne 0 then begin
+	if n_elements(cntrth) eq 0 then cntrth=0.05
+	rs=rs*(1.+5*alog(cntr/cntrth > 1.))
+;	if n_elements(cntrth) eq 0 then cntrth=0.01
+;	rs=rs*(1.+4*alog(cntr/cntrth > 1.))
+endif
+if !debug eq 2 then stop
+return
+end

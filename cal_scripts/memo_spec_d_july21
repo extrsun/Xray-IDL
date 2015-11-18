@@ -1,0 +1,424 @@
+;=========================================================================
+#Requirements:
+# 1)  ciao and ftools are runnig
+# 2)  move to a directory called spec under MAINDIR as defined below
+;=========================================================================
+
+#first define the input event and output spectrum file root names:
+set event_root=evt2file_new_clean
+set spec_root=cluster
+
+set MAINDIR=/d2/a2125
+set datadir=$MAINDIR/xdata
+set asphistfile=$MAINDIR/cal/${event_root}_asphist.fits
+$PUBDIR/cal_scripts/assign_bpix.e $MAINDIR/cal/bpixfile.fits
+set eventfile=${datadir}/${event_root}.fits
+#===================================================================
+#include only the interested ccds
+#set ccd_id="7"
+set ccd_id="0,1,2,3"
+set band="300:12000"
+#which should be consistent with the background 
+
+set source_reg=../sou/${event_root}_map70BSH_hr.reg
+#---------------
+#if ../sou/${event_root}_map70BSH_hr.reg is not yet available, produce it in IDL, e.g.,
+cenvset,'acisi'
+froot='evt2file_new_clean'
+file_params,'../xdata/'+froot+'.fits',h
+sou_fits_reg,h,'../sou/'+froot+'_map70BSH_hr.reg',inf='../sou/'+froot+'_map70BSH_hr'
+#---------------
+
+dmcopy "${eventfile}[grade=0,2,3,4,6][ccd_id=$ccd_id][energy=$band]" ${event_root}_s.fits clobber=yes
+
+set eventfile=${event_root}_s.fits
+
+#get only the diffuse emission
+dmcopy "${eventfile}[exclude sky =region($source_reg)]" ${event_root}_sd.fits clobber=yes
+set eventfile=${event_root}_sd.fits
+#===================================================================
+set reg_s=${spec_root}.reg
+set reg_b=${spec_root}_b.reg
+#use ds9 to create a region file (def: ${spec_root}.reg) to define the source
+# and a background region (def: ${spec_root}_b.reg); saved in the ciao format.
+#you may want to select the band to optimize the diffuse X-ray signal (e.g.) 
+dmcopy "${eventfile}[energy="300:1500"]" test.fits clobber=yes
+
+ds9  test.fits &
+#===================================================================
+#blank sky background (see memo_back)
+#ds9  b${eventfile} &
+dmcopy "../back/b${event_root}.fits[grade=0,2,3,4,6][ccd_id=$ccd_id][energy=$band]" b${event_root}_s.fits clobber=yes
+#for ccd7 only
+#dmcopy "../back/b${event_root}_ccd7.fits[grade=0,2,3,4,6][ccd_id=$ccd_id][energy=$band]" b${event_root}_s.fits clobber=yes
+
+dmcopy "b${event_root}_s.fits[exclude sky =region($source_reg)]" b${event_root}_sd.fits clobber=yes
+
+#on-source background
+punlearn dmextract
+pset dmextract infile="b${event_root}_sd.fits[sky =region($reg_s)][bin pi=1:1024:1]"
+pset dmextract outfile=b${spec_root}_s.pi
+pset dmextract opt=pha1
+pset dmextract clobber=yes
+pset dmextract mode=h
+dmextract
+
+punlearn dmextract
+pset dmextract infile="b${event_root}_sd.fits[sky =region($reg_b)][bin pi=1:1024:1]"
+pset dmextract outfile=b${spec_root}_b.pi
+pset dmextract opt=pha1
+pset dmextract clobber=yes
+pset dmextract mode=h
+dmextract
+#===================================================================
+#produce the weight map of the difuse source spectrum, the energy band may
+#needs to be changed to maximize the S/N ratio of the interested emission.
+#For hard diffuse emission such as a cluster, for example:
+$PUBDIR/cal_scripts/spec_weight.csh "500:4000" "${spec_root}" "${event_root}_sd" "./"
+#for soft diffuse emission such as the hot ISM (ACIS-S):
+ $PUBDIR/cal_scripts/spec_weight.csh "300:1500" "${spec_root}" "${event_root}_sd" "./"
+#error might appear if the exposure for the backg data is not in the right
+#format (e.g., 3.8E5)
+fv cluster.wmap
+#===================================================================
+punlearn acisspec
+pset acisspec soufile1="${eventfile}[sky=region($reg_s)]"
+pset acisspec root=${spec_root}
+pset acisspec souwmap1=${spec_root}.wmap
+pset acisspec mode=h
+pset acisspec clobber = yes
+acisspec verbose=2
+#-----------------------------------
+punlearn acisspec
+pset acisspec soufile1="${eventfile}[sky=region($reg_b)]"
+pset acisspec root=${spec_root}_b
+pset acisspec clobber = yes
+pset acisspec mode=h
+pset acisspec verbose=2
+acisspec 
+#-----------------------------------
+#at this point (Jan 10, 2003) the Maxim's background data cannot be 
+#directly included here in acisspec (see ticket answer). so the following is
+#not working yet.
+punlearn acisspec
+pset acisspec bgfile1="b${eventfile}[sky=region($reg_s)]"
+#-----------------------------------
+#Alternatively, for a compact source:
+punlearn acisspec
+pset acisspec soufile1="${MAINDIR}/spec/${eventfile}[sky=region($reg_s)]"
+pset acisspec root=$spec_root
+pset acisspec bgfile1="${MAINDIR}/spec/${eventfile}[sky=region($reg_b)]"
+pset acisspec mode=h
+pset acisspec clobber = yes
+acisspec verbose=2 gspec=20
+#-----------------------------------
+#http://cxc.harvard.edu/ciao/threads/apply_acisabs/
+#correct for the ACIS sensitivity degration:
+ln -s /net/xray/usr/local/ciao_2.3/contrib/interpreted/acisabs.sl acisabs.sl 
+punlearn apply_acisabs
+mv ${spec_root}_sou.warf ${spec_root}_sou_pre_abs.warf
+apply_acisabs ${spec_root}_sou_pre_abs.warf ${spec_root}_sou.warf
+
+mv ${spec_root}_b_sou.warf ${spec_root}_b_sou_pre_abs.warf
+apply_acisabs ${spec_root}_b_sou_pre_abs.warf ${spec_root}_b_sou.warf
+#=======================================================================
+#group the source spectrum:
+
+#for a diffuse feature, first use the IDL sp_group to produce a group file
+ls ${spec_root}.pi ${spec_root}_bgd.pi
+#The outputs should be used in IDL (for example)
+spec_root='cluster'
+;spec_root='disk'
+sp_group,spec_root+'_sou.pi','b'+spec_root+'_s.pi',ctonth=4,fout=spec_root+'_sou_g.grp'
+sp_group,spec_root+'_b_sou.pi','b'+spec_root+'_b.pi',ctonth=2,fout=spec_root+'_b_sou_g.grp'
+
+#Then exit from the IDL, run the FTOOLS command to regroup the spectra, using
+# the abobe group file. (need to change the group file name accordingly):
+rm ${spec_root}_sou_g.pi
+grppha ${spec_root}_sou.pi ${spec_root}_sou_g.pi 
+group cluster_sou_g.grp
+chkey backfile bcluster_s.pi
+show group
+exit
+
+rm ${spec_root}_b_sou_g.pi
+grppha ${spec_root}_b_sou.pi ${spec_root}_b_sou_g.pi 
+group cluster_b_sou_g.grp
+chkey backfile bcluster_b.pi
+show group
+exit
+
+#=======================================================================
+#run xspec in another window (just an example here, changing file names, 
+# models etc, accordingly). The norm of the non-background model(s) should be
+#set equal to 0. The choice of the background is tricky, depending on whether
+#or not the access is due to particles or due to X-rays: po/b is appropriate 
+# for particles; me maybe for X-rays:
+xspec
+da 1:1 cluster_sou_g.pi
+da 2:2 cluster_b_sou_g.pi
+ig **-0.4 8.-**
+mo me wa po/b
+
+new 3 0.03 0.001 -10 -10 10 10
+fit
+
+setplot e
+cpd /xw
+plot
+flux 0.5 4
+;======================================================================
+ telescope = CHANDRA , instrument = ACIS , channel type = PI
+  Current data file : cluster_sou_g.pi
+   with integration time    8.0540E+04
+          effective area     1.000
+    selected region area    2.0291E-03
+  Background file : bcluster_b.pi
+   with integration time    5.5000E+05
+      and effective area     1.000
+    selected region area    5.8516E-03
+  No current correction
+  Response (RMF) file    : cluster_sou.wrmf
+  Auxiliary (ARF) file    : cluster_sou.warf
+ Weighting method is standard
+  Noticed channels     4 to   161
+  File observed count rate    6.1038E-02+/-1.01185E-03 cts/s( 75.0% total
+  Model predicted rate :   0.5879E-01
+
+ Information for file   2
+  belonging to plot group   2, data group   2
+ telescope = CHANDRA , instrument = ACIS , channel type = PI
+  Current data file : cluster_b_sou_g.pi
+   with integration time    8.0540E+04
+          effective area     1.000
+    selected region area    5.8516E-03
+  Background file : bcluster_b.pi
+   with integration time    5.5000E+05
+      and effective area     1.000
+    selected region area    5.8516E-03
+  No current correction
+  Response (RMF) file    : cluster_b_sou.wrmf
+  Auxiliary (ARF) file    : cluster_b_sou.warf
+ Weighting method is standard
+  Noticed channels     3 to    10
+  File observed count rate    4.6329E-03+/-9.21273E-04 cts/s(  7.7% total
+  Model predicted rate :   0.4895E-02
+
+  Model:  ( ( meka[1] )wabs[2] ) + powerlaw/b[3]
+  ---------------------------------------------------------------------------
+  ---------------------------------------------------------------------------
+  Model:  ( ( meka[1] )wabs[2] ) + powerlaw/b[3]
+  Model Fit Model Component  Parameter  Unit     Value                    Data
+  par   par comp                                                          group
+    1    1    1   meka       kT       keV        3.157     +/-  0.2569       1
+    2    2    1   meka       nH       cm-3       1.000     frozen            1
+    3    3    1   meka       Abundanc           0.2993     +/-  0.8598E-01   1
+    4    4    1   meka       Redshift           0.2500     frozen            1
+    5    5    1   meka       norm               6.2855E-04 +/-  0.6599E-04   1
+    6    6    2   wabs       nH       10^22     9.8793E-02 +/-  0.1309E-01   1
+    7    8    3   powerlaw/b PhoIndex          -5.5786E-02 +/-  0.2518       1
+    8    9    3   powerlaw/b norm               5.5622E-04 +/-  0.4764E-03   1
+    9    1    4   meka       kT       keV        3.157     = par   1         2
+   10    2    4   meka       nH       cm-3       1.000     = par   2         2
+   11    3    4   meka       Abundanc           0.2993     = par   3         2
+   12    4    4   meka       Redshift           0.2500     = par   4         2
+   13    7    4   meka       norm                0.000     frozen            2
+   14    6    5   wabs       nH       10^22     9.8793E-02 = par   6         2
+   15    8    6   powerlaw/b PhoIndex          -5.5786E-02 = par   7         2
+   16    9    6   powerlaw/b norm               5.5622E-04 = par   8         2
+  ---------------------------------------------------------------------------
+  ---------------------------------------------------------------------------
+ Chi-Squared =      173.5304     using   166 PHA bins.
+ Reduced chi-squared =      1.084565     for    160 degrees of freedom
+ Null hypothesis probability = 0.220
+ 1     2.75226         3.59869
+    3    0.164922        0.453448
+    6    7.925481E-02    0.120520
+
+
+flux 0.5 8
+ Model flux  1.5322E-04 photons ( 3.9138E-13 ergs)cm**-2 s**-1 (  0.500-  8.000) 
+ Model flux  1.9749E-04 photons ( 4.4669E-13 ergs)cm**-2 s**-1 (  0.500-  8.000) DtSet
+#===================================================================
+#===================================================================
+#used before ciao version 2.3
+# get information about the source location and about observation
+# yet to be automated.
+dmlist ${datadir}/${eventfile} header | grep TSTART
+0028 TSTART               114998797.1770599931  ;get tstart
+
+dmstat "${datadir}/${eventfile}[sky=region($reg_s)][cols chipx,chipy,x,y, ccd_id]"
+
+chip(chipx, chipy)[pixel]
+    min:	( 547 550 )
+    max:	( 805 812 )
+   mean:	( 672.950875 682.077335 )
+  sigma:	( 56.399846 54.6583735 )
+    sum:	( 2767174 2804702 )
+   good:	( 4112 4112 )
+   null:	( 0 0 )
+
+sky(x, y)[pixel]
+    min:	( 3704.87695 4310.27637 )
+    max:	( 3935.33374 4541.94873 )
+   mean:	( 3817.231 4425.93768 )
+  sigma:	( 55.0509422 53.2670319 )
+    sum:	( 15696453.9 18199455.7 )
+   good:	( 4112 4112 )
+   null:	( 0 0 )
+
+ccd_id
+    min:	3 
+    max:	3 
+   mean:	3 
+  sigma:	0 
+    sum:	12336 
+   good:	4112 
+   null:	0 
+#===================================================================
+#set the following according to the above output
+set tstart=114998797.1770599931
+set mchipx=672.950875
+set mchipy=682.07733
+set mskyx=3817.23
+set mskyy=4425.93768
+set chipid=3
+set detsubsys=ACIS-I3
+set phatype=pi
+
+#Create a RMF and ARF:
+
+punlearn acis_fef_lookup
+acis_fef_lookup $chipid $mchipx $mchipy $phatype $tstart
+
+#place the output into the following (between " and "):
+
+set feffile="/net/xray/usr/local/ciao_2.2//data/chandra/acis/cpf/fefs/acisD2000-01-29fef_piN0002.fits[ccd_id=3,chipx=513:768,chipy=673:704]"
+
+#This row range is too narrow for the cluster source.
+#===================================================================
+#to point to the quantum efficiency file for a PARTICULAR chip at 
+#a CERTAIN WORKING TEMPERATURE
+#For CTI corrected event file (see $PUBDIR/cti_products/public/README):
+pset ardlib AXAF_ACIS${chipid}_QEU_FILE="$PUBDIR/cti_products/public/120C/ccd${chipid}_120.qeu"
+#find the appropriate rmf file, which covers the row specfied by mchip:
+echo $mchipy
+ls $PUBDIR/cti_products/public/120C/
+
+rm ${spec_root}.rmf
+#specify in the following the selection:
+ln -s $PUBDIR/cti_products/public/120C/ccd3_y641-768.rmf ${spec_root}.rmf
+
+set pi_hi=685
+#to be consistent with the PSU matrices (1:685).
+
+
+#===================================================================
+# copy and paste the following:
+#==================================
+#for CTI-corrected data
+
+punlearn dmextract
+pset dmextract infile="${datadir}/${eventfile}[sky=region($reg_s)][grade=0,2,3,4,6][bin pi=1:${pi_hi}:1]"
+pset dmextract outfile=${spec_root}.pi
+#pset dmextract opt=pha1
+#pset dmextract wmap="[bin det=8]"
+pset dmextract wmap="[energy=1000:4000][bin det=8]"
+pset dmextract clobber=yes
+pset dmextract mode=h
+dmextract
+
+#  -------------------------------------------------------------------------
+
+  #to produce the weighted ARF file. Notice that the energy grid should be
+  #consistent as the one used in the RMF file. 
+  punlearn mkwarf
+  pset mkwarf infile="${spec_root}.pi[WMAP]"
+  pset mkwarf outfile=${spec_root}.warf
+  pset mkwarf weightfile=${spec_root}.wgt
+  pset mkwarf egridspec="grid(${spec_root}.rmf[cols ENERG_LO,ENERG_HI])"
+  pset mkwarf threshold=0
+  pset mkwarf verbose=2
+  pset mkwarf clobber=yes
+  mkwarf
+ 
+#-----------------------
+dmcopy "${datadir}/${eventfile}[sky=region($reg_s)]" test.fits clobber=yes
+#just for testing
+punlearn dmextract
+pset dmextract infile="test.fits[grade=0,2,3,4,6][bin pi=1:685:1]"
+pset dmextract outfile=${spec_root}.pi
+pset dmextract opt=pha1
+pset dmextract wmap="det=8"
+pset dmextract clobber=yes
+pset dmextract mode=h
+dmextract
+#-----------------------
+#For normal (non-CTI corrected) event file:
+pset ardlib AXAF_ACIS${chipid}_QEU_FILE=CALDB
+set pi_hi=1024
+
+punlearn dmextract
+pset dmextract infile="${datadir}/${eventfile}[sky=region($reg_b)][grade=0,2,3,4,6][bin pi=1:${pi_hi}:1]"
+pset dmextract outfile=${spec_root}_b.pi
+pset dmextract opt=pha1
+pset dmextract clobber=yes
+pset dmextract mode=h
+dmextract
+
+punlearn mkrmf
+#pset mkrmf infile=feffile
+pset mkrmf infile=CALDB
+pset mkrmf outfile=${spec_root}.wrmf
+pset mkrmf axis1="energy=0.1:11.0:0.01"
+pset mkrmf axis2="pi=1:${pi_hi}:1"
+#pset mkrmf logfile=${spec_root}_rmf.log
+pset mkrmf weights=sources.wgt
+pset mkrmf clobber=yes
+pset mkrmf mode=h
+mkrmf
+
+punlearn mkarf
+pset mkarf detsubsys=$detsubsys
+pset mkarf outfile=${spec_root}.arf
+pset mkarf asphistfile=$asphistfile 
+pset mkarf engrid="grid(${spec_root}.rmf[cols ENERG_LO,ENERG_HI])"
+pset mkarf sourcepixelx=$mskyx  
+pset mkarf sourcepixely=$mskyy
+pset mkarf mode=h
+pset mkarf clobber=yes
+mkarf 
+
+punlearn dmhedit
+dmhedit infile=${spec_root}.pi filelist=none operation=add key=DETNAM value=$detsubsys
+dmhedit infile=${spec_root}.pi filelist=none operation=add key=RESPFILE value=${spec_root}.rmf
+dmhedit infile=${spec_root}.pi filelist=none operation=add key=ANCRFILE value=${spec_root}.arf
+dmhedit infile=${spec_root}.pi filelist=none operation=add key=BACKFILE value=${spec_root}_b.pi
+
+punlearn dmhedit
+dmhedit infile=${spec_root}_b.pi filelist=none operation=add key=DETNAM value=$detsubsys
+
+%dmhedit infile=${spec_root}_bk.pi filelist=none operation=add key=RESPFILE value=${spec_root}.rmf
+%dmhedit infile=${spec_root}_bk.pi filelist=none operation=add key=ANCRFILE value=${spec_root}.arf
+
+#=======================================================================
+#=======================================================================
+grep Id /usr/local/ciao_2.3/contrib/interpreted/show_wgt.sl
+% $Id: show_wgt.sl,v 1.2 2001/10/22 16:17:22 dburke Exp $
+#=======================================================================
+Improving the weights
+
+The approach described at http://asc.harvard.edu/ciao/threads/wresp_multiple_sources/ still seems to use WMAP, which contains the background contribution.
+This approach is problamatic for diffuse emission.
+A correct way should follow the steps: 1) construct a diffuse emission in the sky, which may be from an exposure-corrected image or from a model; 2) reverse dither the image to get a map in the detector coordinates; 3) use the map as 
+the weight.
+
+For point-like sources, the CXC suggested approach may be OK, is the 
+background is negligible. The only correction that is not included is the
+effective exposure. Only use a restricted energy range where the response + model does not vary much; an example being
+the soft energy band for clusters of galaxies. 
+
+But the real simple way should simply be the weighting of individual counts,
+ie., deviding individual photon by the normalized effective area (vignetting+
+QE).
+

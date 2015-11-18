@@ -1,0 +1,167 @@
+    
+  Miscellaneous (Non-Astronomy) Procedures from Astronomical Users' Library
+    (November, 1993)
+
+    ASTROLIB    :   Add the non-standard system variables in use in the IDL
+                    Astronomy User's Library
+    AVG         :   Calculate the average value of an array, or calculate the 
+                    average value over one dimension of an array as a function 
+                    of all the other dimensions
+    BOOST_ARRAY :   Add array APPEND to array DESTINATION, allowing the 
+                    dimensions of DESTINATION to adjust to accomodate it.  
+                    If both input arrays have the same number of dimensions, 
+                    then the output array will have one additional dimension.  
+                    Otherwise, the last dimension of DESTINATION will be 
+                    incremented by one.
+    BSORT       :   Like the IDL SORT function but subscript order is 
+                    maintained when the values are equal -- like a bubble sort.
+                    Called by DBINDEX.
+    CHKARG      :   Determine calling arguments of procedure or function
+    CONV_UNIX_VAX : Convert IEEE datatype to VMS datatypes
+    CONV_VAX_BLOCK: Convert a VMS FORTRAN unformatted file to its Unix 
+                    counterpart
+    CONV_VAX_UNIX : Convert Vax datatypes to Unix using proper byteswapping
+    DATATYPE    :   Return the datatype of an IDL variable as a string
+    DEFINE      :   Emulate the VMS DEFINE command within IDL  (VMS)
+    DETABIFY    :   Replaces tabs in character strings with the appropriate 
+                    number of spaces
+    DIR         :   Emulates the DCL command DIRECTORY or the UNIX command ls 
+                    in its simplest (brief) form
+    EDT         :   Use the CALL_EXTERNAL to enter the EDT editor without 
+                    spawning (VMS)
+    EVE         :   Use the CALL_EXTERNAL to enter the EVE editor without 
+                    spawning (VMS)
+    FDECOMP     :   Decompose a file name                       
+                    (Disk + Directory + Name + Extension + Version)
+    FORPRINT    :   Print a set of vectors by looping over each index value
+    F_FORMAT    :   Choose a nice F format for displaying an array of 
+                    REAL data (called by TVLIST, IMLIST)
+    GETFILE     :   Helps the user retrieve a file in IDL  (better than
+                    FileView since you can have several disks in your user 
+                    defined tree under FILETREE.DAT in your home/SYS$LOGIN
+                    directory
+    GETFILES    :   Interactively specify a list of file numbers.
+    GETLOG      :   Format the input name as a logical directory in the host OS
+    GETOPT      :   Parse a user supplied string into numeric value(s).
+    GETPRO      :   Search !PATH directory for a procedure and copy into user's
+                    directory
+    GETTOK      :   Extract a string up to a specified character.
+    GETWRD      :   Get specified item (word) from a string.
+    HOST_TO_IEEE :  To translate an IDL variable from IEEE-754 representation 
+                    (as used, for example, in FITS data ), into the host 
+                    machine architecture
+    HPRINT      :   Pretty terminal display of a FITS header (or other string 
+                    array)
+    IEEE_TO_HOST :  To translate an IDL variable in IEEE-754 representation 
+                    (as used, for example, in FITS data ), into the host 
+                    machine architecture
+    ISARRAY     :   Determine if an IDL variable is an array.
+    MAKE_2D     :   Change from 1-D indexing to 2-D indexing
+    MATCH       :   Find the subscripts where the values of two vectors match.
+    MINMAX      :   Return the min and max of an array in an 2 element vector
+    NINT        :   Nearest integer function
+    NULLTRIM    :   Delete all characters after, and including, the first null
+                    byte(0).  Called by TAB_PUT.
+    ONE_ARROW   :   Draws an arrow labeled with a single character on the 
+                    current graphics device (called by ARROWS)
+    ONE_RAY     :   Draws a ray from a given starting point for a given 
+                    length at a given angle
+    ORDINAL     :   Convert an integer to a correct English ordinal string: 
+                    i.e., 1st, 2nd, 3rd, 4th ....
+    OSFCNVRT    :   Format the input as a logical name in the host operating 
+                    system
+    PRINTLUM    :   ??
+    PRODUCT     :   Calculates the product of all the elements of an array --
+                    the multiplicative equivalent of total
+    QGET_STRING :   Read a string (e.g. password) from the keyboad without 
+                    echoing it
+    READCOL     :   Quickly read a file of free-format ASCII data into IDL 
+                    vectors
+    READFMT     :   Quickly read a fixed format ASCII data file into IDL 
+                    variables
+    READ_KEY    :   Read a value from the keyboard. It is similar to GET_KBRD
+                    except that the arrow keys are now returned as single 
+                    numbers (128-131) rather than 4 characters beginning with 
+                    an escape sequence.
+    READ_VAX_BLOCK: Read a single VMS FORTRAN unformatted record
+    REMCHAR     :   Remove all appearances of a character from a string.
+    REMOVE      :   Contract a vector or up to 8 vectors by removing specified
+                    elements.
+    REM_DUP     :   Remove duplicate values from a vector.
+    REPCHR      :   Replace all occurrences of one character in a string by 
+                    another.
+    REPSTR      :   Replace all occurrences of one substring in a string by 
+                    another.
+    SCREEN_SELECT : Allow user to interactively select from a list of strings
+    SCREEN_SELECT_O : Routine to allow a user to make an interactive screen 
+                      selection from a list (array) of strings (assumes 
+                      non-x-windows device)
+    SCREEN_SELECT_X : Routine to allow a user to make an interactive screen 
+                      selection from a list (array) of strings (assumes 
+                      x-windows device)
+    SCR_ATTRIB  :   To set the screen attribute to those given
+    SCR_CHARSET :   To change the screen character sets
+    SCR_CURMOV  :   To move the cursor around the screen relative to its 
+                    original position
+    SCR_CURPOS  :   To position the cursor at the specified screen location
+    SCR_ERASE   :   To erase portions of the terminal screen
+    SCR_OTHER   :   To allow the user to issue any ESCAPE sequence
+    SCR_RESET   :   To reset the terminal
+    SCR_SCROLL  :   To define the scrolling area on the screen
+    SELECT_O    :   Allows a user to make an interactive screen selection
+                    from a list (array) of strings (assumes a non-x-windows 
+                    device
+    SELECT_W    :   Event handler for the XMENU widget
+    SELECT_X    :   Allows a user to make an interactive screen selection
+                    from a list (array) of strings (assumes an x-windows 
+                    device
+    SIGMA       :   Calculate the standard deviation over 1 or all dimensions 
+                    of an array
+    SINCE_VERSION : Determine if the current release of IDL (as given in 
+                    the !VERSION.RELEASE system variable) comes after 
+                    the user specified release
+    SPEC_DIR    :   Complete specification of a file name using default disk 
+                    & directory
+    STORE_ARRAY :   Insert array INSERT into array DESTINATION, allowing the 
+                    dimensions of DESTINATION to adjust to accomodate it
+    STREBCASC   :   Convert an EBCDIC string scalar or vector to its ASCII 
+                    equivalent
+    STRN        :   Multi-purpose tool for formatting numbers into strings
+    STRNUMBER   :   Determine whether a string is a valid numeric value
+    SWAP        :   Procedure to swap bytes
+    TEXTCLOSE   :   Close a file that had been opened by TEXTOPEN.
+    TEXTOPEN    :   Open a file for text output as specified by !TEXTOUT
+                    Controls the print output device for many procedures.
+    TO_HEX      :   Translate a decimal integer to a hex string. Called by 
+                    AIPSNAME.
+    TYPE        :   Emulates DCL command TYPE command. On a Unix machine, 
+                    TYPE simply spawns to the more(1) command
+    VECT        :   This function returns the given vector in parenthesized 
+                    coordinates as in the form (X,Y)
+    WHERENAN    :   Find the positions of all values within an array that 
+                    correspond to the IEEE NaN (not-a-number) special values
+    ZPARCHECK   :   Check the type and size of a parameter
+
+C programs linked to IDL via CALL_EXTERNAL 
+
+    MEDARR      :   (MEDian ARRay) Create a 2-d image from a 3-d array 
+                    taking a median filter across the third dimension.  
+                    Useful for removing cosmic rays, etc. from a stack of 
+                    images.
+    READ_KEY    :   Read a value from the keyboard. It is similar to GET_KBRD
+                    except that the arrow keys are now returned a single number
+                    (128-131) rather than 4 characters beginning with an escape
+                    sequence.
+    SUM         :   Total up the values of an array over 1 or more dimensions.
+    STSUB       :   Read a portion of an SDAS disk file, every nth pixel, or 
+                    a subimage
+                    Called by STSUBIM
+    STSUBIM     :   User level routine to read a portion of an SDAS disk file
+    TMULT       :   Compute Transpose(A)#A in about 2/3 of the time of 
+                    the native IDL matrix multiplication routine by taking 
+                    advantage of the fact that this matrix is symmetrical.  
+                    (in fact, a front-end for the shared image TransMult, 
+                    now in the CPROG file)
+    TRANSMULT   :   Multply a matrix by its transpose taking advantage of the 
+                    knowledge that the output is symmetric to speed processing.
+

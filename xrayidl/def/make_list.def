@@ -1,0 +1,20 @@
+Rosat standard default parameters for making Rosat photon lists
+26
+0,OBSEQ=,Root name of input file
+1,DIR=,Directory containing data file
+2,EXTYP=,Extension type of input file (e.g., FITS, MDS)
+4,PROC=, Format of processed files (def=US, or MPE)
+8,TRIM=Y,Trim data to Good Time Intervals? Y(es) or N(o)
+9,CHATTER=1,Controls chattiness of program
+12,XMIN=0,Minimum X value for field (0=minimum of data)
+13,XMAX=0,Maximum X value for field (0=maximum of data)
+14,YMIN=0,Minimum Y value for field (0=minimum of data)
+15,YMAX=0,Maximum Y value for field (0=maximum of data)
+16,PIXEL=UNBL,Pixel convention (def=UNBL=unblocked, BL=blocked)
+17,BLOCK=1,Blocking factor (def = 1), 17,ZOOM=1,Blocking factor (def = 1)
+18,CTYP=SKY,Coodinate type for filtering (SKY=def, or DET)
+21,TMIN=-1.,Min time for photon selection (0 for none) (<0 for using *.gti.dat)
+22,TMAX=0,Max time for photon selection (0 for none)
+23,EMIN=7,Min energy channel for photon selection
+24,EMAX=247,Max energy channel for photon selection
+25,PHAORPI=0,Using PHA (1) or PI (0) channels (def = 0)

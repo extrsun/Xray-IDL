@@ -1,0 +1,12 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+  <meta content="text/html; charset=ISO-8859-1"
+ http-equiv="content-type">
+  <title>memo_cal.html</title>
+  <meta content="Daniel Wang" name="author">
+</head>
+<body>
+<pre>ci<br>ciao<br><br>set dir = ../cal/<br>set events_root = evt2file_new_clean<br><br>mkdir dstreak<br>cd dstreak<br><br>ds9 ${dir}${events_root}.fits &amp;<br><br>more bkg.reg <br><br>pset dmstat centroid=no sigma=no<br>dmstat "${dir}${events_root}.fits[bin sky=8]"<br><br>#update the following with the max pixel values:<br>set xpeak=4084.5 <br>set ypeak=4132.5<br>#---------------------------------------------------------------<br>#copy and paste the following:<br>punlearn dmextract<br>pset dmextract infile="${dir}${events_root}.fits[sky=region(bkg.reg)][bin pi=1:1024:1]"<br>pset dmextract outfile=bkg_pi.fits<br>pset dmextract clobber=yes<br>pset dmextract mode=h<br>dmextract<br><br>punlearn acisreadcorr<br>pset acisreadcorr infile=${dir}${events_root}.fits<br>pset acisreadcorr outfile=${events_root}_corr.fits<br>pset acisreadcorr aspect=@../cal/asol_file<br>pset acisreadcorr x=$xpeak y=$ypeak<br>pset acisreadcorr dx=40 dy=200<br>pset acisreadcorr bkg=bkg_pi.fits<br>pset acisreadcorr clobber=yes<br>pset acisreadcorr mode=h<br>acisreadcorr <br>#---------------------------------------------------------------<br>#examine if the removal is satisfactory. If not adjust the parameters (dx etc)<br>ds9 ${events_root}_corr.fits &amp;<br><br>mv ${dir}${events_root}.fits ${dir}${events_root}.fits_pre_dstreak<br>mv ${events_root}_corr.fits ${dir}${events_root}.fits</pre>
+</body>
+</html>

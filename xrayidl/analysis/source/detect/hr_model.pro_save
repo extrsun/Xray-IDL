@@ -1,0 +1,100 @@
+pro hr_model,model,c1,c2,c3,tv,nv,f1,f2,f3,instr=instr,hrdir=hrdir,noerase=noerase,thick=thick
+;+
+; plot model hardness ratio hardness 2 vs hardness 1
+; 
+; Definition:
+; Hardness 1 = imdiv(c3+c2-c1,c1+c2+c3)
+; Hardness 2 = imdiv(c3-c2,c2+c3)
+; where c1, c2, and c3 are count rates in the 1-2, 2-4, 4-7 keV bands (acisi) and
+;	in the 0.5-1.5, 1.5-3, 3-7 keV bands (aciss)
+;
+; these rates are calculated with the script presented in memo of the directory
+; $PUBDIR/xrayshell/rates/axaf/
+;
+; for raymond model:
+; T=0.5, 1, 2, 4, 8 keV, 
+; for power law model:
+; photon index = 1, 2, and 3
+; NH=1,100,300,1000, 2000 x 10^20 cm^{-2}
+;
+; model - right now two choices:
+;	'vp' - power law
+;	'vr' - raymond smith plasma
+; c1,c2,c3 - the 2-D output count rates in the three bands
+; tv, nv - the spectral model parameters (power law index or T) and NH
+; f1,f2,f3 - fluxes in the three bands 
+; instr - 'aciss' or 'acisi' (def=!instr)
+; hrdir - the directory containing the model count rate file
+;	  def = '$PUBDIR/xrayshell/rates/axaf/'
+; noerase - if set, the plot will be in the existing plot
+; thick - the thickness of the curves.
+;
+;*Example:
+; hr_model,'vp'
+;
+; written by wqd, 6/27/2001
+;
+;-
+if n_params() eq 0 then begin
+print,'Calling Seq - hr_model,model,c1,c2,c3,tv,nv,f1,f2,f3,instr=instr,hrdir=hrdir'
+print,',noerase=noerase,thick=thick'
+return
+endif
+if n_elements(instr) eq 0 then hrdir='$PUBDIR/xrayshell/rates/axaf/'
+if n_elements(instr) eq 0 then instr=!instr 
+insdir=hrdir+strtrim(instr,2)
+if instr eq 'aciss' then begin
+	read_mcntr,tv,nv,c1,fname=insdir+'_'+strtrim(model,2)+'_a1.0e_0.3_1.5',flux=f1
+	read_mcntr,tv,nv,c2,fname=insdir+'_'+strtrim(model,2)+'_a1.0e_1.5_3',flux=f2
+	read_mcntr,tv,nv,c3,fname=insdir+'_'+strtrim(model,2)+'_a1.0e_3_7',flux=f3
+endif else begin		  
+;	read_mcntr,tv,nv,c1,fname=insdir+'_'+strtrim(model,2)+'_a1.0e_12_1_2',flux=f1
+;	read_mcntr,tv,nv,c2,fname=insdir+'_'+strtrim(model,2)+'_a1.0e_24_2_4',flux=f2
+;	read_mcntr,tv,nv,c3,fname=insdir+'_'+strtrim(model,2)+'_a1.0e_47_4_7',flux=f3
+	read_mcntr,tv,nv,c1,fname=insdir+'_'+strtrim(model,2)+'_a1.0e1._3.',flux=f1
+	read_mcntr,tv,nv,c2,fname=insdir+'_'+strtrim(model,2)+'_a1.0e3._5.',flux=f2
+	read_mcntr,tv,nv,c3,fname=insdir+'_'+strtrim(model,2)+'_a1.0e5._9.',flux=f3
+endelse 
+nv=nv*100.  
+
+binterp,tv,nv,imdiv(c3-c2,c2+c3),nv*0.+1,nv,hrm2
+binterp,tv,nv,imdiv(c3+c2-c1,c1+c2+c3),nv*0.+1,nv,hrm
+if keyword_set(noerase) then oplot,hrm,hrm2,thick=thick else $
+	plot,hrm,hrm2,yrange=[-1,1],xrange=[-1,1.2],xtitl='!6rdness Ratio 1',ytitl='Hardness Ratio 2',thick=thick
+binterp,tv,nv,imdiv(c3-c2,c2+c3),nv*0.+2,nv,hrm2
+binterp,tv,nv,imdiv(c3+c2-c1,c1+c2+c3),nv*0.+2,nv,hrm
+oplot,hrm,hrm2,thick=thick
+
+if model eq 'vp' then begin
+	binterp,tv,nv,imdiv(c3-c2,c2+c3),nv*0.+3,nv,hrm2
+	binterp,tv,nv,imdiv(c3+c2-c1,c1+c2+c3),nv*0.+3,nv,hrm
+	oplot,hrm,hrm2,thick=thick
+endif else begin
+	binterp,tv,nv,imdiv(c3-c2,c2+c3),nv*0.+4,nv,hrm2
+	binterp,tv,nv,imdiv(c3+c2-c1,c1+c2+c3),nv*0.+4,nv,hrm
+	oplot,hrm,hrm2,thick=thick
+	binterp,tv,nv,imdiv(c3-c2,c2+c3),nv*0.+8,nv,hrm2
+	binterp,tv,nv,imdiv(c3+c2-c1,c1+c2+c3),nv*0.+8,nv,hrm
+	oplot,hrm,hrm2,thick=thick
+	binterp,tv,nv,imdiv(c3-c2,c2+c3),nv*0.+0.5,nv,hrm2
+	binterp,tv,nv,imdiv(c3+c2-c1,c1+c2+c3),nv*0.+0.5,nv,hrm
+	oplot,hrm,hrm2,thick=thick
+endelse 
+
+binterp,tv,nv,imdiv(c3-c2,c2+c3),tv,tv*0.+1,hrm2
+binterp,tv,nv,imdiv(c3+c2-c1,c1+c2+c3),tv,tv*0.+1,hrm
+oplot,hrm,hrm2,line=2,thick=thick
+binterp,tv,nv,imdiv(c3-c2,c2+c3),tv,tv*0.+100,hrm2
+binterp,tv,nv,imdiv(c3+c2-c1,c1+c2+c3),tv,tv*0.+100,hrm
+oplot,hrm,hrm2,line=2,thick=thick
+binterp,tv,nv,imdiv(c3-c2,c2+c3),tv,tv*0.+300,hrm2
+binterp,tv,nv,imdiv(c3+c2-c1,c1+c2+c3),tv,tv*0.+300,hrm
+oplot,hrm,hrm2,line=2,thick=thick
+binterp,tv,nv,imdiv(c3-c2,c2+c3),tv,tv*0.+1000,hrm2
+binterp,tv,nv,imdiv(c3+c2-c1,c1+c2+c3),tv,tv*0.+1000,hrm
+oplot,hrm,hrm2,line=2,thick=thick
+binterp,tv,nv,imdiv(c3-c2,c2+c3),tv,tv*0.+2000,hrm2
+binterp,tv,nv,imdiv(c3+c2-c1,c1+c2+c3),tv,tv*0.+2000,hrm
+oplot,hrm,hrm2,line=2,thick=thick
+return
+end

@@ -1,0 +1,104 @@
+IDL procedure on calculating the ccd streak contributions for the XMM-Newton EPIC images
+
+;In a directory dstreak under, say, pn, read in the event list:
+instr='epic' ;need to change accordingly!!!
+cenvset,instr
+
+;see if the required files are available
+evtroot='pn'
+;evtroot='evt2file_new_clean'
+emin=200 & emax=7500
+maindir='../'
+fname=maindir+'xdata/'+evtroot+'.fits'
+file_params,fname,dhdr,cra,cdec,expt,fra,fdec,xoff,yoff,roll,hdr=hdr
+
+;imdim=512 & imblock=80 
+evt_image,evtroot,instr,ca,ta,datadir=maindir+'xdata/',hdr=hdr,xmin=xmin,ymin=ymin,list=listo,gradec=gradec,imdim=imdim,imblock=imblock,/nofits 
+window,1,xs=imdim(0),ys=imdim(1)
+-------------------------------------------------------------------
+;determine which bands need to be destreaked (change emin and emax accordingly):
+tv,bscale(ca(*,*,1),0,2)
+;-------------------------------------------------------------------
+;produce a mask for the exposed region:
+;tim=ta(*,*,1)
+;expfname=maindir+'xdata/'+evtroot+'_i2.fits' ;arbitray choice
+;-------------------------------------------------------------------
+;source list:
+;read_reg_str,'../pn.ee_1.5keV.reg',slist,factor=1./0.05 ;temporary solution
+ sou_fits_info,maindir+'sou/'+evtroot+'_map70BSH_hr',slist,/all
+;slist.sradius= slist.sradius*!size_pixel ;which do not account for cntr
+perclimit=0.7 ;for xmm, using the fraction of remaining source energy
+;===================================================================
+;finding the right chip (this section is needed for different bands):
+emin=500 & emax=4500
+;emin=500 & emax=8000
+s=where(listo.ccd_id eq 4)
+;s=where(listo.ccd_id eq 7) ;aciss
+list_image,listo(s),xmin,ymin,im,imdim(0),imdim(1),block=imblock,emin=emin,emax=emax
+tv,bscale(im,0,5) ;just for testing
+list=listo(s)
+s=where(list.energy gt emin and list.energy le emax)
+ls=list(s)
+im=ca(*,*,1)
+
+blo=1 & bhi=3
+im=total(ca(*,*,blo:bhi),3) ;for example
+;----------------------------------------
+;dimx=64*80L
+;dimy=200*80L
+block=20
+;window,xsize=dimx/block,ysize=dimy/block
+
+outfname='test.fits' ;output file name
+;===================================================================
+;now following the XMM part in memo_destreak
+loadct_self,18
+g3=psf_gaussian(fwhm=6,/norm,npix=121) ;smoothing kernal for test plots
+;bnorm=1.      ;normalizing the auto-determined streak flux
+fcton=7       ;signal-to-noise ratio for the adaptive flux calculation
+stonth=2.5     ;# of sigma above which to consider the streak contribution
+nofile=0 ;set 1 for no output fits file
+xrange=0   ; select only the pixels with column-mean fluxes > stonth defined
+        ;in streak_removeal_main
+;xrange=[2610    ,3329] ;streak is in a predefined range
+
+;region for calculating the flux distribution
+;x1=0 & x2=dimx/block-1 & y1=0 & y2=dimy/block-1
+
+;run the main program which outputs the background fits file
+newpexcl=-1    ;> 0 for getting exclusion region, < 0 for getting inclusion region
+        ;if abs(newpexcl)=1, new selection. newpexcl not = 1 or -1  will be set by         ;need to change accordingly!!!
+;nofile=1 ;if =1, no file output; if = 0, file output
+;!debug=1
+ .run streak_removal_main
+
+;additional regions may be excluded by selecting an individual region, using
+; !debug=1, which places the index in sexcl.
+;===================================================================
+;just for testing:
+;tv,bscale(cs,0,2)
+tv,bscale(ccdbim)
+a=convolve(rfim,g3)
+tv,bscale(a,0,30) ;in units of counts per arcmin^2
+wset,1
+tv,bscale(convolve(fim,g3),0,30)
+
+flux=flux*1.e10
+eflux=eflux*1.e10
+mflux=mflux*1.e10
+sh_plot,dis,flux,eflux,dis*0.+mflux,xrang=[0,dimx],xtit='Column number',ytit='Counts pixel!U-1!N 10!U10!Ns!U-1!N',psym=1
+oplot,dis(ss),flux(ss),psym=2 ;selected bins
+device,/close
+$gv idl.ps
+;-----------------------------
+;find the xrange the includes the whole streak, e.g.,
+print,ss
+print,dl(31),dh(41)
+;use the output for xrange and rerun  streak_removal_main
+;===================================================================
+;normalization factors for calculating the streak contribution in
+; various bands:
+ 
+558 ;0.5-2 keV
+789 ;0.5-4.5 keV
+

@@ -1,0 +1,324 @@
+GSFC raw SASS files for HRI:
+
+note: NO STANDARD IN YELLOW BOOK
+
+Files in 3D TABLE FITS format:
+
+.CPS CPS file
+
+contains photon arrival time (sec), event X- & Y-axis positions 
+(pixels), pulse height amplitude (PHA channels), X- & Y-axis raw
+positions, photon status (lsb or msb used? masked by hotspot or edges?)
+
+Calibration files:
+
+  .BEB BEBKM Bright Earth Background Map
+
+     contains simulated? bright Earth background map (counts/sec)
+
+     also gives scales (pixels/element) and pixel centers for map axes,
+     min & max map values 
+
+  .CPB CPBKM Charged Particle Background Map
+
+     contains simulated? charged particle map (counts/sec)
+
+     also gives scales (pixels/element) and pixel centers for map axes,
+     min & max map values 
+
+  .DBM DETBKM Detector Background map
+
+     contains simulated? detector background map (counts/sec)
+
+     also gives scales (pixels/element) and pixel centers for map axes,
+     min & max map values 
+
+  .QEG QEGEOM Quantum Eff. Geometry Map
+ 
+     contains map of quantum efficiency factors
+
+     also gives scales (pixels per element) & pixel centers of map axes 1 & 2,
+     min & max map values
+
+  .SXB SFTBKM Soft Xray Background Map
+
+  .GAP GAPMAP (This can not be converted since it doesn't have a H_ file)
+
+  .PHA GAPPHA (This can not be converted since it doesn't have a H_ file)
+
+SEQ Files
+
+  .DMS 1DMS file
+
+  .AH  AH file       Aspect Histogram file?
+
+     contains X- and Y- offsets (scaled pixels), roll offset (scaled radians),
+     duration (sec)
+
+     also gives scales (resolutions) for X- & Y-offsets and roll offset,
+     average values for aspect X- & Y-offsets and roll
+
+  .ABK AVGBKS file        Average Backgrounds file?
+     
+     contains sect_start_time and sect_stop_time (secs), avgbk_in_sect
+     (cts/sq pixel/sec)
+
+  .BCR BKCRNG file
+ 
+
+  .BGI BKGI file     Background Good Time Intervals file?
+ 
+     contains interval start & stop times (sec)
+
+     also gives total time in good intervals
+
+  .BKI BKI file
+
+  .BIR BKIRNG file      (same as .BKI file?)
+
+  .BSC BKSCR file
+
+  .BTS BKTSU file     Temporal Status History file?
+
+     contains status of spacecraft and instrument during the current 
+     sequence. It contains a separate record for each change in each 
+     different status that occurs during the observation. (-1 = status 
+     unknown)
+
+     contains time of status change? (sec), status id, and status
+
+     also gives number of possible values for status and status id, and
+     keys to understanding the values
+
+  .LTF LTF file (this may collide with the SAO Blackbox)  Live Time Factors?
+
+     gives start times (of interval over which live time correction factor
+     was measured?) (sec), live time correction factors
+
+     also gives lengths of each record, & of interval over which data is
+     averaged (sec)
+
+  .MO  MO file         Temporal Status History file?
+
+     contains status of spacecraft and instrument during the current 
+     sequence. It contains a separate record for each change in each 
+     different status that occurs during the observation. (-1 = status 
+     unknown)
+
+     contains time of status change? (sec), status id, and status
+
+     also gives number of possible values for status and status id, and
+     keys to understanding the values
+
+  .MOB MOBITSH file          Temporal Status History file?
+
+     contains status of spacecraft and instrument during the current 
+     sequence. It contains a separate record for each change in each 
+     different status that occurs during the observation. (-1 = status 
+     unknown)
+
+     contains time of status change? (sec), status id, and status
+
+     also gives number of possible values for status and status id, and
+     keys to understanding the values
+
+  .POE POE file
+
+     contains map subtotals (counts) - whatever those are?
+
+     also gives numbers of small maps in X & Y, poe (position ordered event?)
+     centers in X & Y, small map sizes in X & Y
+
+  .PMS POEMS file
+
+     contains map subtotals (counts) - whatever those are?
+
+     also gives numbers of small maps in X & Y, poe (position ordered event?)
+     centers in X & Y, small map sizes in X & Y
+
+  .S1D S1DM file
+
+     contains sample bins (counts) - whatever those are?
+
+  .SGI STDGI file        Good Time Intervals file?
+ 
+     contains interval start & stop times (sec)
+
+     also gives total time in good intervals
+
+  .SSC STDSCR file
+
+  .GTE TOE file (changed to allow SAO to use TOE)  Time Ordered Events
+
+     contains photon arrival time (sec), event X- & Y-axis positions 
+     (pixels), pulse height amplitude (PHA channels), X- & Y-axis raw
+     positions, photon status (lsb or msb used? masked by hotspot or edges?)
+
+  .TSH TSH file         Temporal Status History file?
+
+     contains status of spacecraft and instrument during the current 
+     sequence. It contains a separate record for each change in each 
+     different status that occurs during the observation. (-1 = status 
+     unknown)
+
+     contains time of status change? (sec), status id, and status
+
+     also gives number of possible values for status and status id, and
+     keys to understanding the values
+
+  .XRB XRB file
+
+OBI files:
+
+  .AO  AO file
+
+     contains aspect time (sec), X- & Y-offsets (pixels), roll angle (radians),
+     aspect error and status (level)
+
+     also gives min and max values of RA, Dec, and roll angle
+
+  .OBI BEGI file
+
+  .OBP BEPOEMS file
+
+     contains map subtotals (counts) - whatever those are?
+
+     also gives numbers of small maps in X & Y, poe (position ordered event?)
+     centers in X & Y, small map sizes in X & Y
+
+  .OBT BETOE file
+
+  .OBS BTSH file      Temporal Status History File?
+
+     contains status of spacecraft and instrument during the current 
+     sequence. It contains a separate record for each change in each 
+     different status that occurs during the observation. (-1 = status 
+     unknown)
+
+     contains time of status change? (sec), status id, and status
+
+     also gives number of possible values for status and status id, and
+     keys to understanding the values
+
+  .CPS CPS file
+
+     contains photon arrival time (sec), event X- & Y-axis positions 
+     (pixels), pulse height amplitude (PHA channels), X- & Y-axis raw
+     positions, photon status (lsb or msb used? masked by hotspot or edges?)
+
+  .HTS HKTSU file        Temporal Status History file?
+
+     contains status of spacecraft and instrument during the current 
+     sequence. It contains a separate record for each change in each 
+     different status that occurs during the observation. (-1 = status 
+     unknown)
+
+     contains time of status change? (sec), status id, and status
+
+     also gives number of possible values for status and status id, and
+     keys to understanding the values
+
+  .HTL HRITALLY file     gives tally of telemetry frames for an obi?
+
+     contains numbers of frames which were discarded within the obiac by
+     the split obi program. The records are divided by intervals in which
+     frames were and were not discarded. Each record also contains the 
+     number of frames which were discarded for each of the specific reasons
+     (a frame can be discarded for more than one reason). The fraction
+     within the obi indicates how much of an interval falls within the obi
+     limits.
+
+     contains interval start & stop times (sec), fraction with the obi,
+     total number of frames discarded?, numbers of frames discarded for
+     each of various reasons
+
+  .OAN OANGS file        Observation Angles file?
+
+     contains start & stop times (sec), EST (Earth-Satellite-Target) and
+     ESS (Sun-Earth-Satellite?) angles (degrees)
+
+  .OTS OBITSH file        Temporal Status History File?
+
+     contains status of spacecraft and instrument during the current 
+     sequence. It contains a separate record for each change in each 
+     different status that occurs during the observation. (-1 = status 
+     unknown)
+
+     contains time of status change? (sec), status id, and status
+
+     also gives number of possible values for status and status id, and
+     keys to understanding the values
+
+  .SAA SAARATES file
+
+  .SPS SPS file
+
+  .UGI UVGI file
+
+  .UPM UVPOEMS file
+
+     contains map subtotals (counts) - whatever those are?
+
+     also gives numbers of small maps in X & Y, poe (position ordered event?)
+     centers in X & Y, small map sizes in X & Y
+
+  .UTE UVTOE file
+
+  .VTS VGTS file           Temporal Status History file?
+
+     contains status of spacecraft and instrument during the current 
+     sequence. It contains a separate record for each change in each 
+     different status that occurs during the observation. (-1 = status 
+     unknown)
+
+     contains time of status change? (sec), status id, and status
+
+     also gives number of possible values for status and status id, and
+     keys to understanding the values
+
+  .VTU VGTSU file          Temporal Status History file?
+
+     contains status of spacecraft and instrument during the current 
+     sequence. It contains a separate record for each change in each 
+     different status that occurs during the observation. (-1 = status 
+     unknown)
+
+     contains time of status change? (sec), status id, and status
+
+     also gives number of possible values for status and status id, and
+     keys to understanding the values
+
+These could be made available with some work.
+
+  .ASP ASPQU file
+
+  .SA  SPASP file
+
+  .SO  SPORB file
+
+Files in ASCII TABLE FITS format:
+
+.ANP Compressed *.anp files used in runs
+
+.ASC Ascii/parameter outputs
+    These files appear as extension tables under a single fits file.
+    They need never appear as actual files.
+    .BKD BKDEN.SEQ file
+    .BPO BPOS.SEQ file
+    .CEN CENS.SEQ file
+    .DGN DGAIN    file
+    .HBK HBK.SEQ  file
+    .ITN INTEN    file
+    .LTO LTOUT    file
+    .MSR MSR      file
+    .OBD OBD      file
+    .OBT OBITOT.SEQ file
+    .RPO RPOS     file
+    .SMT SMTL.SEQ file
+    .SQD SQD      file
+    .SRD SRD      file
+    .UNQ UNIQUE   file
+    I am open to suggestions as to any *.ANP files it would be 
+    useful to the user to include here.
+
+.PAR PAR files        documents pipeline processing

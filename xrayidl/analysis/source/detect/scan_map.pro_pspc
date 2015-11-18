@@ -1,0 +1,184 @@
+;++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+;+
+;*NAME:
+; scan_map
+;
+;*PURPOSE:
+; scan sources through an image with an input background map
+;
+;*CALLING SEQUENCE:
+; scan_map,cra,cdec,array_c,array_b,array_t,block=block,outr=outr,inr=inr $
+; ,blow=blow,bhigh=bhigh,threshold=threshold,outfile=outfile $
+; ,ssr=ssr,fac_ssr=fac_ssr,sigma_a=sigma_a,cntr_a=cntr_a,in_sigma=in_sigma
+; ,append=append,bmape=bmape
+;
+;*PARAMETERS:
+;*INPUTS:
+; cra, cdec - the ra and dec of the image center (radian)
+; array_c, array_t, and array_b - counts, exposure, and background images
+; block - the bin size of the image in units of 0".5
+; inr, outr - the inner and outer radii (in units of bins) of the region
+; 	(centered at the image center) within which 
+;	   the program is going to make the source analysis
+;	(def = 54 arcmin). Annulus_out is cut to make sure sources within
+;	the images are to be analyzed. But the region should be
+;	smaller than that of the image.
+; blow, bhigh - the lower and upper boundaries of the rosat bands
+; 		to be used to get the source detection radii in detect_params
+;		called by get_simga_v
+; threshold - the lower limit of the signal-to-noise ratio of a peak which
+;	is considered to be a source candidate (def = !threshold)
+; outfile - the output source file name. if file='no', there will be no 
+; 	output file
+; frac - the fraction of the core_size used as the radius to search for
+;	local maxima of signal-to-noise ratios.
+; ssr - source search radius, def = core_size of the (90%) radius of a source
+; append - if set, the output source list will be appended to the existing
+;	file (def = 'sou_map'+strtrim(blow,2)+strtrim(bhigh,2))
+;*OUTPUTS:
+; sigma_a, cntr_a - the s/var(s) and count rate arraies which can be
+;	reused, for example, for searching sources with a different fac_ssr.
+; sou_map+blow+bhigh - the source file name if the keyword file is not provided
+;
+;*PROCEDURE
+; The standard map detection, but with pixel-dependent PSF.
+;
+;*EXAMPLES:
+; scan_map,cra,cdec,cb,cbm*tb,tb,block=block,blow=4,bhigh=7,outr=54
+; ,outf='t4.dat',perc=0.5,sigma=s,cntr=c,/in_si 
+;
+;*RESTRICTIONS:
+; The radius for the source analysis should be smaller than the half size
+; of the image minus the annulus_out at the radius
+;
+;*NOTES:
+; The source detection parameters are presented in the procedure detect_params.
+; !threshod is used as a system variable
+; 
+;*SUBROUTINES CALLED:
+; get_sigma_maps
+; star_search_map
+; detect_params
+;
+;*MODIFICATION HISTORY:
+; writen April 21, 1996 (WQD) 
+;-
+;++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+pro scan_map,cra,cdec,array_c,array_b,array_t,block=block,outr=outr,inr=inr $
+,blow=blow,bhigh=bhigh,threshold=threshold,outfile=outfile $
+,ssr=ssr,fac_ssr=fac_ssr,sigma_a=sigma_a,cntr_a=cntr_a,in_sigma=in_sigma $
+,sfrac=sfrac,append=append,ebmap=ebmap,sr=sr
+;
+if n_params() eq 0 then begin
+print,'CALLLING SEQUENCE - scan_map,cra,cdec,array_c,array_b,array_t'
+print,',block=block,outr=outr,inr=inr,blow=blow,bhigh=bhigh'
+print,',threshold=threshold,outfile=outfile,ssr=ssr,fac_ssr=fac_ssr'
+print,',sigma_a=sigma_a,cntr_a=cntr_a,in_sigma=in_sigma,sfrac=sfrac'
+print,',append=append,ebmap=ebmap'
+return
+endif
+;
+sz=size(array_c)
+if n_elements(threshold) eq 0 then threshold=3.
+if n_elements(block) eq 0 then block=!block
+
+if n_elements(outr) eq 0 then outr=54. ;arcmin. The actual search area is
+					; outr+ssr 
+if n_elements(inr) eq 0 then inr=0. ;arcmin
+;
+if n_elements(outfile) eq 0 then begin
+	outfile='sou_map' 
+	if n_elements(blow) ne 0 then $
+		outfile=outfile+strtrim(blow,2)+strtrim(bhigh,2)
+		;to store the information of sources 
+	endif else outfile=strtrim(outfile,2)
+if strupcase(outfile) ne 'NO' then begin
+	if keyword_set(append) eq 0 then $
+	openw,un,outfile,/get_lun else $
+	openw,un,outfile,/get_lun,/append
+endif
+
+; get bins to be search for sources
+hdimx=(sz(1)-1.)*0.5
+hdimy=(sz(2)-1.)*0.5
+loc=lindgen(sz(1),sz(2))
+i=(loc mod sz(1))
+j=loc/sz(1)
+dis=sqrt((i-hdimx)^2+(j-hdimy)^2)*(block*!size_pixel/60.)
+bin_sel=where(dis le outr and dis ge inr,ns)
+if ns eq 0 then stop,'stop: no source within the radius'
+dis=dis(bin_sel)
+
+; get source sizes 
+
+bin_arcmin=block*!size_pixel/60.
+if n_elements(sr) eq 0 then begin
+if !instr eq 'p' then begin
+	detect_params,dis,core_size,blow=blow,bhigh=bhigh,perclimit=sfrac
+endif else begin 
+	if !instr eq 'h' then begin
+		theta=findgen(40)/2.
+		psf_hri_frac,theta,offs,frac=sfrac
+		offs=offs/60.
+		linterp,theta,offs,dis,core_size
+;		if sfrac eq 0.9 then dfac=3. else begin
+;			if sfrac eq 0.5 then dfac=1. else $
+;				stop,'have to give dfac for sfrac= ',sfrac
+;		endelse 
+;	core_size=dfac*(2.35*0.5*(0.74^2+1.0+(1.3+0.0205*dis^2.349)^2)^0.5 > 3.)/60.
+;	;dfac x the 50% radius of the RHRI (p13 of the Guest Observing prog) 
+;	; in units of arcmin
+	endif else stop,'which instrument is this?'
+endelse
+core_size = core_size / bin_arcmin ; in units of bins
+endif else core_size=dis*0.+sr
+
+;
+;calculate the min and max of the i,j for each box
+;
+if n_elements(fac_ssr) eq 0 then fac_ssr=1.
+if n_elements(ssr) eq 0 then ssr=fac_ssr*core_size else $
+	ssr=core_size*0.+ssr ;to be a vector
+if !debug eq 2 then stop
+if keyword_set(in_sigma) eq 0 then $ ;otherwise use input sigma_a and cntr_a
+	get_sigma_map, array_c,array_b,array_t,sigma_a,cntr_a, $
+	core_size=core_size,sfrac=sfrac,bin_sel=bin_sel,ebmap=ebmap
+
+; find the sources corresponding the local sigma maxima in the field
+ssr=ssr(bin_sel)
+star_search_map,sigma_a,cntr_a,ssr,ns,threshold=threshold $
+ 	,x_core,y_core,source_sn,cntr,bin_sel=bin_sel
+
+if n_elements(x_core) eq 0 then return
+ssr=ssr*bin_arcmin ;now ssr is only for the detection
+
+;get position in a standard SASS image
+ra_dist = (float(x_core) - hdimx) * float(block)
+dec_dist = (float(y_core) - hdimy) * float(block)
+
+trans_loct,ra_dist,dec_dist,cra,cdec,star_ra,star_dec,/deg
+
+;convert the RA and DEC into unit of hour, degree:
+
+trans_degree,star_ra,star_dec,ra_hour, $
+ ra_min,ra_sec,dec_deg,dec_min,dec_sec,/deg
+;recalculate the off-axis distances
+trans_dist,cra,cdec,star_ra,star_dec,xp,yp,/deg
+dis=sqrt(xp^2+yp^2)*!size_pixel/60.
+
+;record these source into output file:
+newstar=indgen(ns)+1
+for k=0,(ns-1) do begin
+ 	print, newstar(k), ra_hour(k),ra_min(k),ra_sec(k) $
+ 	,dec_deg(k),dec_min(k),dec_sec(k),source_sn(k),cntr(k) $
+ 	,dis(k),ssr(k),format='(I3, 2(2i4, f7.2), f9.2, f11.5,2f9.2)'
+	if strupcase(outfile) ne 'NO' then $
+ 	  printf,un, newstar(k),' |', ra_hour(k),ra_min(k) $
+	  ,ra_sec(k),' |',dec_deg(k),dec_min(k),dec_sec(k),' |',source_sn(k), $
+   	  ' |',cntr(k),' |', dis(k),' |',ssr(k),' |' $
+	  ,format='(I3,a2,2(2i4, f7.2,a2), f9.2,a2, f11.5,a2,2(f9.2,a2))'
+endfor
+if strupcase(outfile) ne 'NO' then free_lun,un
+stop
+return
+end

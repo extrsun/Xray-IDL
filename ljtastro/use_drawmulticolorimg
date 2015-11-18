@@ -1,0 +1,17 @@
+fitsheadfile='/home/ljt/ljt/data/AboutAGN/NGC5775/Chandra/2940/mdata/Hubble/hst/ngc5775r-shifted_bin2.fits'
+imagefile=strarr(4)
+imagefile[0]='/home/ljt/ljt/data/AboutAGN/NGC5775/Chandra/2940/image/multiprofile/minoraverage/dust/dust_large.fits'
+imagefile[1]='/home/ljt/ljt/data/AboutAGN/NGC5775/Chandra/2940/mdata/Hubble/hst/ngc5775ha-cont_bin2.fits'
+imagefile[2]='/home/ljt/ljt/data/AboutAGN/NGC5775/Chandra/2940/mdata/Hubble/hst/ngc5775r-shifted_bin2.fits'
+imagefile[3]='/home/ljt/ljt/data/AboutAGN/NGC5775/Chandra/2940/image/smoothimg3/as_fton5_s_subback.fits'
+
+description=['Spitzer dust','HST H!7a!3','HST R','0.3-1.5 keV']
+psfile='/home/ljt/ljt/data/AboutAGN/NGC5775/Chandra/NGC5775_multi1.ps'
+jpegfile='/home/ljt/ljt/data/AboutAGN/NGC5775/Chandra/NGC5775_multi1.jpeg'
+title='!7NGC 5775'
+;rbrightness=[1.0,1.0,1.0,1.0]
+fscale=['alog10','alog10','alog10','alog10']
+;scalezoom=[1000.0,1000.0,1000.0,1000.0,1000.0,1000.0]
+;meanfactor=[1.0,1.0,1.0,1.0,0.7,1.0]
+
+drawmulticolorimg,imagefile,fitsheadfile=fitsheadfile,description=description,psfile=psfile,figtitle=title,fscale=fscale, colortype=1, rbrightness=rbrightness, meanfactor=meanfactor, coefficient=coefficient

@@ -1,0 +1,328 @@
+##########################################################################
+# 	Memo for Chandra ACIS observation calibration
+#
+#  You can run the unix cammands and scripts, using copy and paste.
+#  It helps to understand the scipts (*.e), at least the information in 
+#	the headers.
+#
+#  After a successful run, you can move on to read the file "memo_anal" about
+#  post-calibration analysis (e.g., source detection and image construction).
+#
+# Requirements:
+# 1) The environment variable PUBDIR needs to be defined (ideally in your 
+#   .cshrc); e.g., setenv PUBDIR /net/xray/pub, which is where you have 
+#    installed cal_scripts directory.
+# 2) ciaoinit.e should have been run (e.g., type
+# 	source $PUBDIR/cal_scripts/ciaoinit.e and then type ciao)
+# 3) Standard archival files have been downloaded and untared in the so-called 
+# 	main directory (e.g., n4631)
+# 4) Make a directory called cal (mkdir cal) in the main directory
+#	and move into it (cd cal)
+# 5) For cleaning high background intervals of the observation without 
+#  potential effects due to source variability, a bright source regional 
+#  file (source.reg) is then needed in the  ciao format and saved
+#	 in the current directory (e.g., usign ds9). If the file is not 
+#	provided, no region is removed. The cleaning uses a non-ciao package
+#	acisbg from Markavich (lc_clean), which is assumed to be installed in 
+#	$LOCALDIR
+#
+# Key decisions need to be made (see the following):
+#  1) processing choice:
+#	evt1 - from evt1 to evt2 (def)
+#	evt2: just modify evt2
+#  3) VF mode flag: yes - to reduce the background in the timed VF mode 
+#	(good for diffuse study. However, a significant fraction of the 
+#	source events may be flagged and removed for moderately bright to 
+#	bright sources. 
+#	no - no flag, which may be good for studying discrete sources
+#     In principle, two versions of the process may be produced for the VF mode
+#
+# written by wqd, July, 2002
+# updated by wqd, Jan 5, 2003: 1) several shell variables are converted 
+# 	into environment valiables to simplify the entries to scripts
+#	2) multiple file processing scripts are added.
+##########################################################################
+#To turn on the creation of count and flux maps by make_expmap.e, 
+# setenv CMAP 1
+setenv CMAP 0
+
+#as Sept, 2003, CTI corrections can be applied only to the ACIS-I array 
+# and/or chip S2 and are available for -120 C observations 
+#setenv APPLYCTI yes
+setenv APPLYCTI no
+
+#set the default root name for processed files:
+set event_root=evt2file
+
+#making the right choice of the instrument:
+setenv INSTR aciss
+#setenv INSTR acisi
+#special for the GC observations and others with high absorption:
+#setenv INSTR acisi_low
+#-----------------------------------------------------
+#From the main dir, check to see if there are multiple OBIs:
+ls ./*/acis*evt1.fits*
+
+#The processing needs to be done separately for each OBI, see
+# http://cxc.harvard.edu/ciao/dictionary/obi.html
+#If there more than 1 entries, the following links are problematic; the OBI
+#needs to be consistent, e.g., the observing time should match the right asol 
+#file. It is advised to processed them in different directories (e.g., 
+#1561_0 and 1561_1); for example.
+ln -s ../../1561/primary/acisf01561_001N001_bpix1.fits  acisf01561_001N001_bpix1.fits
+ln -s ../../1561/primary/acisf01561N003_evt2.fits acisf01561N003_evt2.fits
+ln -s ../../1561/primary/pcadf111463469N001_asol1.fits pcadf111463469N001_asol1.fits
+
+ln -s ../../1561/secondary/acisf01561_001N001_evt1.fits acisf01561_001N001_evt1.fits
+ln -s ../../1561/secondary/acisf01561_001N001_flt1.fits acisf01561_001N001_flt1.fits
+
+
+#-----------------------------------------------------
+#move to the processing directory
+cd cal
+#main directory (containing primary etc) relative to this processing direction
+setenv MAINDIR ..
+
+#uppack the necessary files:
+find $MAINDIR -name 'acis*bpix1.fits.gz' -exec gunzip {} \;
+find $MAINDIR -name 'pcadf*_asol1.fits.gz' -exec gunzip {} \;
+find $MAINDIR -name 'acis*evt2.fits.gz' -exec gunzip {} \;
+
+#make soft links to default file names:
+find $MAINDIR -name 'acis*bpix1.fits' -exec ln -s {} bpixfile.fits \;
+rm asol_file
+find $MAINDIR -name 'pcadf*_asol1.fits' -exec sh -c 'ls {} >> asol_file' \;
+find $MAINDIR -name 'acis*evt2.fits' -exec ln -s {} ${event_root}.fits \;
+
+#check that the links are correct:
+ls -ltr bpixfile.fits ${event_root}.fits
+more asol_file
+#--------------------------------------------------------------------
+#for archival data, normally you need to reprocess the evt2 data
+#see http://cxc.harvard.edu/ciao/threads/cti_choices/
+#If evt1-to-evt2 processing is indeed required:
+find $MAINDIR -name '*flt*.fits.gz' -exec gunzip {} \;
+find $MAINDIR -name 'acis*flt*' -exec ln -s {} fltfile.fits \;
+
+#for cti-corrected file (no longer needed; Dec. 12, 2002):
+#ln -s acisf02207_000N002_evt1.no_cti.fits evt1file.fits
+#if in the current directory or
+#find $MAINDIR -name '*evt1.no_cti.fits' -exec ln -s {} evt1file.fits \;
+#otherwise, use the downloaded evt1 file:
+
+find $MAINDIR -name '*evt1*.fits.gz' -exec gunzip {} \;
+find $MAINDIR -name '*evt1*' -exec ln -s {} evt1file.fits \;
+
+#check that the files are actually there and are correct:
+ls -ltr fltfile.fits evt1file.fits
+ln -s evt1file.fits aspcorr_evt2.fits
+#--------------------------------------------------------------------
+#if instead, no evt1-to-evt2 processing is required:
+#ln -s ${event_root}.fits aspcorr_evt2.fits
+#--------------------------------------------------------------------
+#check to see if the observation was taken in timed vfaint mode
+dmkeypar aspcorr_evt2.fits DATAMODE ; pget dmkeypar value
+dmkeypar aspcorr_evt2.fits READMODE ; pget dmkeypar value
+#if it was, you MAY want to use CHVF=yes (but you need to know what this means)
+setenv CHVF yes
+#setenv CHVF no
+#-----------------------------------
+#correct for astrometry offsets:
+$PUBDIR/cal_scripts/pre_cal.e $proc
+chmod +w aspcorr_evt2.fits
+echo "Copy the output into the website: http://asc.harvard.edu/cal/ASPECT/fix_offset/fix_offset.cgi 
+and follow the execution of the instructions on the website."
+echo "After that you are ready for evt1to2.e or post_evt2.e."
+dmlist aspcorr_evt2.fits header,raw,clean | egrep 'TCTYP|TCRVL|ASCDSVER|DATE|OBS_ID'
+
+#wait for the end of the above and finish the web task and then do the next:
+#-----------------------------------
+#The section is only for cti correction of FI chips:
+#if APPLYCTI=yes, we could only include ccd=0:3,6 at this point, so you may 
+#need to do the following:
+#mv aspcorr_evt2.fits aspcorr_evt2_allccd.fits
+#dmcopy "aspcorr_evt2_allccd.fits[ccd_id=0:3,6]" aspcorr_evt2.fits
+#dmcopy "aspcorr_evt2_allccd.fits[ccd_id=6:8]" aspcorr_evt2.fits
+
+#if processing from evt1 to evt2:
+$PUBDIR/cal_scripts/evt1to2.e ${event_root}
+
+#Check the size of the files:
+ls -ltr ${event_root}_new.fits
+
+#if no evt1 to evt2 processing: mv aspcorr_evt2.fits ${event_root}_new.fits
+
+#define the energy band:
+$PUBDIR/cal_scripts/def_bands.e
+
+#place the output from the above into the following:
+#setenv BANDS "500:1000 1000:2000 2000:4000 4000:8000"
+setenv BANDS "300:700 700:1500 1500:3000 3000:7000"
+#setenv BANDS "1000:2500 2500:4000 4000:6000 6000:9000"
+
+#post evt2 processing:
+#remove bright variable sources by placing them in a regional file source.reg
+#currently only accept circle and ellipse regions.
+
+$PUBDIR/cal_scripts/post_evt2.e ${event_root}_new 
+#drawback: the gti is read from the first gti extension and may not be the same for all chips
+#check the lightcurve 
+fv _eventsfile.lc
+set event_root=evt2file_new_clean
+#======================================================================
+#No longer needed for data processed with ciao 3.1 or later
+# Correction for the ACIS gain change with time
+# A revised version of what is compiled by Yang Chen,
+# following http://cxc.harvard.edu/contrib/alexey/tgain/tgain.html
+# June 17, 2003
+cp ${event_root}.fits ${event_root}_pregain.fits
+
+set gainfiledir=$NETDIR/software/corr_tgain
+
+# pget dmkeypar value
+ dmkeypar ${event_root}.fits DATE-OBS ; pget dmkeypar value
+
+ls ${gainfiledir} 
+#to find and match the file with the closest date; e.g., (change the
+# following accordingly!!!)
+ ln -s ${gainfiledir}/corrgain2002-05-01.fits ./corrgain_data.fits
+ ${gainfiledir}/corr_tgain ${event_root}.fits -tgain corrgain_data.fits
+
+ #Recompute the photon energies and PI values:
+set gainfile=$NETDIR/usr/local/ciao_2.3/data/chandra/acis/bcf/gain/acisD2000-01-29gainN0003.fits
+ punlearn acis_process_events
+ pset acis_process_events infile=${event_root}.fits
+ pset acis_process_events outfile=temp.fits
+ pset acis_process_events acaofffile=none
+ pset acis_process_events stop=none
+ pset acis_process_events gainfile=$gainfile
+ pset acis_process_events gradefile=CALDB
+ pset acis_process_events apply_cti=yes
+ pset acis_process_events apply_tgain=yes
+ pset acis_process_events doevtgrade=no
+ pset acis_process_events calculate_pi=yes
+ pset acis_process_events check_vf_pha=no
+ pset acis_process_events clobber=yes
+ acis_process_events
+mv temp.fits ${event_root}.fits
+
+#Finished. Now ${event_root}.fits has been corrected for the gain change
+#============================================================================
+#correct for the low energy degradation of the CCD with time (no longer used for new ciao?):
+#contributed by Dave Smith 
+#ciao and ftools must be running.
+
+#If running this block and creating the exposure maps independently,
+setenv INSTR aciss
+#setenv INSTR acisi
+set event_root=evt2file_new_clean
+source $PUBDIR/xrayshell/chandra/expmap_weight.csh $event_root aciss $INSTR
+# typical output example: .5008 .8379 .9719 .9965
+source $PUBDIR/xrayshell/chandra/expmap_weight.csh $event_root acisi $INSTR
+# typical output example: .5359 .8563 .9711 .9967
+#If the value is less than 0.4, something is likely to be wrong!!!
+# I run this script right on my computer gcs. sgr is fine.
+
+#If bands are not defined:
+$PUBDIR/cal_scripts/def_bands.e
+#place the output from the above into the following:
+#setenv BANDS "500:1000 1000:2000 2000:4000 4000:8000"
+setenv BANDS "300:700 700:1500 1500:3000 3000:7000"
+#setenv BANDS "1000:2500 2500:4000 4000:6000 6000:9000"
+#$PUBDIR/cal_scripts/cal_main.e $event_root $proc > cal_main.log &
+
+set event_root=evt2file_new_clean
+$PUBDIR/cal_scripts/make_expmap.e ${event_root} asol_file &
+rm _* temp_* new_*
+
+#----------------------------------
+#move to the main directory
+mkdir xdata
+cd xdata
+#for single file, use
+ $PUBDIR/cal_scripts/cal_mob_link.e ../ "./"
+
+#for multiple observations of a single targe
+$PUBDIR/cal_scripts/cal_mob_link.e /d4/m82 "1302" evt2file 
+
+;for a subarray observation with only (ccd7 turned on), instead do:
+ln -s ${evtdir}${evtfname}.fits   ${evtfname}.fits
+ln -s ${evtdir}${evtfname}_i300:700_ccd7.fits   ${evtfname}_i1.fits
+ln -s ${evtdir}${evtfname}_i700:1500_ccd7.fits  ${evtfname}_i2.fits
+ln -s ${evtdir}${evtfname}_i1500:3000_ccd7.fits ${evtfname}_i3.fits
+ln -s ${evtdir}${evtfname}_i3000:7000_ccd7.fits ${evtfname}_i4.fits
+
+# end of the data calibration!!
+
+#If another version of the processing with slight modification is needed
+# (e.g., with CHVF=yes), you may proceed with the astrometry corrected 
+# aspcorr_evt2.fits.
+
+#check the image if there is any bright source that may produce a CCD streak.
+#If yes, proceed to remove the streak by reading memo_dstreak.
+##########################################################################
+# Procedure for processing multiple observations:
+# first work to the step of correcting the astrometry and 
+# then do something SIMILAR to the following:
+set oblist="1302 361 378 379 380_1 380_2"
+$PUBDIR/cal_scripts/cal_mob.e "$oblist" > cal_mob.log 
+
+./def_bands.e
+#place the output from the above into the following:
+setenv BANDS "500:1000 1000:2000 2000:4000 4000:8000"
+
+$PUBDIR/cal_scripts/cal_mob_link.e "../" "${oblist}"  "evt2file_new_clean"
+#which produce links (similar to the above) to the default file names in
+#the directory xdata.
+##########################################################################
+# Description of the above procedure
+#
+##Procedure:
+#1) Compare the processing date and version of the data with the present CALDB
+# to see whether reprocessing evt2 is needed.
+#
+#2) Pre-calibration
+# 	Decompress files
+#	Check the website for the aspect correction
+#
+#3) Calibration
+#	optional evt1to2 processing (proc not= evt2)
+#	post-evt2 processing: remove extra destreak, 
+#		bad pixels, background flares
+#
+#4) Make exposure maps
+#
+#5) Make links for subsequent data analysis (e.g., source detection and 
+# smoothed 3-color flux image construction)
+#
+#*Outputs:
+# ${event_root}_new.fits - offset-corrected evt2 file
+# ${event_root}_new_clean.fits - cleaned evt2 file
+# various count, exposure, and flux maps
+# average light curves of the observation
+#====================================================
+# Here is a little more detailed consideration about 
+#	whether to reprocess the evt1 data:
+ # RULE OVER THE THUMB:
+ # If you work on NEW data, no re-processing is needed unless
+ # there was a new release of the CALDB between the processing
+ # and the time you start analysing the data or you need to take advantage
+ # of the low background of the VF mode or CTI correction.
+ # If you work on OLDER data, you need to process from the evt1 data
+ # check the following:
+ #      http://cxc.harvard.edu/caldb/version_release_notes.html
+ # gives the history of the CALDB.
+#====================================================
+# It is very important to check your results to see if the processing is OK:
+#
+# Check the log file of the processing to see if there is any serious errors,
+# some of which can be neglected, and to check the sizes, for example.
+# Also use fv and/or ds9 to check the fits files:
+# For obsid 2025, the number of counts are exactly the same for the processed
+# and the original evt2 files. But the size of the processed one is about 1/4
+# greater, because of an extra column (array of pulse heights).
+# For CTI-corrected file, the total number of the reprocessed evt2 file 
+# contains slightly less number of counts (198513 vs 198795 for a2125 obs). 
+#====================================================
+#====================================================
+

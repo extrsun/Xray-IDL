@@ -1,0 +1,230 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+  <meta content="text/html; charset=ISO-8859-1"
+ http-equiv="content-type">
+  <title>memo_merge</title>
+  <meta content="Daniel Wang" name="author">
+</head>
+<body>
+<h3 style="text-align: center;">Memo on producing merged data sets of
+multiple observations</h3>
+;================================================================<br>
+; Assumptions:<br>
+<ul>
+  <li>basic data calibration has been done for individual observations
+and the data have been placed in the xdata directory of each observation</li>
+  <li>Individual file root names are included in the file flist.dat</li>
+</ul>
+;written by wqd<br>
+;================================================================<br>
+; Merge the events:<br>
+instr='acisi_low' ; for the GC project<br>
+cenvset,instr <br>
+gradec=[3./60.,-4./60.] ;center coordinates<br>
+;======================================================<br>
+;setup various parameters (including band weights for exposure maps):<br>
+sou_det_params,instr,dim,block,ccd,bmin,bmax <br>
+&nbsp;<br>
+mblock=3<br>
+mdim=long([1,1]*1024)<br>
+;----------------------------------------<br>
+;mtype=0&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; ;for Ra and Dec &nbsp;
+coordinates<br>
+mtype=1 ;for Galactic coordinates<br>
+flist='flist.dat'<br>
+subfac=1.5<br>
+pixsize=!size_pixel/3600<br>
+del=pixsize*mblock ;pixel size in units of deg<br>
+;generate a fits header<br>
+get_fitshead,0,ph,del=pixsize,crval=gradec,dim=mdim*mblock,type=2,equi=2000,/galactic
+;for Galactic coordinates<br>
+get_fitshead,0,mh,ph,del=del,dim=mdim,type=4 ;real image header<br>
+<br>
+;read events<br>
+fdir='../xdata/'<br>
+row = {x:0.,y:0.,energy:0,detx:0,dety:0,mx:0.,my:0.,fid:0}<br>
+list_merge,flist,ph,mlist,mtype=mtype,ftail='.fits',fdir=fdir,row=row,ccd=[0,1,2,3]<br>
+;just to have a look of the image:<br>
+list_image,mlist,1,1,cb,mdim(0),mdim(1),block=mblock,emin=1000,emax=8000,det='m'<br>
+tv,bscale(cb,0,3)<br>
+;===============================================================<br>
+;construct images in multiple bands:<br>
+detagname='m'<br>
+xmin=1 &amp; ymin=1<br>
+cim=intarr(mdim(0),mdim(1),4)<br>
+for k=0,3 do begin &amp;&nbsp;
+list_image,mlist,xmin,ymin,cb,mdim(0),mdim(1),block=mblock,emin=bmin(k),emax=bmax(k),det=detagname
+&amp; cim(*,*,k)=cb &amp; endfor<br>
+;-------------------<br>
+;construct exposure maps<br>
+flist='flist.dat' ;including only obs that cover the field<br>
+tim=fltarr(mdim(0),mdim(1),4)<br>
+for k=1,4 do begin &amp;
+cast_main,flist,mh,t,ftail='_i',mtype=mtype,fdir='../xdata/',eband=[k]
+&amp;tim(*,*,k-1)=t &amp; endfor ;for mblock &lt; sqrt(2)*block, e.g.,
+block=3 for ACIS-I; otherwise add the keyword ,/mtoi<br>
+;=========================================================================<br>
+;only for merge with other merged events and exposure maps (e.g.,
+different surveys in the same general region):<br>
+evtfname='/d2/gc_new/merge/gc_new_events.fits'<br>
+list_xray,evtfname,gclist,hdr=h2<br>
+mrefp=sxpar(ph,'crpix*')<br>
+mcrval=sxpar(ph,'crval*')<br>
+mnaxis=sxpar(ph,'naxis*')<br>
+mtype=1 ;for conversion to Galactic coordinates<br>
+list_cast,mcrval(0),mcrval(1),h2,gclist,ls,mrefp=mrefp,mtype=1,naxis=naxis,/xyreal,detagname='m'<br>
+mlist=[ls,mlist]<br>
+list_image,mlist,1,1,cb,mdim(0),mdim(1),block=mblock,emin=1000,emax=8000,det='m'<br>
+tv,bscale(cb,0,3)<br>
+;------------------<br>
+;merge the gcs data (already in the Galactic coor)<br>
+evtfname='/d2/gcs/gcs_merge/gcs_events.fits'<br>
+list_xray,evtfname,gclist,hdr=h2<br>
+list_cast,mcrval(0),mcrval(1),h2,gclist,ls,mrefp=mrefp,mtype=0,naxis=naxis,/xyreal,detagname='m'<br>
+<br>
+t2=readfits('/d2/gcs/gcs_merge/gcs_exp.fits',th2)<br>
+;galactic to galacitc<br>
+for k=1,4 do begin &amp; cast,'',mh,outa=t,ina=t2(*,*,k-1),inh=th2
+&amp;tim(*,*,k-1)=tim(*,*,k-1)+t &amp; endfor<br>
+;=========================================================================<br>
+;create background images with proper exposure normalizations<br>
+list_merge,'b'+flist,ph,mblist,frav,fdecv,bexpt,mtype=mtype,ftail='.fits',fdir=fdir,row=row,ccd=[0,1,2,3]<br>
+<br>
+list_sel,'flist.dat',mblist,msel,ftail='.fits',fdir=fdir,eband=eband,mdim=mdim,mblock=mblock,bmin=bmin,bmax=bmax,detagname=detagname,cim=bsa,bexpt=bexpt
+,souf=soufile,subfac=subfac<br>
+<br>
+;do the similar merge for the background events as for the events:<br>
+evtfname='/d2/gc_new/merge/gc_new_events.fits'<br>
+mblist=[ls,mblist]<br>
+<br>
+bim=intarr(mdim(0),mdim(1),4)<br>
+for k=0,3 do begin &amp;&nbsp;
+list_image,mblist,xmin,ymin,cb,mdim(0),mdim(1),block=mblock,emin=bmin(k),emax=bmax(k),det=detagname
+&amp; bim(*,*,k)=cb &amp; endfor<br>
+;===============================================================<br>
+; write the merged events and exposure maps into fits files<br>
+; first get the reference headers for the two extensions:<br>
+rfname=fdir+'/4500_evt2file_new_clean.fits' ;just a reference herder;
+change the file name accordingly<br>
+fname='gcdeep_events.fits'<br>
+writefits_evt,fname,mlist,gradec,(mdim*mblock+1)*0.5,pixsize,rfname,h1=h1<br>
+writefits,'gcdeep_exp.fits',tim,mh<br>
+fname='gcdeep_bevents.fits'<br>
+writefits_evt,fname,mblist,gradec,(mdim*mblock+1)*0.5,pixsize,rfname,h1=h1<br>
+<br>
+;Try to read the merged events for the future use<br>
+list_xray,'gcdeep_events.fits',mlist,hdr=h1<br>
+;=========================================================================<br>
+;construct the streak map (if there is any) to be subtracted from the
+count map:<br>
+sim=fltarr(mdim(0),mdim(1),4)<br>
+for k=1,4 do begin &amp;
+cast_main,'sflist.dat',mh,b,ftail='_s',mtype=mtype,eband=[k],/nonorm,avgkey=0,fdir='../xdata/'
+&amp;sim(*,*,k-1)=b*(mblock/float(block))^2 &amp; endfor<br>
+<br>
+;test:<br>
+g5=psf_gaussian(fwhm=5,/norm,npix=121)<br>
+b=total(imdiv(cim-sim,tim),3)<br>
+tv,bscale(convolve(b,g5),0,1.e-4)<br>
+;===============================================================<br>
+;get the streak-subtracted image:<br>
+c=total(cim-sim,3)<br>
+writefits,'c_b.fits',c,mh<br>
+for k=0,3 do
+writefits,'c_'+strtrim(k+1,2)+'.fits',cim(*,*,k)-sim(*,*,k),mh <br>
+for k=0,3 do writefits,'t_'+strtrim(k+1,2)+'.fits',tim(*,*,k),mh <br>
+for k=0,3 do writefits,'b_'+strtrim(k+1,2)+'.fits',bim(*,*,k),mh <br>
+$PUBDIR/cal_scripts/mcsmooth.e "1 2 3 4" 3. 3.5 b &amp;<br>
+<br>
+;get a subset of the images:<br>
+smh=mh<br>
+xlo=60 &amp; xhi=mdim(0)-1 &amp; ylo=102 &amp; yhi=mdim(1)-1-102<br>
+sxaddpar,smh,'CRPIX1',(mdim(0)+1.)*0.5-xlo<br>
+sxaddpar,smh,'CRPIX2',(mdim(1)+1.)*0.5-ylo<br>
+c=total(cim-sim,3)<br>
+writefits,'c_b.fits',c(xlo:xhi,ylo:yhi),smh<br>
+for k=0,3 do
+writefits,'c_'+strtrim(k+1,2)+'.fits',cim(xlo:xhi,ylo:yhi,k)-sim(xlo:xhi,ylo:yhi,k),smh
+<br>
+for k=0,3 do
+writefits,'t_'+strtrim(k+1,2)+'.fits',tim(xlo:xhi,ylo:yhi,k),smh <br>
+$PUBDIR/cal_scripts/mcsmooth.e "1 2 3 4" 3. 3.5&nbsp; &amp;<br>
+<br>
+&nbsp;edge=[80,90,964-1-4,820-1-50]<br>
+read_mimages,4,mh,fs,a,mv,cor=cor,edge=edge,mdim=mdim<br>
+<br>
+a=fltarr(mdim(0),mdim(1),3)<br>
+;for 1+2,3, 4 bands (increasing the low intensity by exploring the log
+curve at low flux ends):<br>
+amv=-(mv(0)+mv(1))*0.8<br>
+a(*,*,0)=bscale(alog10(fs(*,*,0)+fs(*,*,1)+amv),alog10(mv(0)+mv(1)+amv),alog10((mv(0)+mv(1)+amv)*100))<br>
+amv=-mv(2)*0.88<br>
+a(*,*,1)=bscale(alog10(fs(*,*,2)+amv),alog10(mv(2)+amv),alog10((mv(2)+amv)*80))<br>
+amv=-mv(3)*0.88<br>
+a(*,*,2)=bscale(alog10(fs(*,*,3)+amv),alog10(mv(3)+amv),alog10((mv(3)+amv)*80))<br>
+cont_grey,a,mh,cor=cor,true=3,mr=0,/ps,/nocon,/full,f_c=-1,barf=0.<br>
+<br>
+s=tvrd(0,0,true=3) &amp; write_jpeg,'image_rgb.jpg',s,true=3<br>
+<br>
+;output the plot:<br>
+set_plot,'ps'<br>
+loadct,0<br>
+device,bits=8,/land,color=1,xsize=16.,ysize=16.*mdim(1)/mdim(0),yoff=26,xoff=2<br>
+cont_grey,a,mh,cor=cor,true=3,mr=0,/ps,/nocon,/full,f_c=-1,barf=0.<br>
+device,/close<br>
+$gv idl.ps<br>
+set_plot,'x'<br>
+<br>
+soufile='../sou/sou_merge_arches.fits'<br>
+source_plot,soufile,cor,mh,slow=0,probth=probth,/fits,s_c=!d.n_colors-1,slist=slist,sym=1,psym=7&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+<br>
+;=====================================================================<br>
+;remove source events<br>
+soufile='../sou/sou_merge_arches.fits'<br>
+list_sel,flist,mlist,msel,ftail='.fits',fdir=fdir,souf=soufile,subfac=subfac,eband=eband
+<br>
+smlist=mlist(msel)<br>
+list_image,smlist,xmin,ymin,cb,mdim(0),mdim(1),block=mblock,det=detagname,emin=bmin(0),emax=max(bmax)<br>
+tv,bscale(cb,0,5)<br>
+<br>
+;construct source-removed images:<br>
+nb=4<br>
+csa=intarr(mdim(0),mdim(1),nb)<br>
+for k=0,3 do begin
+list_image,smlist,xmin,ymin,cb,mdim(0),mdim(1),block=mblock,det=detagname,emin=bmin(k),emax=bmax(k)
+&amp; csa(*,*,k)=cb<br>
+;---------------------<br>
+;construct a source removing exposure maps:<br>
+tsim=fltarr(mdim(0),mdim(1),4)<br>
+for k=1,4 do begin &amp;
+cast_main,flist,mh,t,ftail='_i',mtype=mtype,fdir=fdir,soufile=soufile,subfac=subfac,flow=flow,eband=[k]&nbsp;
+&amp;tsim(*,*,k-1)=t &amp; endfor<br>
+writefits,'arches_dif_exp.fits',tsim,mh<br>
+;create background images with proper exposure normalizations<br>
+list_merge,'b'+flist,ph,mblist,frav,fdecv,bexpt,mtype=mtype,ftail='.fits',fdir=fdir,row=row,ccd=[0,1,2,3]<br>
+list_sel,'flist.dat',mblist,msel,ftail='.fits',fdir=fdir,eband=eband,mdim=mdim,mblock=mblock,bmin=bmin,bmax=bmax,detagname=detagname,cim=bsa,bexpt=bexpt
+,souf=soufile,subfac=subfac<br>
+fname='arches_bevents.fits'<br>
+FXWRITE,fname,h0<br>
+fxbhmake,h1,n_elements(mblist),'events',/init<br>
+sxaddpar,h1,'tctyp11','RA--TAN' <br>
+sxaddpar,h1,'tcrvl11',gradec(0)<br>
+sxaddpar,h1,'tcrpx11',(mdim(0)*block+1)*0.5<br>
+sxaddpar,h1,'tcdlt11',-pixsize<br>
+sxaddpar,h1,'tctyp12','DEC--TAN'<br>
+sxaddpar,h1,'tcrvl12',gradec(1)<br>
+sxaddpar,h1,'tcrpx12',(mdim(1)*block+1)*0.5<br>
+sxaddpar,h1,'tcdlt12',pixsize<br>
+mwrfits,mblist,fname,h1<br>
+<br>
+;background images:<br>
+list_sel,'flist.dat',mblist,msel,ftail='.fits',fdir=fdir,eband=eband,mdim=mdim,mblock=mblock,bmin=bmin,bmax=bmax,detagname=detagname,cim=ba,bexpt=bexpt&nbsp;
+&nbsp;<br>
+;===============================================================<br>
+a=imdiv(cim-ba-sim,tim)<br>
+b=convolve(total(a,3),g5)<br>
+tv,bscale(b,0,1.e-5)<br>
+<br>
+</body>
+</html>

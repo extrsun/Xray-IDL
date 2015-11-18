@@ -1,0 +1,79 @@
+Color plot using Kodak:
+lpr -Pkodak filename. Can't use -# keyword yet.
+Contact Anne Hammer
+
+sample commands to create a color postscript file:
+set_plot,'ps'
+help,/device
+device, color=1, bits_per_pixel=8
+tv,image
+device,/close
+gs idl.ps  ;using ghostview to view an postscipt file.
+
+There is differences in the number of levels in colors for different devices.
+If a color table is called after set_plot, the color table will be interpolated
+to accormodate the levels of the current device. Therefore, the color table
+should be called always after a device have been set. For devive 'ps', the
+color tables can be different for plots even in the same page. This however
+is not the case for device='x'. Two key words f_color and c_colors should
+be used to specify the colors of the plot frame and contours. They should be
+adjusted according to the current color table used. 
+
+A color table can be adjusted by using palette.pro. For a hardcopy, the lowest
+level (or the background), which can often be used to draw contours,
+is better to be white, and the highest level (used for drawing the frame and
+possibly  the contours) is better to be black. The advantage with the choice
+for the contour color to be same as the background is that contours will not
+be seen in areas where data are missing and have been set to the background
+level. This is particularly true when a color printer is used because the 
+while contours can always be seen in area with available data.
+
+device,/landscape ,/color, bits_per_pixel=8
+!p.charsize=1.5
+loadct_self,11 cont_grey,mnhce,hmnhce,mnhcs,lev=[5,10,20,30,40,50,60,70,80,90],corner=corner,spline=0.0002,/greylog,sub='',xtic=4,ytic=4,greymin=1.,ny1=0.345,nx1=0.52,nx2=0.895,xtitl='',ytit='',/xbar,c_colors=0,f_color=!d.n_colors-1,/pscolor
+cont_grey,irce,hmnhce,lev=[4,10,20,30,50,100,200],spline=0.001,corner=corner,fmc,sub='',xtic=4,ytic=4,nx1=0.145,ny1=corner(2),ny2=corner(3),xtitl='',ytit='',/xbar,c_colors=0,f_color=!d.n_colors-1,/pscolor
+
+Blackwhite plot:
+!p.multi=[0,2,0,0,0]
+set_plot,'ps'
+device,/land,color=0
+loadct,0 
+
+cont_grey,mnhce,hmnhce,mnhc,lev=[5,10,20,30,40,50,60,70,80,90],corner=corner,spline=0.0002,/greylog,sub='',xtic=4,ytic=4,greymin=1,ny1=0.345,nx1=0.52,nx2=0.895,xtitl='',ytit='',/xbar,f_color=0,c_colors=!d.n_colors-1,barshiftx=-0.185,barshifty=0.01
+cont_grey,irce,hmnhce,lev=[4,10,20,30,50,100,200],spline=0.001,corner=corner,fmc,sub='',xtic=4,ytic=4,nx1=0.145,ny1=corner(2),ny2=corner(3),xtitl='',ytit='',/xbar,f_color=0,c_color=!d.n_colors-1,barf=0.
+device,/close
+$view idl.ps
+
+Four color plots in one page:
+fscss=fscs
+fscss(where(mnhcs le 0.))=0.
+device,/port, bits_per_pixel=8,color=1
+device,xs=21.5,ys=28.5,xo=0.,yo=-0.
+!p.charsize=1.2
+loadct_self,12
+!p.multi=[0,2,2,0,0]
+cont_grey,irce,hmnhce,lev=[4,10,20,30,50,100,200],spline=0.001,corner=corner,fmc,sub='',xtic=4,ytic=4,nx1=0.52,ny1=0.57,nx2=0.9,xtitl='',ytit='',/xbar,c_colors=0,f_color=!d.n_colors-1,barshiftx=-0.19,barshifty=0.01,/pscolor,ntoppix=2
+dx=corner(1)-corner(0)
+dy=corner(3)-corner(2)
+cont_grey,irce,hmnhce,lev=[4,10,20,30,50,100,200],spline=0.001,corner=corner,fscss,sub='',xtic=4,ytic=4,nx1=corner(0)-dx,ny1=corner(2),ny2=corner(3),xtitl='',ytit='',/xbar,c_colors=0,f_color=!d.n_colors-1,barf=0.,/pscolor,ntoppix=2
+cont_grey,mnhce,hmnhce,mnhc,lev=[5,10,20,30,40,50,60,70,80,90],corner=corner,spline=0.0001,sub='',xtic=4,ytic=4,greymin=1.,nx1=corner(1),ny1=corner(2)-dy,ny2=corner(2),xtitl='',ytit='',/xbar,c_colors=0,f_color=!d.n_colors-1,barf=0.,/pscolor,ntoppix=2
+cont_grey,irce,hmnhce,lev=[4,10,20,30,50,100,200],spline=0.001,corner=corner,fhc,sub='',xtic=4,ytic=4,nx1=corner(0)-dx,ny1=corner(2),ny2=corner(3),xtitl='',ytit='',/xbar,c_colors=0,f_color=!d.n_colors-1,barf=0.,/pscolor,ntoppix=2
+device,/close
+$view idl.ps
+
+Blackwhite:
+device,/port, bits_per_pixel=8,color=0
+device,xs=21.5,ys=28.5,xo=0.,yo=0.
+!p.charsize=1.2
+loadct,0
+!p.multi=[0,2,2,0,0]
+cont_grey,irce,hmnhce,lev=[4,10,20,30,50,100,200],spline=0.001,corner=corner,fmc,sub='',xtic=4,ytic=4,nx1=0.52,ny1=0.57,nx2=0.9,xtitl='',ytit='',/xbar,f_color=0,c_colors=!d.n_colors-1,barshiftx=-0.19,barshifty=0.01
+dx=corner(1)-corner(0)
+dy=corner(3)-corner(2)
+cont_grey,irce,hmnhce,lev=[4,10,20,30,50,100,200],spline=0.001,corner=corner,fscss,sub='',xtic=4,ytic=4,nx1=corner(0)-dx,ny1=corner(2),ny2=corner(3),xtitl='',ytit='',/xbar,f_color=0,c_colors=!d.n_colors-1,barf=0.
+cont_grey,mnhce,hmnhce,mnhc,lev=[5,10,20,30,40,50,60,70,80,90],corner=corner,spline=0.0001,/greylog,sub='',xtic=4,ytic=4,greymin=1.,nx1=corner(1),ny1=corner(2)-dy,ny2=corner(2),xtitl='',ytit='',/xbar,f_color=0,c_colors=!d.n_colors-1,barf=0.
+cont_grey,irce,hmnhce,lev=[4,10,20,30,50,100,200],spline=0.001,corner=corner,fhc,sub='',xtic=4,ytic=4,nx1=corner(0)-dx,ny1=corner(2),ny2=corner(3),xtitl='',ytit='',/xbar,f_color=0,c_colors=!d.n_colors-1,barf=0.
+device,/close
+$view idl.ps
+
+

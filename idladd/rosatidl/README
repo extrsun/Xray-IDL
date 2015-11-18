@@ -1,0 +1,55 @@
+Subdirectory:  rosat/software/idl/
+
+09 March 1994
+
+     IDL is currently one means by which Rosat GOs can access the data
+contained within the anciliary and data FITS files (e.g., calibration,
+aspect, housekeeping) for their observations. There are also IDL procedures
+which allow users to perform various analysis tasks (e.g., construction of
+energy dependent mean exposure maps). This file summarizes how to access
+IDL using GOF computers. For futher information on:
+
+     contents of the Rosat IDL library, see     contents.txt
+     Setting up to run IDL at your home inst.   setting_up.txt
+     how to use IDL on GOF computers            gof_guide.txt
+     how to use IDL to read FITS files          fits_guide.txt
+     hints for new IDL users                    new_user_guide.txt
+     IDL news items (an incremental file)       news.txt
+     a history of changes to the IDL library    changes.txt
+        (an incremental file)
+     a basic introduction to IDL                "Introduction to IDL" manual
+                                                    in GOF library
+     IDL in general                             IDL manual in GOF library
+
+The help files can be found in the IDL subdirectory of the GOF
+anonymous ftp account on legacy (128.183.8.233) (rosat/software/idl),
+and also in the ZDOC directories (idl:[lib.rosat.doc],
+/usr1/source/idl/lib/rosat/doc) under the obvious corresponding file
+names. A cookbook of IDL recipes for Rosat can also be found in the Latex
+files (extension .TEX; get all three and run Latex on LX_IDL_RECIPES.TEX,
+then print) and/or the file IDL_RECIPES.ps (all on legacy in software/idl).
+
+     IDL can be run under VMS, Unix, and Ultrix operating systems. At
+present, at the GOF we have licenses to run IDL on the HEASRC cluster
+(VMS), on the rosserv, xtelab, ros9, ros16, and heasfs Sun workstations
+(Unix), and on the legacy Decstation (Ultrix).
+
+     The most recent 2 versions of the ROSAT IDL library are available in
+this directory (as .tar files). Energy-dependent instrument maps (required
+for constructing mean exposure maps for PSPC observations) can be found in
+the calibration areas (caldb:[data.rosat.pspc.cpf], caldb/data/rosat/pspc/cpf)
+in the files det*.fits. The complete set of instrument maps will require
+26,025 blocks or 13.320 Mbytes of disk space.
+
+For IDL-specific help:  Gail Reichert, NASA-GSFC/USRA
+                        lheavx::reichert
+
+
+For general help/comments/changes:
+
+Gail Rohrbach,  ROSAT GOF          Lab. for High Energy Astrophysics
+ph: 301-286-1516                    Code 664, NASA-Goddard SpFltCntr
+rohrbach@rosserv.gsfc.nasa.gov                   Greenbelt, MD 20771
+
+
+

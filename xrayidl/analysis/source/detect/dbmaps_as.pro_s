@@ -1,0 +1,109 @@
+pro im_fill_enlarge,fmo,tb,fac,cbm,frac=frac
+;+
+; to enlarge a flux image with the empty pixels first filled with 
+; approximate values to avoid the artificial reduction of flux values 
+; at the edges of the image during the expansion of the image, 
+; called by dbmaps_as.pro
+;
+; fmo - the input flux map
+; tb - exposure map used only for locating the unexposed regions
+; fac - the images will be enlarged by this factor
+; cbm - enlarged flux map
+; frac - the lower flux fraction of the pixesl used to estimate the
+; 	filling value (def 1/5.)
+;
+; written by wqd, 4/24/2002
+;-
+if n_elements(frac) eq 0 then frac=1./5
+fm=fmo
+ss=where(tb gt 0.,nbin)
+fmv=fm(ss)
+fmv=fmv(sort(fmv))
+ss=where(tb le 0.,nss)
+if nss ne 0 then fm(ss)=avg(fmv(0:nbin*frac))
+cbm=image_comp(fm,fac)*(1./fac^2)
+return
+end
+
+pro dbmaps_as,ls,xmin,ymin,block,dim,bmin,bmax,tb,tbs,ta,cbm,cbma,cbo=cbo,fra=fra,npo=npo,npd=npd,th1=th1
+;+
+; create a set of diffuse (source-removed) background maps
+; to be used for map_ratio.pro
+;
+; ls - count list
+; xmin,ymin - lower left corner pixel position
+; block - image block factor
+; dim - dimension of the image
+; bmin, bmax - vectors containing lower and upper limits of the energy bands
+;		in units of eV for Chandra data
+; tb - exposure mask
+; tbs - source region removed exposure mask
+; ta - a stack of exposure maps in individual energy bands
+; cbm - the output background map
+; cbma - the output  background map in individual energy bands
+; cbo - broad band count map; if not given, the sum of the count maps in
+;		individual bands will be used
+; fra - if given, the images will be binned by this factor
+; npo, npd,th1 - parameters used by adp_gs_m.pro
+; 
+; written by wqd, April 24, 2002
+;-
+if n_params() eq 0 then begin
+print,'Calling procedure - dbmaps_as,ls,xmin,ymin,block,dim,bmin,bmax'
+print,',tb,tbs,ta,cbm,cbma,cbo=cbo,fra=fra,npo=npo,npd=npd,th1=th1'
+return
+endif
+if n_elements(fra) eq 0 then fra=4
+if n_elements(npo) eq 0 then npo=3.
+if n_elements(npd) eq 0 then npd=0.1
+if n_elements(th1) eq 0 then th1=10
+
+sz=size(ta)
+nb=sz(3)
+ca=intarr(sz(1),sz(2),nb)
+
+for k=0,nb-1 do begin
+	list_image,ls,xmin,ymin,cc,dim,block=block,emin=bmin(k),emax=bmax(k)
+	ca(*,*,k)=cc
+endfor
+if n_elements(cbo) eq 0 then cb=fix(total(ca,3)) else cb=cbo
+tas=ta
+
+;remove source regions in the images:
+ss=where(tbs le 0,nss)
+if nss ne 0 then begin
+	cb(ss)=0
+	for k=0,nb-1 do begin
+		imtemp=ca(*,*,k)
+		imtemp(ss)=0
+		ca(*,*,k)=imtemp
+		imtemp=tas(*,*,k)
+		imtemp(ss)=0
+		tas(*,*,k)=imtemp
+	endfor
+endif
+;rebin the images:
+if fra ne 1 then begin
+	cb=image_comp(cb,1./fra)
+	tbtemp=image_comp(tb,1./fra)
+	imtemp=fltarr(sz(1)/fra,sz(2)/fra,nb*2+1)
+	imtemp(*,*,0)=image_comp(tbs,1./fra)
+	for k=0,nb-1 do imtemp(*,*,k+1)=image_comp(tas(*,*,k),1./fra)
+	for k=0,nb-1 do imtemp(*,*,k+1+nb)=image_comp(ca(*,*,k),1./fra)
+endif 
+;smooth the images:
+adp_gs_m,cb,imtemp,cbm,ims,npo=npo,npd=npd,th1=th1,filter=tbtemp
+
+;enlarge the images:
+cbma=fltarr(sz(1),sz(2),nb)
+fm=imdiv(cbm,ims(*,*,0))
+if fra ne 1 then im_fill_enlarge,fm,tbtemp,fra,cbm,frac=frac else cbm=fm
+cbm=cbm*tb
+for k=0,nb-1 do begin
+	fm=imdiv(ims(*,*,nb+k+1),ims(*,*,k+1))
+	if fra ne 1 then im_fill_enlarge,fm,tbtemp,fra,imtemp,frac=frac else $
+		imtemp=fm
+	cbma(*,*,k)=imtemp*ta(*,*,k)
+endfor
+return
+end

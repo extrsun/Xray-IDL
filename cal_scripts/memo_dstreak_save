@@ -1,0 +1,104 @@
+;=========================================================
+; IDL procedure to produce a background map (corresponding to the exposure map)
+; that includes the significant streak contribution in a certain energy band.
+; This procedure is meant to be used in the situation where the ciao 
+; algorithm (http://asc.harvard.edu/ciao/threads/acisreadcorr/)
+; is problemantic (e.g., streaks produced strong diffuse emission).
+;
+;*Requirements:
+; cleaned evt2 file in ../xdata  as described in memo_cal
+; exposure maps in ../xdata as described in memo_cal
+; source list in ../sou  as described in memo_anal
+;
+;*Outputs:
+; evtroot+'_s'+strtrim(band,2)+'.fits'
+;
+; The procedure may be run by copying and pasting, except for
+; commands marked with "change accordingly!!!"
+;
+; written by wqd, Jan, 1, 2003
+;=========================================================
+; need to be modified to remove the exposure correction!!!
+;
+;basic setup:
+;move a dedicated directory (e.g., dstreak) at the same level as xdata
+instr='acisi'				;need to change accordingly!!!
+cenvset,instr
+;see if the required files are available
+$ls -ltr ../xdata/*_i?.fits ../xdata/*_clean.fits ../sou/*_map70BSH
+evtroot='evt2file_new_clean'
+soufname='../sou/'+evtroot+'_map70BSH'
+evtfname='../xdata/'+evtroot
+file_params,evtfname+'.fits',imhdr,fra,fdec,expt,nra,ndec,xoff,yoff,roll,hdr=hdr
+;evt_image,evtfname,instr,carr,tarr,hdr=imh,/nofits,list=listo,xmin=xmin,ymin=ymin,bmin=bmin,bmax=bmax
+evt_image,evtfname,instr,carr,/noexp,/nofits,list=listo,xmin=xmin,ymin=ymin,bmin=bmin,bmax=bmax
+loadct_self,18
+g3=psf_gaussian(fwhm=6,/norm,npix=121) ;smoothing kernal for test plots
+bnorm=1.      ;normalizing the auto-determined streak flux
+fcton=5       ;signal-to-noise ratio for the adaptive flux calculation
+stonth=3.     ;# of sigma above which to consider the streak contribution
+;---------------
+;read source parameters for subtraction
+sou_fits_info,soufname,slist,/all,flow=flow
+
+;determine which ccd contains the streak:
+;If the streak is at the ccd gap, it is better to include both chips
+;s=where(listo.ccd_id eq 3)  			;need to change accordingly!!!
+s=where(listo.ccd_id eq 1 or listo.ccd_id eq 3) ;need to change accordingly!!!
+list_image,listo(s),xmin,ymin,im,512,block=6 ;,emin=emin,emax=emax
+tv,bscale(im,0,5) ;just for testing
+list=listo(s)
+
+xrange=0   ; select only the pixels with column-mean fluxes > stonth defined 
+		;in streak_removeal_main
+;xrange=[100,380] ;streak is in a predefined range
+
+;dimension of the de-rotated ccd image
+dimx=2048 & dimy=1024   ;for two ccd configuration
+;dimx=1024 & dimy=1024   ;for one ccd configuration
+block=2 ;block=1 possibly for a very bright or deeply exposed streak
+window,xsize=dimx/block,ysize=dimy/block 
+
+;region for calculating the flux distribution
+x1=0 & x2=(dimx-1)/block & y1=0 & y2=(dimy-1)/block
+;x1=178 & x2=298 & y1=0 & y2=511
+
+;emin=1000 & emax=2000
+;list_image,list,xmin,ymin,im,512,block=6,emin=emin,emax=emax
+;s=where(list.energy gt emin and list.energy le emax and list.ccd_id eq ccdid)
+
+band=2 ;1,2,3, or 4 - energy band needs to change accordingly!!!
+im=carr(*,*,band-1)
+;tim=tarr(*,*,band-1)
+;tv,bscale(image_comp(im,0.5),0,3)
+emin=bmin(band-1) & emax=bmax(band-1)
+s=where(list.energy gt emin and list.energy le emax)
+ls=list(s)
+;list_image,ls,xmin,ymin,c,512,block=6,emin=emin,emax=emax
+;tv,bscale(c,0,3)
+expfname='../xdata/'+evtroot+'_i'+strtrim(band,2)+'.fits'
+outfname=evtroot+'_s'+strtrim(band,2)+'.fits' ;output file name
+
+;run the main program which outputs the background fits file
+newpexcl=1    ;calculate the excluding region for the flux calculation
+		;newpexcl=0 will be set by streak_removal_main
+		;need to change accordingly!!!
+;nofile=1 ;if =1, no file output; if = 0, file output
+.run streak_removal_main
+	; for M82 Obs 361, exclude the bottom 1/3 chips
+;--------------------
+;just for testing:
+;tv,bscale(cs,0,2)
+tv,bscale(ccdbim)
+a=convolve(imdiv(ccdim-ccdbim,tbo),g3)
+tv,bscale(a*1.e7,0,1)
+tv,bscale(convolve(image_comp(im-bmap,0.5)*4,g3),0,1)
+
+flux=flux*1.e10
+eflux=eflux*1.e10
+mflux=mflux*1.e10
+sh_plot,dis,flux,eflux,dis*0.+mflux,xrang=[0,dimx],xtit='Column number',ytit='Counts pixel!U-1!N 10!U10!Ns!U-1!N',psym=1
+oplot,dis(ss),flux(ss),psym=2 ;selected bins
+device,/close
+$gv idl.ps
+

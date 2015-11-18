@@ -1,0 +1,70 @@
+
+**************************************************************************
+
+15 July 1992
+
+For local users of IDL:
+
+     A new way to define the IDL_PATH variable (on the HEASRC cluster only)
+is being tested. If you are currently using (on HEASRC) any of the new
+routines that use the new FITS readers, then you should try this out! To do
+so, just type (*before* getting into IDL): 
+
+$ define idl_path xanadu:[idl_lib.rosat.experimental], -
+  "+xanadu:[idl_lib.idlaul]", -
+  "@idl_dir:[lib]userlib.tlb"
+
+This supersedes the previous definition of IDL_PATH in zcom:idldef.com.
+(If you are using zcom:idldef.com, then obviously you want to redefine
+IDL_PATH *after* typing @zcom:idldef.)
+
+     If you are typing @newfits.setup once you get into IDL, then it is
+important that you use the new definition for IDL_PATH. Otherwise, IDL may
+not compile the newest versions of all of the routines.
+
+     These remarks are of interest only to IDL users on the HEASRC cluster.
+If you only use IDL on the Suns, then you can safely ignore them.
+
+     Please report any problems to Gail Reichert.
+
+
+**************************************************************************
+
+5 June 1992
+
+     New general FITS readers are now available in the IDL Astronomical
+Users' Library. These allow ASCII and Binary table extensions to be read
+directly from the FITS file. Rosat library procedures which used the old
+FITS readers (i.e., those which read the files created by DFITSRD) have 
+been modified to use these new readers (and are *much* faster as a result). 
+These procedures are:
+
+     rsaspect, rschecktsi, rsevrates, rsgetasp, rsgetevr, rsgethkb, 
+     rsgethksta, rsorbit, and rsorb_pos
+
+The procedures have not (yet) been added to the experimental library.
+Local users who wish to try them out may do so by getting into IDL,
+and then typing 
+
+IDL> @explib:newfits.setup      (VMS)     or 
+IDL> @$EXPLIB/newfits.setup     (Unix)
+
+which will compile new versions of these procedures. To return to using the
+old procedure (e.g., rsaspect), type
+
+IDL> .run explib:rsaspect       (VMS)     or
+IDL> .run $EXPLIB/rsaspect      (Unix)
+
+NOTE: The new procedures read data from the FITS files directly. IT IS NO
+LONGER NECESSARY TO CONVERT THESE FILES USING DFITSRD. The new versions
+will not work with files created using DFITSRD.
+
+     We plan to add these routines to the experimental library soon.
+
+     There have been substantial changes to the library! A number of new
+procedures have been added; see Contents.txt in the doc subdirectory, or
+use DOC_LIST. A specific history of changes/additions can be found in
+Changes.txt. These help files can also be found in the IDL subdirectory in
+the GOF anonymous ftp account (/home/heasfs/ftp/pub/IDL) under the obvious
+corresponding file names. 
+**************************************************************************

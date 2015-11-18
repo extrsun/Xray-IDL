@@ -1,0 +1,47 @@
+ Contents of the Local ROSAT IDL Routines
+
+Analysis [.analysis]
+
+filter_sgti - select indeces (in an input time vector) covered by a "good
+		time intervals
+filter_spatial - conduct a spatial filtering of a photon list with an input
+		spatial filter
+filter_time - conduct a time filtering
+get_bimage - get a broad band image (e.g. in channel interval R4-R7) 
+get_edge - get the boundaries of an image partially covered by an array
+get_image - get various types of images, including exposure, count, source
+		subtracted exposure, flat fielding and mask image.
+get_interval - determine time intervals in a time vector
+getlistimage - get a photon list and the corresponding image
+hist_area - get the histogram of area as a function of off axis
+image_add - a function used to add images to an array
+image_center - determine the center of an observation
+image_comp - compress or expand an image 
+image_cut - cut an inner circle or an area outside a radius from an image
+iras_sub
+
+Shadow experiment [rosat.shadow]
+bin_pixel - select pixels in an image according to the selected bins
+		in an array which can be on different scales.
+dis_flux - calculate an one dimension distribution of X-ray surfance brightness
+		of an image
+fit_ab - conduct a fit of images (upto three different energy bands) to an
+	 imput absorbing gas distribution (e.g., an IRAS 100um image)
+get_opacity - get broad energy band absorption as a function of column density
+image_comb - form arrays containing three images in three different energy 
+		bands
+int_opacity - get an integrated opacity
+map_nh - derive an absorbing gas column density map from X-ray absorption as
+		observed in an X-ray image
+opacity - read a file containing opacity data for a particular band and
+		emission spectrum (the file is derived from XSPEC)
+plot_ab - plot the model fit to the abservaed flux as a function of opacity
+sel_data - form count, back, time vectors from selected pixels in corresponding
+		images. (called by fit_ab)
+
+
+Utility [rosat.utility]
+min_image - get minimum values and locations in individual columns or rows
+		in an image
+
+

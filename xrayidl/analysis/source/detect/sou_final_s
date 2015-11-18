@@ -1,0 +1,83 @@
+;sou_final
+; calculate hardness ratios of selected sources and generate output table and
+; plots
+;================================
+if n_elements(slist) eq 0 then sou_fits_info,soufile,slist,/all
+;Hardness ratio analysis:
+; with option for an output of the final source list into a nice LaTex format
+; only sources with slow > hrslow are calculated
+;probth=-8
+probth=-7 ;for single observation
+hrslow=4.
+;hr_out,slist,hr,hr2,hre,hr2e,outf=soufile+'_out',hrslow=4,probth=probth
+hr_cal,slist,slist,hr,hre,hr2,hr2e,hr1,hr1e,outf=soufile+'_hr',hrslow=hrslow,probth=probth,nband=nband,soufile=soufile
+;hr_out,slist,slist,hr,hre,hr1,hr1e,hr2,hr2e,outf=soufile+'_hr',texf=soufile+'_hr.tex',hrslow=hrslow,probth=probth,nband=nband
+hr_out,slist,outf=soufile+'_hr',texf=soufile+'_hr.tex',nband=nband,hrth=hrth
+sn=slist.sn
+
+;plot color-color diagram:
+!x.style=1
+!y.style=1
+;========================================
+;Hardness ratios:
+s2=where(hre lt 0.2 and hr2e lt 0.2,ns2)
+print,ns2,'sources are selected for the HR2 plot (s2): '
+print,s2+1
+if noplot eq 0 then begin
+plot_xy,hr(s2),hr(s2)-hre(s2),hr(s2)+hre(s2),hr2(s2),hr2(s2)-hr2e(s2),hr2(s2)+hr2e(s2),xrang=[-1.2,1.2],yr=[-1.2,1.2],xt='HR',yt='HR2'
+; model hardness ratios
+hr_model,vpfname,/noer,thick=3,[1,2,3],[1,10,30,100,300],hrch=2
+hr_model,vrfname,/noer,[0.3,1,3,10],[1.,10,30,100,300],hrch=2
+xyouts,hr(s2)-0.15,hr2(s2)+0.05,sn(s2)
+endif
+
+if nband eq 4 then begin
+	s1=where(hre lt 0.2 and hr1e lt 0.2,ns1)
+	print,ns1,' are selected for the HR1 plot (s1): '
+	print,s1+1
+	if noplot eq 0 then begin
+	plot_xy,hr(s1),hr(s1)-hre(s1),hr(s1)+hre(s1),hr1(s1),hr1(s1)-hr1e(s1) $
+	,hr1(s1)+hr1e(s1),xrang=[-1.2,0.6],yr=[-1.2,1.2],xt='HR',yt='HR1'
+	hr_model,vpfname,/noer,thick=3,[1,2,3],[1,10,30,100,300]*0.1,hrch=1
+	hr_model,vrfname,/noer,[0.1,0.3,1,3,10],[1.,10,30,100,300]*0.1,hrch=1
+	xyouts,hr(s1)-0.15,hr1(s1)+0.05,sn(s1)
+	endif
+endif
+;-----------
+if n_elements(hrout) eq 0 then hrout=1
+if hrout ne 0 then  begin
+	set_plot,'ps'
+	device,bits=8,/land,color=1,xsize=18.,ysiz=18,yoff=22,xoff=4
+	cs=0.7
+	device,filename=soufile+'_hr.ps'
+	plot_xy,hr(s2),hr(s2)-hre(s2),hr(s2)+hre(s2),hr2(s2),hr2(s2)-hr2e(s2) $
+	,hr2(s2)+hr2e(s2),xrang=[-1.2,1.2],yr=[-1.2,1.2],xt='HR',yt='HR2'
+	; model hardness ratios
+	hr_model,vpfname,/noer,thick=3,[1,2,3],[1,10,30,100,300],hrch=2
+	hr_model,vrfname,/noer,[0.3,1,3,10],[1.,10,30,100,300],hrch=2
+	xyouts,hr(s2)-0.15,hr2(s2)+0.05,sn(s2)
+	if nband eq 4 then begin
+	plot_xy,hr(s1),hr(s1)-hre(s1),hr(s1)+hre(s1),hr1(s1),hr1(s1)-hr1e(s1) $
+	,hr1(s1)+hr1e(s1),xrang=[-1.2,1.],yr=[-1.2,1.2],xt='HR',yt='HR1'
+	hr_model,vpfname,/noer,thick=3,[1,2,3],[1,10,30,100,300]*0.1,hrch=1
+	hr_model,vrfname,/noer,[0.1,0.3,1,3,10],[1.,10,30,100,300]*0.1,hrch=1
+	xyouts,hr(s1)-0.15,hr1(s1)+0.05,sn(s1)
+	endif
+	device,/close
+	print,soufile+'_hr.ps is created for the color-color diagram!'
+endif 
+;========================================
+device,filename=soufile+'_cm.ps'
+; Overplay of source positions on the broadband image:
+cont_grey,cm,hh,/noc,cor=cor,greymin=greymin,greymax=greymax $
+		,greyl=2,/full,/def,barf=0,f_c=-1,/ps
+source_plot,soufile,cor,hh,slow=0,probth=probth,psym=6.,sym=2,/fits,s_c=!d.n_colors-1
+source_plot,soufile,cor,hh,slow=0,probth=probth,psym=6.,sym=cs,/fits,/sou_no,sn=slist.sn,s_c=!d.n_colors-1
+device,/close
+print,'sou_final.ps is created!'
+;========================================
+set_plot,'x'
+;get the source-removed mask:
+tbs=source_sub_v(tb,nra,ndec,slist.ra,slist.dec,block=block,fac=subfac,/deg,perc=asfrac,psffile=psffile,cra=cra,cdec=cdec)
+
+end

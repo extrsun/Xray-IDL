@@ -1,0 +1,88 @@
+
+  Astronomical Utilities from IDL Astronomical User's Library (November, 1993)
+
+    ADSTRING    :   Format RA and DEC as a character string
+    AIRTOVAC    :   Convert air wavelengths to vacuum wavelengths
+    AITOFF      :   Convert longitude,latitude to X,Y using Aitoff projection
+    AITOFF_GRID :   Create an overlay grid using the AITOFF projection 
+    ARROWS      :   Display "weathervane" directional arrows on an astronomical 
+                    image showing orientation of North and East
+    ASTRO       :   Interactive driver to compute astronomical precession,
+                    or coordinate conversions (calls EULER and PRECESS).
+    A_b         :   Compute interstellar extinction in the B band as a function
+                    of galactic position (as in RC2 catalog, deVaucoulers).
+    BPRECESS    :   Calculate the mean place of a star at B1950.0 on the FK4 
+                    system from the mean place at J2000.0 on the FK5 system
+    CCM_UNRED   :   Deredden an (ultraviolet) flux vector according to the 
+                    parameterization of Cardelli, Clayton, and Mathis 
+    CT2LST      :   Convert from civil time to local sidereal time
+    DATE        :   Convert day of year to a DY-MON-YR string
+    DATE_CONV   :   Function to perform various date format conversions
+    DAYCNV      :   Convert from Julian Date to calender date.
+    DEREDD      :   Deredden Stromgren indices (called by UVBYBETA)
+    EQPOLE      :   Convert longitude,latitude to X,Y using polar equal-area 
+                    projection
+    EQPOLE_GRID :   Create overlay grid using polar equal-area projection
+    EULER       :   Astronomical coordinate system conversions
+    FLAT        :   Correct a galaxy image for inclination effects.
+    FLUX2MAG    :   Convert from flux units to magnitudes
+    GCIRC       :   Compute rigorous great circle distance
+    GET_COORDS  :   Read in angular input in decimal or sexigesimal format
+    GET_DATE    :   Get the current date in DD/MM/YY format (FITS standard)
+    GET_JULDATE :   Get the current Julian date as a double precision scalar
+    GLACTC      :   Convert between galactic and equatorial coordinates at any 
+                    equinox                                     
+    HELIO       :   Give (low-precision) heliocentric coordinates of the 
+                    planets.
+    HELIO_JD    :   Convert geocentric (reduced) julian date to heliocentric 
+                    julian date
+    IMCONTOUR   :   Contour plots with astronomical labeling (either RA,Dec or 
+                    arc distance from the image center
+    IMF         :   Return values for a two component initial mass function
+    JDCNV       :   Convert from calender date to Julian date.
+    JPRECESS    :   Calculate the mean place of a star at J2000.0 on the FK5 
+                    system from the mean place at B1950.0 on the FK4 system
+    JULDATE     :   Convert from calender date to reduced Julian date
+    MAG2FLUX    :   Convert from magnitudes to flux units
+    MOONPOS     :   Compute the RA and Dec of the moon at a given date
+    PLANCK      :   Returns a blackbody flux for a given effective temperature
+    PRECESS     :   Precess RA and Dec to a new equinox
+    PRECESS_CD  :   Precess CD (coordinate description) matrix from a FITS 
+                    header from EPOCH1 to EPOCH2 (called by HPRECESS)
+    QDCB        :   Convert lattitude and longitude or right ascention and 
+                    declination into quad cube data base coordinates
+    QDCB_GRID   :   Produce an overlay of latitude and longitude lines over a 
+                    plot or image on the current graphics device assuming that 
+                    the current plot is a map in the so called quad cube 
+                    projection (see qdcb.pro)
+    RADEC       :   Format RA, Dec as Hours,Min,Sec,Deg,Min,Sec
+    REDSHIFT    :   Interactively convert between redshift, distance, and 
+                    velocity
+    SIXTY       :   Convert decimal number to sexigesimal                 
+    STRINGAD    :   Convert a RA,DEC string to decimal RA and Dec.
+    SUNPOS      :   Compute the RA and Dec of the Sun at a given date
+    TEN         :   Convert sexigesimal number to decimal             
+    TENV        :   Like TEN but will work on a vector of sexigesimal numbers.
+    TICPOS,TICLABELS,TICS,TIC_ONE :  Procedures called by IMCONTOUR to 
+                    determine tic positions for contour plots with 
+                    astronomical labeling.
+    UNRED       :   Deredden an (ultraviolet) flux vector using one of 9 
+                    different extinction curves.
+    UVBYBETA    :   Use Stromgren indices to derive dereddened colors, 
+                    metallicity, and effective Temperature.
+    VACTOAIR    :   Convert vacuum wavelengths to air wavelengths.
+    VOIGT       :   Implementation of the Voigt function
+    WCSSPH2XY   :   Convert spherical (longitude and latitude -- sky) 
+                    coordinates to x and y (map) angular coordinates
+    WCSXY2SPH   :   Convert x and y (map) coordinates to spherical 
+                    (longitude and latitude or sky) coordinates
+    WCS_DEMO    :   Demonstrate the basic capabilities of the routines 
+                    wcssph2xy.pro and wcsxy2sph.pro
+    XYZ         :   Compute heliocentric rectangular coordinates at given 
+                    julian date.
+    YDN2MD      :   Convert day number of the year to year, month,day.
+    YMD2DN      :   Convert year,month,day to day number of the year.
+    ZANG        :   Compute angular size as a function of redshift in a 
+                    Friedman cosmology
+    ZENPOS      :   Compute the RA and Dec of the local zenith at a given date
+

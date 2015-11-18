@@ -1,0 +1,16 @@
+## make_acisbg.par
+## A leading space comments the line out; all lines except in the form 
+## name=value are ignored.
+## bg_x_shift=-10	- coordinate shift in arcsec, if needed
+## bg_y_shift=5
+## Based on Maxim's email(07/13/2004), this two parameters is obsolete.
+## If background coordinate don't mathc the image, one need to
+## rurun acis_process_events on the science file to update the sky coords.
+
+evt_file=evt2file_new_clean.fits
+aoff1_file=aoff.fits
+
+gti_file=gti.fits
+
+bg_file=evt2file_new_clean_b.fits	- this file will be modified
+

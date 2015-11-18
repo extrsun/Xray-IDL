@@ -1,0 +1,71 @@
+pro map_exp,expt,tb,ta,bv=bv,fhead=fhead,mapdir=mapdir,tbw=tbw,tanorm=tanorm $
+,hdr=hdr
+;+
+; create exposure maps from instrument maps, plus a combined exposure map
+; weighted by tbw 
+;
+; expt - live time of the observation (exposure corrected for dead
+;        time). if =0, no normalization will be performed
+; tb - combined exposure map, normalized to the value
+;	at the aiming point
+; ta - array of exposure maps in individual (bv) selected bands, 
+;		normalized to the value at the aiming point
+; bv - selecting vector containing band numbers (def =[1,2,3,4])
+; fhead - the head name of the instrument maps (def = 'expmap')
+; mapdir - the directory in which the instrument maps are located
+;		(def ='')
+; tbw - vector containing the count flux weights in the bands
+;	which depends on the spectral model used for creating the instrument
+;	maps. (def =!tbw defined in sou_det_params)
+;	if tbw=0, output no tb.
+; tanorm - optional output of the normalization that is muliplied to the 
+;	instrument maps to get the exposure maps ta	
+; hdr - fits header for the output exposure maps: if given, the instrument 
+; 	will be re-casted accordingly
+; 
+; written by wqd, 6/28/2001
+;-
+if n_params() eq 0 then begin
+print,'Calling Seq. - map_exp,expt,tb,ta,bv=bv,fhead=fhead,mapdir=mapdir'
+print,',tbw=tbw,tanorm=tanorm,hdr=hdr'
+return
+endif
+
+if n_elements(fhead) eq 0 then fhead='evt2file_new_clean_i'
+if n_elements(mapdir) eq 0 then mapdir=''
+if n_elements(bv) eq 0 then bv=[1,2,3,4]
+nbt=n_elements(bv)
+for k=0,nbt-1 do begin
+	fname=mapdir+fhead+strtrim(bv(k),2)+'.fits'
+	if n_elements(hdr) eq 0 then expmap=readfits(fname) $
+		else begin
+			print,'casting the exposure maps, ...'
+			cast,fname,hdr,outa=expmap
+		endelse 
+	if k eq 0 then begin
+		sz=size(expmap)
+		ta=fltarr(sz(1),sz(2),nbt)
+	endif
+	ta(*,*,k)=expmap
+    endfor
+if expt eq 0 then return ;no normalization to the exposure 
+if n_elements(hdr) eq 0 then begin
+	xaim=(sz(1)-1)*0.5 ;the aiming point is at the center
+	yaim=(sz(2)-1)*0.5
+	ti=ta(xaim,yaim,*)
+endif else begin ;if casted, the aiming point may be no longer at the center
+	ti=fltarr(nbt)
+	for k=0,nbt-1 do ti(k)=max(ta(*,*,k)) ;maxium value as the norm
+endelse	
+tanorm=expt/ti
+for k=0,nbt-1 do ta(*,*,k)=ta(*,*,k)*tanorm(k)
+
+if n_elements(tbw) eq 0 then tbw=!tbw else $
+	if tbw(0) eq 0 then return ;return normalized maps
+tbnorm=tbw(bv-1)/total(tbw(bv-1))
+tb=ta
+for k=0,nbt-1 do tb(*,*,k)=ta(*,*,k)*tbnorm(k)
+if nbt gt 1 then tb=total(tb,3)
+if !debug eq 2 then stop
+return
+end

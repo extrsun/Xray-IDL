@@ -1,0 +1,166 @@
+;++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+;+
+;*NAME:
+; rbp
+;
+;*PURPOSE:
+; Obtain a radial brightness profile around a specified position in an image
+;
+;*CALLING SEQUENCE:
+; rbp,image_c,dist,flux,flux_err,image_t=image_t,block=block
+; ,xc=x,yc=y,radiuslow=radiuslow,radiushi=radiushi,plotoff=plotoff
+; ,image_b=image_b,ringwidth=ringwidth,rvlo=rvlo,rvhi=rvhi
+;
+;*PARAMETERS:
+; INPUTS:
+; image_c - count image or its equivelent 
+; image_t - optional exposure image. If provided, regions with exposure=0 will
+;         not be included in rbp calculation. If not provided, a flat field is
+;		assumed
+; image_b - optional background image (in units of counts). If not provided, 
+;          the background is assumed to have a zero value
+; block - blocksize of the image pixel in units of 0".5
+; xc, yc - respectively,  the x, y pixel positions of the center around which
+;          the rbp will be calculated
+; radiuslow, radiushi - the lower and upper radius limits
+;	(in units of arcsec) of the annulus within which 
+;          the rbp is to be calculated 
+; plotoff - if set, the program will not creat the rbp plot on the screen
+; rvlo,rvhi - lower and upper limits of the dist
+; ringwidth - width of each dist bin
+; expt,back - exposure and background vectors
+; 
+;*OPTIONAL OUTPUTS:
+; dist - the vector contains the distance from the circle center position
+; flux, flux_err - respectively, the vectors contain the rbp and its error 
+;
+;*PROCEDURE:
+; obvious
+;
+;*NOTES:
+;
+;
+;*SUBROUTINES CALLED:
+; tvcircle
+;
+;
+;*MODIFICATION HISTORY:
+; writen Aug 30 1992 (WQD)
+; add a background image option, Aug 29, 1992 (wqd)
+; add the lower and upper limits of the radius. Sept 30, 1993 (wqd)
+; add rvlo,rvhi keywords, May 21, 2005
+;-
+;++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+pro  rbp,image_c,dist,flux,flux_err,image_t=image_t, $
+block=block,xc=x,yc=y,radiuslow=radiuslow,radiushi=radiushi,plotoff=plotoff $
+,image_b=image_b,climit=climit,filter=filter,ee=ee,al=al,expt=expt,back=back,ringwidth=ringwidth,rvlo=rvlo,rvhi=rvhi,rtv=rtv
+;-----------------        =----------------------------------------------
+if n_params() EQ 0 then begin
+print,'CALL SEQUENCE -  rbp,image_c,dist,flux,flux_err,image_t=image_t,block=block'
+print,',xc=x,yc=y,radiuslow=radiuslow,radiushi=radiushi,plotoff=plotoff,image_b=image_b,climit=climit,filter=filter,ee=ee,al=al,expt=expt,back=back,ringwidth=ringwidth,rvlo=rvlo,rvhi=rvhi'
+retall
+endif
+;---------------------------------------------------------------
+if n_elements(block) EQ 0 then block=!block
+sz=size(image_c) 
+szmin=(sz(1) < sz(2))
+if n_elements(radiuslow) eq 0 then rlow=0. $
+	else 	rlow=radiuslow/(!size_pixel*block)
+
+if n_elements(radiushi) eq 0 then rhi=0.5*szmin $
+	else begin
+	rhi=radiushi/(!size_pixel*block)
+	if rhi gt szmin then begin
+	rhi=szmin
+	print,'radius exceeds the half size of the image and is set to be dim/2'
+	endif
+endelse
+if n_elements(x) EQ 0 then x=(sz(1)-1)/2.
+if n_elements(y) EQ 0 then y=(sz(2)-1)/2.
+if n_elements(image_b) eq 0  then image_b=fltarr(sz(1),sz(2))
+if n_elements(climit) eq 0 then climit=0
+if n_elements(image_t) eq 0  then begin 
+image_t=fltarr(sz(1),sz(2))+1. 
+print,'All pixels are considered to be good. No other sources or un-exposed region?'
+print,'The effective exposures in the pixels have been set to be 1'
+endif
+;
+if keyword_set(plotoff) eq 0 then begin
+    if n_elements(rtv) eq 0 then rtv=rhi < 20
+  if rlow ne 0 then tvcircle,rlow,x,y    
+  tvcircle,rtv,x,y      ;draws a circle around the source
+  tvcircle,rhi,x,y    
+endif
+;
+ambin=60./(block*!size_pixel)
+  sambin=ambin^2
+  if n_elements(filter) eq 0 then filter=image_t ;*0.+1
+yn='yes'
+while yn do begin
+  print,'Input number of radial divisions:' & read,rdivs
+  ringwidth=(rhi-rlow)/rdivs
+  rvlo=(rlow+findgen(rdivs)*ringwidth)/ambin
+  rvhi=(rlow+(findgen(rdivs)+1)*ringwidth)/ambin
+;
+  	count=fltarr(rdivs)
+	back=fltarr(rdivs)
+  	expt=fltarr(rdivs)
+	dist=expt
+;
+if n_elements(ee) ne 0 then dist_ellipse,circle,szmin,x,y,ee,al $
+	else   dist_circle,circle,szmin,x,y
+  good=where((circle ge rlow) and (circle LT rhi) and (filter ne 0.), n_bin)
+  if n_bin eq 0 then begin
+	print,'No data covered in the radius. Is the radius too small?'
+	goto,again
+  endif
+;
+  dis=circle(good)
+  rad=fix((circle(good)-rlow)/ringwidth)
+  vec_c=float(image_c(good))
+  vec_b=image_b(good)
+  time=image_t(good)
+
+  for n=0L,n_bin-1 do begin
+	nn=rad(n)
+	count(nn)=count(nn)+vec_c(n)
+	back(nn)=back(nn)+vec_b(n)
+	expt(nn)=expt(nn)+time(n)
+	dist(nn)=dist(nn)+dis(n)*vec_c(n) 
+  endfor
+
+  good=where(expt GT 0 and count gt climit)
+  flux=(count(good)-back(good))/expt(good)*sambin
+  dist=dist(good)/count(good)/ambin
+  expt=expt(good)/sambin
+  back=back(good)
+;
+  print,'Total net count is',total(count-back)
+  print,'Mean flux ',total(count(good)-back)/total(expt)
+;
+  if keyword_set(plotoff) eq 0 then  begin
+   	erase
+	plot,dist,flux, Xtitle='Radius (arcmin)', Ytitle='Flux (Counts/s arcmin^2',Title='Radial Flux Distribution'
+  endif
+;
+;  if sz(3) ne 4 then begin ;when real counts are considered
+	syserr=0.
+	read,'Give systematic error, e.g, 0.1 (10% of the count rate): ',syserr
+	syserr=syserr*(count(good) > back)
+   	flux_err=sqrt((count(good) > back)+syserr*syserr)/expt
+;  endif
+   if keyword_set(plotoffs) eq 0 then  begin ;and sz(3) ne 4 
+  	errplot,dist,flux+flux_err,flux-flux_err
+	yn='yes'
+	again:  read,'Want to change the radius (yes or no)? ',yn
+	yesno,yn
+	if yn then begin
+		read,'Give the lower and upper  radius limits (arcmin): ',rlow,radiushi
+		rhi=radiushi/(!size_pixel*block)
+		rlow=radiuslow/(!size_pixel*block)
+	endif
+   endif else yn=0
+endwhile
+;
+return
+end 

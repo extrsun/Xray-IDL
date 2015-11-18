@@ -1,0 +1,27 @@
+pro plot_sel,hdr,corner,xs,ys,sel,lines=lines,color=color,fill=fill,thick=thick
+;+
+; select pixels within the boundary of a enclosed curve.
+;
+; hdr - fits header
+; corner - corner positions of the plot
+; xs, ys - curve coordinates in arcsec in the image coordinates
+; lines, thick, color - curve style, thickness, and color 
+;
+; written by wqd, June 15, 2003
+;-
+if n_params() lt 1 then begin
+print,'CALLING SEQUENCE - plot_sel,hdr,corner,xs,ys,lines=lines,color=color,fill=fill,thick=thick'
+return 
+endif
+;device, get_graphics_function=oldGrphFunc ; Remember what to restore it to
+;    device, set_graphics_function=6           ; Set XOR mode
+plot_add,hdr,corner,xs,ys,lines=lines,color=color,fill=fill,thick=thick
+;sel= polyfillv(xs*!d.x_size,ys*!d.y_size,!d.x_size,!d.y_size) ;in
+;detector coordinates
+xdim=sxpar(hdr,'naxis1') & ydim=sxpar(hdr,'naxis2')
+xs=(xs-corner(0))/(corner(1)-corner(0))*xdim ;now in the image coordinates
+ys=(ys-corner(2))/(corner(3)-corner(2))*ydim
+sel= polyfillv(xs,ys,xdim,ydim)
+;device, set_graphics_function=oldGrphFunc ; Restore old grphx mode
+return
+end

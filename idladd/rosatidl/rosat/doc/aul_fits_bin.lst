@@ -1,0 +1,85 @@
+
+  FITS 3D Binary Table I/O Procedures from Astronomical Users' Library
+    (November, 1993)
+
+  in [.idlaul.fits_3dtable] or idlaul/fits_3dtable
+
+    TBDELCOL    :   Delete specified column from a FITS 3D Binary table
+    TBDELROW    :   Delete specified row(s) from a FITS 3D Binary table
+    TBDIR       :   Give a directory of modified FITS 3D Binary tables on disk
+    TBGET       :   Extract a specified field from a column in a FITS 3D 
+                    Binary table
+    TBHELP      :   Display the fields in a FITS 3D Binary table header
+    TBINFO      :   Give information about a specified field in a FITS 3D 
+                    Binary table
+    TBPRINT     :   Print specified columns and rows in a FITS 3D Binary table
+    TBREAD      :   Read a table in modified disk FITS 3D Binary table format.
+    TBSIZE      :   Return the size and number of fields in a FITS 3D Binary 
+                    table
+
+  in [.idlaul.fits_bintable] or idlaul/fits_bintable
+
+    FITSTAPE    :   Perform FITS tape I/O  (called by FITSREAD; VMS only)
+    FXADDPAR    :   Add or modify a parameter in a FITS header array
+    FXBADDCOL   :   Modify a basic FITS binary table extension (BINTABLE) 
+                    header array to define a column.
+    FXBCLOSE    :   Close a FITS binary table extension that was opened for read
+    FXBCOLNUM   :   Returns a binary table column number
+    FXBCREATE   :   Write a binary table extension header to the end of a 
+                    disk FITS file, and leave it open to receive the data
+    FXBFIND     :   Find column keywords in a FITS binary table header
+    FXBFINDLUN  :   Find the logical unit number UNIT in the FXBINTABLE common 
+                    block (called from FXBCREATE and FXBOPEN)
+    FXBFINISH   :   Close a FITS binary table extension file that was open for 
+                    write
+    FXBHEADER   :   Returns the header of an open FITS binary table
+    FXBHELP     :   Prints a short description of the columns in a FITS binary 
+                    table
+    FXBHMAKE    :   Create a basic FITS binary table extension (BINTABLE) 
+                    header array
+    FXBINTABLE  :   Contains the definition of the common block FXBINTABLE 
+                    for inclusion into other FXB... routines
+    FXBISOPEN   :   Returns true if UNIT points to an open FITS binary table
+    FXBOPEN     :   Open a binary table extension in a disk FITS file for 
+                    reading
+    FXBPARSE    :   Parse the binary table extension header, and store the 
+                    information about the format of the binary table in the 
+                    FXBINTABLE common block (called from FXBCREATE and FXBOPEN)
+    FXBPARSETDIM :  Parse the value of a TDIM-like keyword (e.g. TDIMnnn, 
+                    TDESC, etc.) to return the separate elements contained 
+                    within
+    FXBPARSETFORM : Procedure to return information about the various columns 
+                    in a FITS binary table.
+    FXBREAD     :   Read a data array from a disk FITS binary table file
+    FXBSTATE    :   Returns the state of a FITS binary table that was either
+                    opened for read with the command FXBOPEN, or for write
+                    with the command FXBCREATE
+    FXBTDIM     :   Parses the value of a TDIM-like keyword (e.g. TDIMnnn, 
+                    TDESC, etc.) to return the separate elements contained
+                    within
+    FXBTFORM    :   Returns information about FITS binary table columns
+    FXBWRITE    :   Write a binary data array to a disk FITS binary table file
+    FXFINDEND   :   Find the end of a FITS file
+    FXHCLEAN    :   Removes any keywords relevant to array structure from 
+                    a FITS header, preparatory to recreating it with the 
+                    proper values
+    FXHMAKE     :   Create a basic FITS header array
+    FXHREAD     :   Reads a FITS header from an opened disk file
+    FXPAR       :   Obtain the value of a parameter in a FITS header
+    FXPARPOS    :   Find the position to insert a record into a FITS header
+                    (called from FXADDPAR)
+    FXREAD      :   Read the primary array from a disk FITS file
+                    (Optionally allows the user to read in only a subarray 
+                    and/or every Nth pixel)
+    FXTAPEIO_READ : Procedure to copy a FITS file from a tape on the specified 
+                    tape unit to the FITS format disk file <name>.FITS 
+                    (VMS only)
+    FXTAPEIO_WRITE: Copy a disk FITS file to the specified tape unit
+                    (called by FXTAPEWRITE)
+    FXTAPEREAD  :   Interactive procedure to copy FITS files from tape onto disk
+                    (VMS only)
+    FXTAPEWRITE :   Interactive procedure to copy disk FITS files to tape
+    FXWHERENAN  :   Find the positions of all values within an array that 
+                    correspond to the IEEE NaN (not-a-number) special values
+    FXWRITE     :   Write a disk FITS file
+

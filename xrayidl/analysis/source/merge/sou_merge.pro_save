@@ -1,0 +1,123 @@
+pro sou_merge,infile,outfile,outrfile,outdfile,slow=slow,sradius=sradius $
+,glsort=glsort,nosort=nosort,psigma=psigma,sperr=sperr
+;+
+; Merge various source detections
+;
+; infile - input source file name
+; slow, flow - S/N selection criteria for the sources to be merged
+; sradius - (scalar) the minimum radius in which sources are considered to 
+;	be duplicate ones (in units of arcsec). 
+; nosort - if set, the sorting will be according to the position uncertainty
+; glsort - sorting according to the Galactic coordinate l_II, def: according
+;		to RA
+; psigma - number of sigma value for the position error radius 
+; sperr - systematic error in units of arcsec
+;*outputs:
+; outfile - file name to contain the merged source list
+; outrfile - file name to contain the removed source list
+; outdfile - file name to contain both the merge sources and their 
+;		removed sources
+;
+;*example
+; sou_merge,'sou_comb','sou_merge','sou_merge_r','sou_merge_d',slow=2.5
+;
+;*NOTE:
+;
+; written by wqd, 12/24/2001
+;-
+if n_params() eq 0 then begin
+print,'CALLING SEQUENCE - sou_merge,infile,outfile,outrfile,outdfile'
+print,',slow=slow,sradius=sradius,glsort=glsort,nosort=nosort,psigma=psigma'
+return
+endif
+
+if n_elements(sperr) eq 0 then sperr=0.
+if n_elements(psigma) eq 0 then spsigma=1. else spsigma=psigma^2
+source_info,ss,sra,sdec,ston,cntr,cntre,soufile=infile,slow=slow,text=text,/deg,/deci,perr=perr
+
+ns=n_elements(sra)
+if ns eq 0 then begin
+	print,'No source in the file!'
+	return
+endif 
+
+;find duplicate sources:
+msort,perr,sra,sdec,text,ston,cntr,cntre ;sort according to position accuracy
+srs=perr^2
+sel=intarr(ns) ;for source removal
+for k=ns-1,1,-1 do begin 
+	trans_dist,sra(k),sdec(k),sra(0:k-1),sdec(0:k-1),px,py,/deg,/das
+	sep=(px^2+py^2)
+	seperr=srs(0:k-1)+srs(k)+sperr^2 ;combined position error square
+	ser=spsigma*seperr
+	if n_elements(sradius) ne 0 then ser=ser > sradius^2
+	rsel= where(sep lt ser, nrsel) 
+	if nrsel ne 0 then sel(k)=1 ;mark this duplicate source
+endfor
+
+; prepare for the output order:
+if not keyword_set(nosort) then begin
+ 	if n_elements(glsort) ne 0 then begin
+		glactc,sra,sdec,2000,gl,gb,1,/deg
+		msort,gl,sra,sdec,text,srs,sel
+ 	endif else msort,sra,sdec,text,srs,sel
+endif
+
+;find all the duplicate sources marked
+rsel=where(sel eq 1,nrsel)
+if nrsel eq 0 then begin
+	print,'No duplicate source!'
+	return
+endif else sel=where(sel eq 0) ;remove,rsel,sel
+
+ns=ns-nrsel ;number of unique sources
+stext=text(sel)
+str=mgettok(stext,'|')
+stext=strtrim(indgen(ns)+1,2)+' | '+stext ;re-number the sources
+rtext=text(rsel)
+str=mgettok(rtext,'|')
+rtext=strtrim(indgen(nrsel)+1,2)+rtext ;number dumplicated sources
+
+; output the list of duplicated sources
+openw,unoutr,outrfile,/get_lun
+for k=0,nrsel-1 do printf,unoutr,rtext(k)
+free_lun,unoutr	
+
+openw,unout,outfile,/get_lun
+openw,unoutd,outdfile,/get_lun
+rsra=sra(rsel)
+rsdec=sdec(rsel)
+rsrs=srs(rsel)
+rcntr=cntr(rsel)
+rcntre=cntre(rsel)
+for kk=0,ns-1 do begin
+	k=sel(kk)
+	printf,unout,stext(kk) ;first the unique source
+	; now find all the duplicated sources associated with the unique one
+	trans_dist,sra(k),sdec(k),rsra,rsdec,px,py,/deg,/das
+	sep=(px^2+py^2)
+	seperr=rsrs+srs(k)+sperr^2
+	ser=spsigma*seperr
+	if n_elements(sradius) ne 0 then ser=ser > sradius^2
+	rseln= where((sep lt ser), nsrsel)  
+	if nsrsel ne 0 then begin
+		rseln=rsel(srsel) ;the index of the duplicated sources
+		;calculate the mean cntr and its error as well as chi^2, ndf
+		avg_least,[cntr(k),rcntr(rseln)],[cntre(k),rcntre(rseln)] $
+			,cntrs,cntres,chi=chi,ndf=ndf
+		;include these new parameters in the output
+		text(k)=text(k)+strtrim(cntrs,2)+' | '+strtrim(cntres,2) $
+		+strtrim(chi,2)+' | '+strtrim(ndf,2)
+		printf,unoutd,text(k)
+
+	 	stext=' r '+rtext(rseln)+' | ' $
+		+strtrim(sqrt(ser(rseln)),2)+' | '+strtrim(sqrt(sep(rseln)),2)
+		for n=0,nsrsel-1 do printf,unoutd,stext(n)
+	endif
+endfor
+print,'The number of sources is ',ns
+free_lun,unout
+free_lun,unoutd
+stop
+return
+end

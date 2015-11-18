@@ -1,0 +1,27 @@
+  
+  DATA :    Procedures (and functions) useful for handling Rosat data 
+            (e.g., reading, filtering, ...)
+
+    MAKE_LIST   :   Read data from an events list (FITS) file and store in a
+                    photon list structure variable
+    RS_SOURCES  :   Read info on sources in a source list file (e.g.,
+                    _src_fits_1, _sky_fits_1) and store in a structure
+                    variable
+
+    Also OLD_SOURCES, RDF_SOURCES
+
+    RSCHECK_SOURCES:  Check sources in SASS source table against objects in 
+                      SIMBAD sky table (also from SASS), and select those for 
+                      which there is a SIMBAD object which falls within a 
+                      given search radius.
+
+    PARSE_TIME  :   Convert a (PROS style) ASCII descriptor for time filtering 
+                    into start and stop times
+    TIMESTR     :   Convert start and stop time vectors into a PROS style ASCII
+                    string for time filtering
+                    structure variable OBINFO
+    WRITESTR    :   Write a vector of ASCII strings to an output file
+                    (one element per line)
+
+***************************************************************************
+

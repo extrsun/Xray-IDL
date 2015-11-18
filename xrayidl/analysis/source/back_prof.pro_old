@@ -1,0 +1,68 @@
+pro back_prof,image_c,dist,flux,flux_err, $
+block=block,radiuslow=radiuslow,radiushi=radiushi,filter=filter,sambin=sambin
+;---------------------------------------------------------------
+if n_params() EQ 0 then begin
+print,'CALL SEQUENCE -  back_prof,image_c,dist,flux,flux_err,"
+print,'block=block,radiuslow=radiuslow,radiushi=radiushi'
+retall
+endif
+;---------------------------------------------------------------
+if n_elements(block) EQ 0 then block=!block
+sz=size(image_c) 
+szmin=(sz(1) < sz(2))
+if n_elements(radiuslow) eq 0 then rlow=0. else rlow=radiuslow/(0.5*block)
+
+if n_elements(radiushi) eq 0 then rhi=0.5*szmin else begin  $
+	rhi=radiushi/(0.5*block)
+	if rhi gt szmin then begin
+	rhi=szmin
+	print,'radius exceeds the half size of the image and is set to be dim/2'	
+	endif
+endelse
+x=(sz(1)-1)/2.
+y=(sz(2)-1)/2.
+print,'Input number of radial divisions:' & read,rdivs
+ringwidth=(rhi-rlow)/rdivs
+;
+count=fltarr(rdivs)
+expt=fltarr(rdivs)
+dist=expt
+;
+dist_circle,circle,szmin,x,y
+  if n_elements(filter) eq 0 then $
+    good=where((circle ge rlow) and (circle LT rhi), n_bin) $
+    else good=where((circle ge rlow) and (circle LT rhi) and $
+                    filter gt 0., n_bin)
+  if n_bin eq 0 then begin
+	print,'No data covered in the radius. Is the radius too small?'
+  endif
+;
+  dis=circle(good)
+  rad=fix((circle(good)-rlow)/ringwidth)
+  vec_c=float(image_c(good))
+
+  for n=0L,n_bin-1 do begin
+	nn=rad(n)
+	count(nn)=count(nn)+vec_c(n)
+	expt(nn)=expt(nn)+1.
+	dist(nn)=dist(nn)+dis(n)*vec_c(n) 
+  endfor
+
+  ambin=60./(block*!size_pixel)
+ if n_elements(sambin) eq 0 then  sambin=ambin^2
+  flux=count/expt
+  dist=dist/count/ambin
+  flux_err=flux*0.
+
+  for n=0L,n_bin-1 do begin
+	nn=rad(n)
+	flux_err(nn)=flux_err(nn)+(vec_c(n)-flux(nn))^2
+  endfor
+
+flux_err=sqrt(flux_err/expt)*sambin
+flux=flux*sambin
+;
+print,flux,flux_err
+stop
+return
+end 

@@ -1,0 +1,40 @@
+pro fill_holes,cbm,cims,tim,mfilter,cimf
+;+
+; fill holes in count image(s) (left from source subtractions) with
+; random counts determined from smoothed diffuse count image(s)
+;
+;*INPUTS:
+; cbm - smoothed diffuse count image(s)
+; cims - count image(s) with the holes
+; tim - exposure map(s) without the holes
+; mfilter - image(s) contains the fraction of exposure that need to be
+;          filled, e.g., filter=(t-ts)/t
+;*OUTPUTS:
+; cimf - count image(s) with the holes filled
+; written by wqd May 25, 2003
+;-
+if n_params() eq 0 then begin
+print,'CALL SEQUENCE - fill_holes,cbm,cims,tim,mfilter,cimf'
+return
+endif
+
+sz=size(cims)
+if sz(0) eq 2 then nim=1 else nim=sz(3)
+xdim=sz(1)
+ydim=sz(2)
+cimf=cims*0
+
+;determine how many filters are there (ie., a universal filter for all bands)
+fsz=size(mfilter)
+if fsz(0) eq 2 then nfilter=1 else nfilter=fsz(3)
+if nfilter eq 1 then filter=mfilter ;single filter applies to all bands
+
+for k=0,nim-1 do begin
+    if nfilter gt 1 then filter=mfilter(*,*,k)
+    tdif=tim(*,*,k)*filter
+    ran_pos,where(tdif gt 0.),cbm,0,0,xs1,ys1,block=1
+    list_image,l,0,0,rim,sz(1),sz(2),block=1,xp=xs1,yp=ys1
+    cimf(*,*,k)=cims(*,*,k)+rim
+endfor
+return
+end

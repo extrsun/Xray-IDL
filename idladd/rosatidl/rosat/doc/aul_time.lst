@@ -1,0 +1,21 @@
+
+  Time Conversion Procedures from Astronomical Users' Library (Nov 1993)
+
+    BREAK_PATH  :   Breaks up a path string into its component directories
+    DATATYPE    :   Returns the data type of a variable
+    DATE2MJD    :   Convert calendar dates to Modified Julian Days (MJD)
+    FIND_WITH_DEF : Searches for files with a default path and extension
+    MJD2DATE    :   Converts Modified Julian Days (MJD) to year, month, and day
+    MJD2UTC     :   Converts Modified Julian Days (MJD) to Coordinated 
+                    Universal Time (UTC) in ISO 8601 format, or as a data 
+                    structure
+    TAI2UTC     :   Converts Atomic International Time (TAI) to Coordinated
+                    Universal Time (UTC) in ISO 8601 format, or as a data 
+                    structure
+    UTC2MJD     :   Converts Coordinated Universal Time (UTC) calendar time 
+                    into Modified Julian Days (MJD)
+    UTC2TAI     :   Converts Coordinated Universal Time (UTC) calendar time
+                    into Atomic International Time (TAI)
+    UTCPARSE    :   Parses Coordinated Universal Time (UTC) time strings to 
+                    extract the date and time
+

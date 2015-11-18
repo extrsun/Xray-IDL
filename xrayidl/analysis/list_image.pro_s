@@ -1,0 +1,90 @@
+pro list_image,listo,xmin,ymin,image,dimx,dimy,block=block,filter=filter,det=det,sel=sel,loc=loc,xp=xp,yp=yp,emin=emin,emax=emax,rsel=rsel,fid=fid
+;-
+; cast a list of counts into an image 
+;
+; list - table list of counts, whose content does not need to match the image boundaries
+; xmin, ymin - DADA pixel coordinates of the lower left corner of the image
+; 		(starting at (1,1) for the fortran format)
+; emin,emax - lower and upper energy (or channel) limits of counts to be chosen
+; image - the output image
+; dim - the dimension of the image
+; filter - an image of the size of the image for excluding counts in regions
+;	 with filter values <= 0
+; det - cast the image in the detector coordinates
+; sel - the output address of the selected counts in the list
+; loc - the output location of the selected counts in the image
+; rsel - if set, reverse the selection criterion (i.e., counts in regions
+;	with filter value <=0)
+; xp,yp - data pixel coordinates of individual counts, if supplied, listo
+;	will not be used
+; fid - if given, only those events with their file ID equal to fid will be
+;	included
+;
+; writen by wqd, 1994
+;+
+if n_params() eq 0 then begin
+print,'CALLING SEQUENCE - list_image,listo,xmin,ymin,image,dimx,dimy'
+print,',block=block,filter=filter,det=det,sel=sel,loc=loc,xp=xp,yp=yp'
+print,',emin=emin,emax=emax,rsel=rsel,fid=fid'
+return
+endif
+if n_elements(dimy) eq 0 then dimy=dimx
+if n_elements(block) eq 0 then block=!block
+if n_elements(emin) eq 0 then begin
+	list=listo 
+	nss=0
+endif else begin
+;		ss=where(listo.pi ge emin and listo.pi lt emax, nss)
+		ss=where(listo.energy ge emin and listo.energy lt emax, nss)
+		list=listo(ss)
+endelse
+if n_elements(fid) ne 0 then begin
+	match,list.fid,fid,ss,count=nc
+	if nc eq 0 then begin
+		print,'no match is found for fid = ',fid
+		return
+	endif else list=list(ss)
+endif
+;
+if n_elements(xp) eq 0  then begin
+ if keyword_set(det) eq 0 then begin
+	xp=list.x & yp=list.y
+ endif else begin
+	;block=30./1.8684151 ;use this fixed block to get pixel size=15"
+	xp=list.dx & yp=list.dy
+	print,'Assuming the PSPC image pixel as ', 0.93420756*block,' arcsec'
+ endelse
+endif
+; hdimx=dimx*block/2. ; now in units of pixel
+; hdimy=dimy*block/2. ; now in units of pixel
+; xmin=nint(xp-hdimx)+1 ;because list.x >=1
+; ymin=nint(yp-hdimy)+1 
+xmax=xmin+long(dimx)*block-1
+ymax=ymin+long(dimy)*block-1
+
+sel=where(xp ge xmin and xp le xmax and yp ge ymin and yp le ymax,nsel)
+if nsel eq 0 then stop,'stop: no counts in the list is in the image!!!'
+loc=long(dimx)*(long(yp(sel)-ymin)/long(block))+ $
+		long(xp(sel)-xmin)/long(block)
+if n_elements(filter) ne 0 then begin
+	c=where(filter(loc) le 0.,nc)
+	if nc ne 0 then begin
+		if keyword_set(rsel) then begin
+			sel=c 
+			loc=loc(sel)
+		endif else remove,c,loc,sel
+	endif
+endif
+if nss ne 0 then sel=ss(sel)
+print,'Creating image'
+image=intarr(dimx,dimy)
+sz=size(loc)  ; check to see if x is a scalar
+case 1 of
+  (sz(0) ne 0): begin        ; x is a vector
+     h=histogram(loc)
+     bin=lindgen(n_elements(h))+min(loc)
+     image(bin)=h
+     end
+  else:    image = 0
+endcase
+end 

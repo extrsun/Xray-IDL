@@ -1,0 +1,47 @@
+pro poisig_v,expect,kdup,sig
+;+
+; calculate the significance of count deviations from expect values
+; When the expect value is greater than gauth (def=50), gaussian approximation
+; is used.
+; expect - vector containing the expected values
+; kdup - the number of observed counts
+; sig - assumulated probability for the number of counts to be greater than kdup 
+; written by wqd, April, 21, 2002
+;-
+if n_params() eq 0 then begin
+print,'Calling Seq: poisig_v,expect,kdup,sig'
+return
+endif
+;
+gauth=50d
+nbin=n_elements(expect) > n_elements(kdup)
+expectd=dblarr(nbin)+double(expect) ;make sure the same dimension
+kdup=lonarr(nbin)+kdup
+sig=dblarr(nbin)+1.
+ss=where(expectd gt gauth,nss)
+if nss ne 0 then begin
+	sigma=(kdup(ss)-expectd(ss))/sqrt(expectd(ss)) < 8. 
+		;limit that erroorf can handle, corresponding to sig=-15.2142
+	sig(ss)=0.5*(1.-errorf(sigma/sqrt(2.)))
+	;negative sigma gives a negative output from errorf
+endif 
+if nss eq nbin then goto,done
+ss=where(expectd le gauth and expectd gt 0.0d,nss)
+if nss eq 0 then goto,done
+prob=exp(-expectd(ss))
+sig(ss)=1.0-prob
+loci=where(kdup(ss) gt 0,nloci)
+if nloci eq 0 then goto,done
+ssl=ss(loci)
+counts=kdup(ssl)
+mc=max(counts)
+for n=1L,mc do begin	
+	prob(loci)=prob(loci)*expectd(ssl)/double(n) 
+	sig(ssl)=sig(ssl)-prob(loci)                
+	sel=where(counts eq n,nsel)
+	if nsel ne 0 and n ne mc then remove,sel,loci,ssl,counts
+endfor 
+done: 
+sig=alog10(sig > 1.e-20)
+return
+end

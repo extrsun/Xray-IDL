@@ -1,0 +1,51 @@
+pro cenvset,seqno,tail=tail,instr=instr,cdir=cdir,blow=blow,bhigh=bhigh,spfile=spfile ;,pdir=pdir
+;+
+; setup (and move to) directory and define system 
+;	instrument parameters for Chandra data
+;
+; seqno - Chandra observation seq. number (eq. 'acisf00945N001'), used
+; to identify the subdirectory within pdir
+; pdir - project directory (def ='')
+; cdir - local calibration file directory (def=''$PUBDIR/cal_chandra/')
+; tail - additional characters that may follow the norminal seq_no (e.g.,
+;		different versions)
+; instr - instrument name (def ='acisi'; others are 'hrc' and 'aciss')
+;
+;written by wqd, 6/4/2001
+;-
+if n_params() eq 0 then begin
+print,'CALLING SEQUENCE - cenvset,seqno,cdir=cdir,tail=tail,instr=instr'
+return
+endif
+On_error,2    
+if n_elements(tail) eq 0 then tail=''
+if n_elements(pdir) eq 0 then pdir=''
+if n_elements(cdir) eq 0 then $
+	defsysv,'!cdir','$PUBDIR/cal_chandra/' $
+	else defsysv,'!cdir',cdir
+if n_elements(blow) eq 0 then blow=1
+defsysv,'!blow',blow
+if n_elements(bhigh) eq 0 then bhigh=1
+defsysv,'!high',bhigh
+if n_elements(spfile) eq 0 then spfile=!cdir+strtrim(instr,2)+'_po0.7.dat'
+defsysv,'!spfile',spfile
+
+if n_elements(instr) eq 0 then !instr='acisi' else !instr=instr
+case !instr of
+'hrc': begin
+	defsysv,'!size_pixel',0.1318  
+	defsysv,'!pref',16384.5d
+	end
+'acisi': begin
+	defsysv,'!size_pixel',0.491 ;changed on 7/22/2001 from 0.492
+	defsysv,'!pref',4096.5
+	end
+'aciss': begin
+	defsysv,'!size_pixel',0.491 
+	defsysv,'!pref',4096.5
+	end
+endcase
+!seq_no=strtrim(seqno)
+;!data_dir=pdir ;+!seq_no+tail
+return
+end

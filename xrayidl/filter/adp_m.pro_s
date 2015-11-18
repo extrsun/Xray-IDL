@@ -1,0 +1,178 @@
+pro adp_m,im,ims,ima,imas,expt=expt,sexpt=sexpt,mexpt=mexpt,filter=filter,gslo=gslo,gstep=gstep,gshi=gshi,ftonth=ftonth,bch=bch,nonorm=nonorm,gsimsz=gsimsz,nimax=nimax
+;+
+; perform an adaptive gaussian smooth of images
+;
+;*CALLING SEQUENCE:
+; adp_m,im,ims,ima,imas,expt=expt,sexpt=sexpt,mexpt=mexpt,filter=filter
+; ,gslo=gslo,gstep=gstep,gshi=gshi,ftonth=ftonth,bch=bch,nonorm=nonorm
+; ,gsimsz=gsimsz,nimax=nimax
+;*PARAMETERS:
+; INPUTS:
+; im - input count image for smoothing
+;	
+; OUTPUTS:
+; ims - smoothed image
+;
+;*OPTIONAL IMPUTS or OUTPUTS:
+; expt - the exposure of the input image. If supplied, the
+;              output is the flux image mutiplied by mexpt
+; mexpt - the maximum value of expt
+; sexpt - smoothed expt
+; ima - stack of additional images (e.g., background or images in other bands)
+;       to be smoothed in the exact same way as im
+; imas - stack of the smoothed ima
+; filter - image for selecting pixels in the smoothing
+;          calculation. only pixels > 0 are chosen.
+; gslo - the initial size of the Gaussian FWHM (def=1 pixel)
+; gstep - fractional step of the Gaussian size increase (def = 0.02)
+; gshi - the maximum Gaussian size before stopping (def=sz(1) < sz(2))
+; ftonth - the flux-to-noise ratio lower limit  for the smoothing
+; bch - choice for background estimate during the flux to noise
+;             ratio calculation. (def =0). If =1, the flux is the net
+;             flux above the median flux value of the remaining pixels
+; gsimsz   - gaussian image size in units of bins (def=min(sz(1:2))/2)
+; nimax - the maximum number of smoothing steps (def=1000)
+;
+;*RESTRICTIONS:
+;
+;*NOTES:
+;
+;*SUBROUTINES CALLED:
+;   covolve
+;   gsf_gaussian
+;
+;*MODIFICATION HISTORY:
+;    written  by wqd, May 27, 2003
+;-
+;------------------------------------------------------------------------------
+np=n_params ()
+if np eq 0 then begin
+print,'Calling SEQ - adp_m,im,ims,ima,imas,expt=expt,sexpt=sexpt,mexpt=mexpt'
+print,',filter=filter,gslo=gslo,gstep=gstep,gshi=gshi,ftonth=ftonth,bch=bch'
+print,',nonorm=nonorm,gsimsz=gsimsz,nimax=nimax'
+return
+endif
+
+if n_elements(bch) eq 0 then bch=1
+if n_elements(nimax) eq 0 then nimax=1000
+if n_elements(ftonth) eq 0 then ftonth=3
+if n_elements(gstep) eq 0 then gstep=0.02
+if n_elements(gslo) eq 0 then gslo=1.
+sz=size(im)
+if n_elements(gshi) eq 0 then gshi=min(sz(1:2))/2
+if n_elements(gsimsz) eq 0 then gsimsz=sz(1) < sz(2)
+minc = 1.e-10 ;minimum number of counts for calculating Poisson error
+
+;if exposure map is supplied
+nexpt=n_elements(expt)
+if nexpt ne 0 then begin
+    mexpt=max(expt)
+    sexpt=expt*0.
+endif
+
+;if additional maps are to be smoothed
+nima=n_elements(ima)
+if nima ne 0 then begin
+    imt=fltarr(sz(1),sz(2)) ;for later use
+    sza=size(ima)
+    if sza(0) eq 2 then nima=1 else if sza(0) eq 3 then nima=sza(3) else begin
+        print,'ima must be a 2-D or 3-D array!'
+        return
+    endelse
+    imas=ima*0.
+endif
+
+;if the filter is supplied
+nfilter=n_elements(filter)
+if nfilter eq 0 then begin
+    sel=lindgen(sz(1)*sz(2)) 
+    if nexpt ne 0 then exptn=expt/mexpt
+    if nima ne 0 then nima=ima
+endif else begin
+    sel=where(filter gt 0,nsel)
+    imn=im*0 & imn(sel)=im(sel)
+    if nexpt ne 0 then begin 
+        exptn=expt*0 & exptn(sel)=expt(sel)/mexpt
+    endif
+    if nima ne 0 then begin 
+        iman=ima*0 
+        for k=0,nima-1 do begin
+            imst=ima(*,*,k)
+            imt(sel)=imst(sel)
+            iman(*,*,k)=ima(*,*,k)+imt
+        endfor
+        imt(sel)=0 ;for later use of imt
+    endif
+endelse
+
+ims=im*0.
+ni=0
+binsize=gslo
+nselo=nsel
+while ni lt nimax and binsize lt gshi do begin
+    print,'ni, binsize,nsel = ',ni,binsize,nsel
+     wlimg=psf_gaussian(nd=2,fwhm=binsize,np=gsimsz,/norm)
+     imc=convolve(imn,wlimg) 
+     if nexpt ne 0 then begin
+         exptc=convolve(exptn,wlimg) 
+         flux=imdiv(imc,exptc)
+         imssigma=sqrt(convolve(exptn,wlimg^2)*flux  > minc)
+         if bch eq 0 then fton=imdiv(imc, imssigma) else begin
+           mimc=median(flux(sel))*exptc
+           fton=imdiv(imc-mimc, imssigma)
+         endelse
+     endif else begin
+         imssigma=sqrt(total(wlimg^2)*imc  > minc)
+         if bch eq 0 then fton=imdiv(imc,imssigma) else begin
+           mimc=median(imc(sel))
+           fton=imdiv(imc-mimc,imssigma )
+       endelse
+     endelse
+	c=where(fton(sel) gt ftonth,nc)
+	if nc ne 0 then begin
+            selc=sel(c)
+            if nexpt ne 0 then begin
+                ims(selc)=flux(selc)
+                sexpt(selc)=exptc(selc)
+            endif else ims(selc)=imc(selc)
+            if nima gt 0 then begin
+              for k=0,nima-1 do begin
+                  imst=convolve(iman(*,*,k),wlimg)
+                  imt(selc)=imst(selc)
+                  imas(*,*,k)=imas(*,*,k)+imt
+              endfor
+              imt(selc)=0 ;for later use of imt
+            endif
+            if nc eq nsel then goto,done
+            remove,c,sel
+            nsel=nsel-nc
+	endif
+        ni=ni+1
+        binsize=binsize*(1.+gstep)
+        if !debug eq 1 then stop
+        if nsel lt nselo*0.05 then goto,done
+endwhile
+done:
+
+;for the rest of the image, set to the current values
+; and normalize the smoothed image value to avoid any intensity shift
+ if nexpt ne 0 then ims(sel)=flux(sel) else ims(sel)=imc(sel) 
+if nexpt ne 0 then sexpt(sel)=exptc(sel)
+if keyword_set(nonorm) ne 0 then begin
+    if nexpt eq 0 then ims=total(imn)/total(ims)*ims else begin
+      ims=total(imdiv(im,exptn))/total(ims)*ims 
+      sexpt=total(exptn)/total(sexpt)*sexpt
+    endelse
+endif
+
+if nima gt 0 then begin
+    for k=0,nima-1 do begin
+	imst=convolve(iman(*,*,k),wlimg)
+	imt(sel)=imst(sel)
+	imas(*,*,k)=imas(*,*,k)+imt
+	if keyword_set(nonorm) ne 0 then $
+          imas(*,*,k)=total(iman(*,*,k))/total(imas(*,*,k))*imas(*,*,k)
+    endfor
+endif
+return
+end

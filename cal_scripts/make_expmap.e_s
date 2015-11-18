@@ -1,0 +1,237 @@
+##########################################################################
+# 	Memo for Chandra ACIS observation calibration
+#
+#  You can run the unix cammands and scripts, using copy and paste.
+#  It helps to understand the scipts (*.e), at least the information in 
+#	the headers.
+#
+#  After s successful run, you can move on to read the file "memo_anal" about
+#  post-calibration analysis (e.g., source detection and image construction).
+#
+# Requirements:
+# 1) The environment variable PUBDIR needs to be defined (ideally in your 
+#   .cshrc); e.g., setenv PUBDIR /net/xray/pub, which is where you have 
+#    installed cal_scripts directory.
+# 2) ciaoinit.e should have been run (e.g., type
+# 	source $PUBDIR/cal_scripts/ciaoinit.e 
+#	then type ciao)
+# 3) Standard archival files have been downloaded and untared in the so-called 
+# 	main directory (e.g., n4631)
+# 4) Make a directory called cal (mkdir cal) in the main directory
+#	and move into it (cd cal)
+# 5) For cleaning high background intervals of the observation without 
+#  potential effects due to source variability, a bright source regional 
+#  file (source.reg) is then needed in the  ciao format and saved
+#	 in the current directory (e.g., usign ds9). If the file is not 
+#	provided, no region is removed. The cleaning uses a non-ciao package
+#	acisbg from Markavich (lc_clean), which is assumed to be installed in 
+#	$LOCALDIR
+#
+# Key parameters need to be defined (see the following):
+#  1) evt2 file root name (e.g., by typing "ls ./primary")
+#  2) processing choice:
+#	evt1 - from evt1 to evt2 (def)
+#	evt2: just modify evt2
+#  3) instrument choice (i.e., aciss, acisi, acisi_low; def = aciss)
+#  4) VF mode flag: yes - to reduce the background in the timed VF mode 
+#	(good for diffuse study. However, a significant fraction of the 
+#	source events may be flagged and removed for moderately bright to 
+#	bright sources. 
+#	no - no flag, which may be good for studying discrete sources
+#     In principle, two versions of the process may be produced for the VF mode
+#
+# written by wqd, July, 2002
+##########################################################################
+#set events_root=acisf02025N001_evt2
+set events_root=evt2file
+
+#Check to see if the necessary files are in right directories:
+find $MAINDIR -name '*bpix1.fits.gz' -exec gunzip {} \;
+find $MAINDIR -name 'pcadf*_asol1.fits.gz' -exec gunzip {} \;
+find $MAINDIR -name '*evt2.fits.gz' -exec gunzip {} \;
+
+find $MAINDIR -name '*bpix1.fits' -exec ln -s {} bpixfile.fits \;
+find $MAINDIR -name 'pcadf*_asol1.fits' -exec sh -c 'ls {} > asol_file' \;
+find $MAINDIR -name '*evt2.fits' -exec ln -s {} ${events_root}.fits \;
+
+#check that the files are actually there and are correct:
+ls -ltr bpixfile.fits evt2file.fits
+more asol_file
+
+#--------------------------------------------------------------------
+#If evt1-to-evt2 processing is required:
+find $MAINDIR -name '*flt*.fits.gz' -exec gunzip {} \;
+find $MAINDIR -name '*flt*' -exec ln -s {} fltfile.fits \;
+
+#for cti-corrected file (no longer needed; Dec. 12, 2002):
+#ln -s acisf02207_000N002_evt1.no_cti.fits evt1file.fits
+#if in the corrent directory or
+#find $MAINDIR -name '*evt1.no_cti.fits' -exec ln -s {} evt1file.fits \;
+
+#otherwise, use the downloaded evt1 file:
+find $MAINDIR -name '*evt1*.fits.gz' -exec gunzip {} \;
+find $MAINDIR -name '*evt1*' -exec ln -s {} evt1file.fits \;
+
+#check that the files are actually there and are correct:
+ls -ltr fltfile.fits evt1file.fits
+ln -s evt1file.fits aspcorr_evt2.fits
+#cp evt1file.fits aspcorr_evt2.fits
+#--------------------------------------------------------------------
+
+#for archival data, normally you need to reprocess the evt2 data (otherwise,
+# set proc=evt2) or set proc=cti for acis-I data
+set proc=evt1
+set instr=aciss
+;set instr=acisi
+;set instr=acisi_low
+#check to see if the observation was taken in timed vfaint mode
+dmkeypar aspcorr_evt2.fits DATAMODE ; pget dmkeypar value
+dmkeypar aspcorr_evt2.fits READMODE ; pget dmkeypar value
+#if it was, you MAY want to use chvf=yes (but you need to know what this means)
+set chvf=no
+#set chvf=yes 
+
+$PUBDIR/cal_scripts/pre_cal.e $proc
+
+#wait for the end of the above and finish the web task and then do the next:
+
+$PUBDIR/cal_scripts/cal_main.e $events_root $instr $proc  $chvf > cal_main.log &
+#----------------------------------
+# a few checks 
+#afterglow events (my guess is that they are all removed by the standard evt1toevt2; but not 100% sure):
+dmcopy "${events_root}_new_clean.fits[EVENTS][exclude status=xxxxxxxxxxxx0000xxxxxxxxxxxxxxxx]" test.fits
+#first use fv to see if test.fits contains any counts
+#if yes, check out http://asc.harvard.edu/ciao/threads/acisdetectafterglow/
+#----------------------------------
+
+#move to $MAINDIR/xdata
+cd ..
+mkdir xdata
+cd xdata
+
+set evtdir=$MAINDIR/cal/
+set evtfname = ${events_root}_new_clean
+ln -s ${evtdir}${evtfname}.fits  ${evtfname}.fits
+
+#for the ACIS-S
+ln -s ${evtdir}${evtfname}_i300:700.fits   ${evtfname}_i1.fits
+ln -s ${evtdir}${evtfname}_i700:1500.fits  ${evtfname}_i2.fits
+ln -s ${evtdir}${evtfname}_i1500:3000.fits ${evtfname}_i3.fits
+ln -s ${evtdir}${evtfname}_i3000:7000.fits ${evtfname}_i4.fits
+
+;for a subarray observation with only (ccd7 turned on):
+ln -s ${evtdir}${evtfname}_i300:700_ccd7.fits   ${evtfname}_i1.fits
+ln -s ${evtdir}${evtfname}_i700:1500_ccd7.fits  ${evtfname}_i2.fits
+ln -s ${evtdir}${evtfname}_i1500:3000_ccd7.fits ${evtfname}_i3.fits
+ln -s ${evtdir}${evtfname}_i3000:7000_ccd7.fits ${evtfname}_i4.fits
+
+#for the ACIS-I
+#ln -s ${evtdir}${evtfname}_i500:1400.fits   ${evtfname}_i1.fits
+#ln -s ${evtdir}${evtfname}_i1400:2000.fits  ${evtfname}_i2.fits
+ln -s ${evtdir}${evtfname}_i500:1000.fits   ${evtfname}_i1.fits
+ln -s ${evtdir}${evtfname}_i1000:2000.fits  ${evtfname}_i2.fits
+ln -s ${evtdir}${evtfname}_i2000:4000.fits ${evtfname}_i3.fits
+ln -s ${evtdir}${evtfname}_i4000:8000.fits ${evtfname}_i4.fits
+#for acisi_low (3-bands)
+ln -s ${evtdir}${evtfname}_i1000:3000.fits   ${evtfname}_i1.fits
+ln -s ${evtdir}${evtfname}_i3000:5000.fits  ${evtfname}_i2.fits
+ln -s ${evtdir}${evtfname}_i5000:8000.fits ${evtfname}_i3.fits
+#for acisi_low (4-bands)
+ln -s ${evtdir}${evtfname}_i1000:2500.fits   ${evtfname}_i1.fits
+ln -s ${evtdir}${evtfname}_i2500:4000.fits   ${evtfname}_i2.fits
+ln -s ${evtdir}${evtfname}_i4000:6000.fits  ${evtfname}_i3.fits
+ln -s ${evtdir}${evtfname}_i6000:9000.fits ${evtfname}_i4.fits
+#for acisi_low (4-bands)
+#ln -s ${evtdir}${evtfname}_i1000:2000.fits   ${evtfname}_i1.fits
+#ln -s ${evtdir}${evtfname}_i2000:3500.fits   ${evtfname}_i2.fits
+#ln -s ${evtdir}${evtfname}_i3500:5000.fits  ${evtfname}_i3.fits
+#ln -s ${evtdir}${evtfname}_i5000:8000.fits ${evtfname}_i4.fits
+# end of the data calibration!!
+
+#If wants to produce another version of the processing with slight modification# you may proceed with the astrometry corrected aspcorr_evt2.fits
+#Othersise 
+rm aspcorr_evt2.fits
+
+##########################################################################
+#not yet updated
+# Description of the above procedure
+#
+##Procedure:
+#1) Compare the processing date and version of the data with the present CALDB
+# to see whether reprocessing evt2 is needed.
+#
+#2) Pre-calibration
+# 	Decompress files
+#	Check the website for the aspect correction
+#
+#3) Calibration
+#	optional evt1to2 processing (proc not= evt2)
+#	post-evt2 processing: remove extra destreak, 
+#		bad pixels, background flares
+#
+#4) Make exposure maps
+#
+#5) Make links for subsequent data analysis (e.g., source detection and 
+# smoothed 3-color flux image construction)
+#
+#*Outputs:
+# ${events_root}_new.fits - offset-corrected evt2 file
+# ${events_root}_new_clean.fits - cleaned evt2 file
+# various count, exposure, and flux maps
+# average light curves of the observation
+#====================================================
+# The def commands (proc=evt1) generate a new evt2 file. Here is 
+# a little more detailed consideration about 
+#	whether to reprocess the evt1 data:
+ # RULE OVER THE THUMB:
+ # If you work on NEW data, no re-processing is needed unless
+ # there was a new release of the CALDB between the processing
+ # and the time you start analysing the data.
+ # If you work on OLDER data, check the following:
+
+ #      http://cxc.harvard.edu/caldb/version_release_notes.html
+ # gives the history of the CALDB.
+
+dmlist ../primary/$events_root.fits header | grep ASCDSVER
+#--------
+#sample output:
+#0007 ASCDSVER             6.2.4                          String       ASCDS version number
+#--------
+ # you get information regarding the PIPELINE PROCESSING version of the data. 
+ # New calibration data was introduced with version R4CU5UPD8 of 
+ # the processing software# if the data has been processed by at least 
+ # this version, it is fine for use in this script (as of 05/2002).
+ # Note that the version naming convention changed after version 
+ # R4CU5UPD14 to the "DS" system, starting with DS6.0.0. 
+ # You may consider any data with a processing version of DS6.0.0 
+ # or higher to have more recent processing than R4CU5UPD14.
+
+ # Also check WHEN the data have been created:
+dmlist ../primary/$events_root.fits header | grep "DATE "
+#--------
+#sample output:
+#0010 DATE           2001-09-12T04:13:38            String       Date and time of file creation
+#--------
+
+dmlist $CALDB/docs/chandra/caldb_version/caldb_version.fits data
+
+ # which gives you the version of the CALDB you are running on your computer.
+ # The last line of the output gives you the current version.
+ # At the time of this writing (05/2002), it should be:
+ # CALDB: 2.12     ASCDS: DS6.6.0        CIAO: 2.2.1
+ # In this particular case with pipeline processing using an outdated
+ # CALDB version 2.8, a RE-PROCESSING of the data is RECOMMENDED.
+#====================================================
+#====================================================
+# It is very important to check your results to see if the processing is OK:
+#
+# Check the log file of the processing to see if there is any serious errors,
+# some of which can be neglected, and to check the sizes, for example.
+# Also use fv and/or ds9 to check the fits files:
+# For obsid 2025, the number of counts are exactly the same for the processed
+# and the original evt2 files. But the size of the processed one is about 1/4
+# greater, because of an extra column (array of pulse heights).
+# For CTI-corrected file, the total number of the reprocessed evt2 file 
+# contains slightly less number of counts (198513 vs 198795 for a2125 obs). 
+#====================================================
+#====================================================

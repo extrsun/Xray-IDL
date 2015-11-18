@@ -1,0 +1,164 @@
+#Requirements:
+# 1)  ciao and ftools are runnig
+# 2)  move to a directory called spec under MAINDIR as defined below
+
+#first define the input event and output spectrum file root names:
+set event_root=evt2file_new_clean
+set spec_root=source
+
+set eventfile=${event_root}.fits
+set MAINDIR=..
+set datadir=$MAINDIR/xdata
+set asphistfile=$MAINDIR/cal/${event_root}_asphist.fits
+$PUBDIR/cal_scripts/assign_bpix.e $MAINDIR/cal/bpixfile.fits
+
+#===================================================================
+#use ds9 to create a region file (def: ${spec_root}.reg) to define the source
+# and a background region (def: ${spec_root}_b.reg); saved in the ciao format. 
+ds9  ${datadir}/${eventfile} &
+
+set reg_s=${spec_root}.reg
+set reg_b=${spec_root}_b.reg
+#===================================================================
+# get information about the source location and about observation
+# yet to be automated.
+dmlist ${datadir}/${eventfile} header | grep TSTART
+0028 TSTART               114998797.1770599931  ;get tstart
+
+dmstat "${datadir}/${eventfile}[sky=region($reg_s)][cols chipx,chipy,x,y, ccd_id]"
+
+chip(chipx, chipy)[pixel]
+    min:	( 844 600 )
+    max:	( 888 643 )
+   mean:	( 865.351133 619.419094 )  ;get mchipx and mchipy
+  sigma:	( 11.7643257 11.4900023 )
+    sum:	( 534787 382801 )
+   good:	( 618 618 )
+   null:	( 0 0 )
+
+sky(x, y)[pixel]
+    min:	( 4004.41089 4471.77588 )
+    max:	( 4019.83472 4487.39209 ) 
+   mean:	( 4011.97683 4479.76475 );get mskyx mskyy
+  sigma:	( 1.5433272 1.53747889 )
+    sum:	( 2479401.68 2768494.62 )
+   good:	( 618 618 )
+   null:	( 0 0 )
+
+ccd_id
+    min:	3 
+    max:	3 
+   mean:	3 ;get the chipid
+  sigma:	0 
+    sum:	1854 
+   good:	618 
+   null:	0 
+#===================================================================
+#set the following according to the above output
+set tstart=114998797.1770599931
+set mchipx=865.351133
+set mchipy=619.419094
+set mskyx=4011.97683
+set mskyy=4479.76475
+set chipid=3
+set detsubsys=ACIS-I3
+set phatype=pi
+
+#Create a RMF and ARF:
+
+punlearn acis_fef_lookup
+acis_fef_lookup $chipid $mchipx $mchipy $phatype $tstart
+
+#place the output into the following (between " and "):
+
+set feffile="/net/xray/usr/local/ciao_2.2//data/chandra/acis/cpf/fefs/acisD2000-01-29fef_piN0002.fits[ccd_id=3,chipx=769:1024,chipy=609:640]"
+#===================================================================
+#to point to the quantum efficiency file for a PARTICULAR chip at 
+#a CERTAIN WORKING TEMPERATURE
+#For CTI corrected event file (see $PUBDIR/cti_products/public/README):
+pset ardlib AXAF_ACIS${chipid}_QEU_FILE="$PUBDIR/cti_products/public/120C/ccd${chipid}_120.qeu"
+#find the appropriate rmf file, which covers the row specfied by mchip:
+echo $mchip
+ls $PUBDIR/cti_products/public/120C/
+ln -s $PUBDIR/cti_products/public/120C/ccd2_y513-640.rmf ${spec_root}.rmf
+set pi_hi=685
+#to be consistent with the PSU matrices (1:685).
+
+
+#For normal (non-CTI corrected) event file:
+pset ardlib AXAF_ACIS${chipid}_QEU_FILE=CALDB
+set pi_hi=1024
+#===================================================================
+
+# copy and paste the following:
+
+punlearn dmextract
+pset dmextract infile="${datadir}/${eventfile}[sky=region(source.reg)][grade=0,2,3,4,6][bin pi=1:${pi_hi}:1]"
+pset dmextract outfile=${spec_root}.pi
+pset dmextract opt=pha1
+pset dmextract clobber=yes
+pset dmextract mode=h
+dmextract
+
+punlearn dmextract
+pset dmextract infile="${datadir}/${eventfile}[sky=region($reg_b)][grade=0,2,3,4,6][bin pi=1:${pi_hi}:1]"
+pset dmextract outfile=${spec_root}_b.pi
+pset dmextract opt=pha1
+pset dmextract clobber=yes
+pset dmextract mode=h
+dmextract
+
+punlearn mkrmf
+pset mkrmf infile=feffile
+pset mkrmf outfile=${spec_root}.rmf
+pset mkrmf axis1="energy=0.1:11.0:0.01"
+pset mkrmf axis2="pi=1:${pi_hi}:1"
+pset mkrmf logfile=${spec_root}_rmf.log
+pset mkrmf clobber=yes
+pset mkrmf mode=h
+mkrmf
+
+punlearn mkarf
+pset mkarf detsubsys=$detsubsys
+pset mkarf outfile=${spec_root}.arf
+pset mkarf asphistfile=$asphistfile 
+pset mkarf engrid="grid(${spec_root}.rmf[cols ENERG_LO,ENERG_HI])"
+pset mkarf sourcepixelx=$mskyx  
+pset mkarf sourcepixely=$mskyy
+pset mkarf mode=h
+pset mkarf clobber=yes
+mkarf 
+
+punlearn dmhedit
+dmhedit infile=${spec_root}.pi filelist=none operation=add key=DETNAM value=$detsubsys
+dmhedit infile=${spec_root}.pi filelist=none operation=add key=RESPFILE value=${spec_root}.rmf
+dmhedit infile=${spec_root}.pi filelist=none operation=add key=ANCRFILE value=${spec_root}.arf
+dmhedit infile=${spec_root}.pi filelist=none operation=add key=BACKFILE value=${spec_root}_b.pi
+
+punlearn dmhedit
+dmhedit infile=${spec_root}_b.pi filelist=none operation=add key=DETNAM value=$detsubsys
+
+%dmhedit infile=${spec_root}_bk.pi filelist=none operation=add key=RESPFILE value=${spec_root}.rmf
+%dmhedit infile=${spec_root}_bk.pi filelist=none operation=add key=ANCRFILE value=${spec_root}.arf
+
+#=======================================================================
+#group the source spectrum:
+
+rm ${spec_root}_g.pi
+grppha ${spec_root}.pi ${spec_root}_g.pi 
+group min 25 
+show group
+exit
+
+#=======================================================================
+#run xspec in another window:
+xspec
+da source_g.pi
+ig bad
+mo po wa
+
+fit
+setplot e
+cpd /xw
+plot
+ -------------------------------------------------------------------------

@@ -1,0 +1,72 @@
+pro plot_reg,cor,hdr,regfile,crval=crval,linestyle=linestype,thick=thick,s_c=s_c ,factor=factor
+;+
+; overplot the outlines of regions defined in a standard region file
+; on an existing plot (as defined by cor and hdr, for example by
+; cont_grey)
+;
+; cor - normalized plot corner from cont_grey
+; hdr - the header of the plot
+; regfile - region file name, created by ds9 or sou_final, for
+;           example.
+; crval - 2-element vector containing the RA and Dec of the
+;         observation aiming point. If not given, crval in hdr is assumed.
+; s_c - color of the plotting
+; factor - the magnification factor to be applied to the size of the regions
+;
+; written by wqd, June 4, 2003
+;-
+if N_params() eq 0 then begin
+  print,'CALLING SEQUENCE - plot_reg,cor,hdr,regfile,crval=crval'
+  print,',linestyle=linestype,thick=thick,s_c=s_c,factor=factor'
+ return
+endif
+if n_elements(s_c) eq 0 then s_c=!d.n_colors-1
+if n_elements(crval) eq 0 then crval=sxpar(hdr,'crval*')
+if n_elements(factor) eq 0 then factor=1.
+pixarcmin=!size_pixel/60.*factor ;to convert to the size in units of arcmin
+
+openr,un,regfile,/get
+text=''
+while eof(un) eq 0 do begin
+    readagain: readf,un,text
+    if strmid(text,0,1) eq '#' then goto,readagain
+    if strmid(text,0,9) eq 'physical;' then textrem=gettok(text,';')
+    shape=gettok(text,'(')
+    xp=gettok(text,',')
+    yp=gettok(text,',')
+    trans_loct,xp-!pref,yp-!pref,crval(0),crval(1),sra,sdec $
+      ,/deg,pixsize=!size_pixel
+    case  shape of
+        'circle': begin
+            scale1=gettok(text,')')*pixarcmin
+            plot_circle,sra,sdec,scale1,cor,hdr,s_c=s_c $
+              ,linestyle=linestype,thick=thick
+        end
+        'box': begin
+            scale1=gettok(text,')')*pixarcmin
+            scale2=gettok(text,')')*pixarcmin
+            plot_box,cor,hdr,sra,sdec,scale1,s_c=s_c $
+              ,dmy=scale2,linestyle=linestype,thick=thick
+            end
+        'rotbox': begin
+            scale1=gettok(text,',')*pixarcmin
+            scale2=gettok(text,',')*pixarcmin
+            angle=gettok(text,')')
+            plot_box,cor,hdr,sra,sdec,scale1,s_c=s_c $
+              ,dmy=scale2,angle=-angle $
+              ,linestyle=linestype,thick=thick
+        end 
+        'ellipse': begin
+            scale1=gettok(text,',')*pixarcmin
+            scale2=gettok(text,',')*pixarcmin
+            angle=gettok(text,')')-90.
+            plot_ell,1.- scale2/scale1,angle,/deg,scale1,cor,hdr,[sra,sdec], $
+              color=s_c,lines=linestype,thick=thick
+        end 
+        else: print,'The region shape ',shape,' needs to be implemented!'
+    endcase
+if !debug eq 2 then stop
+endwhile
+free_lun,un
+return
+end

@@ -1,0 +1,31 @@
+
+  Procedures from Astronomical Users' Library for Dealing with Structure
+    Variables (November 1993)
+
+    ALIGN_STRUCT :  Check an IDL structure for standard memory alignment 
+                    of fields, insert any byte padding required to align 
+                    fields on size boundaries, write out new code to define 
+                    the aligned version of structure
+    COMPARE_STRUCT: Compare all matching Tags names (except for "except_Tags")
+                    between two structure arrays (may be different 
+                    struct.defs.), and return a structured List of fields 
+                    found different
+    COPY_STRUCT :   Copy all Fields with matching Tags names (except for 
+                    "except_Tags") from one structure array to another 
+                    structure array (may be different)
+    CREATE_STRUCT : Dynamically create an IDL structure variable from list of 
+                    tag names and data types of arbitrary dimensions.   
+                    (Useful when the type of structure needed is not known 
+                     until run time)
+    DDL_STRUCT  :   Convert a DDL record-structure definition file
+                    into IDL structure(s) code, packaged as a function
+    DDL_TO_STRUCT : Create IDL function code which defines record structure 
+                    for DATASET. Check for DDL file (describing DATASET) and 
+                    invoke DDL_STRUCT function.
+    N_STRUCT    :   Return number of tags in a given structure
+    PRINT_STRUCT :  Print the tag names of a structure
+    SIZE_STRUCT :   Obtain the size in bytes of an IDL structure definition
+    WHERE_TAG   :   Obtain subscripts of elements in structure array 
+                    for which a particular Tag has values in a range 
+                    or matching specified values
+

@@ -1,0 +1,329 @@
+
+February 23, 1993
+
+Contents and organization of the Rosat IDL library:
+
+     The IDL procedures are stored on the HEASRC Vax workstation under the
+account IDL:[LIB.ROSAT]. On the Suns, the procedures are stored under the
+account /usr1/source/idl/lib/rosat. The directory is organized into the
+following subdirectories: 
+
+      Subdirectory       contains
+
+       experimental      experimental procedure files (extension .pro)
+                         All Rosat IDL procedures are currently regarded as
+                         experimental.
+
+       working           working procedure files (i.e., those which have been
+                         tested and are no longer experimental)
+
+       doc               online help files (extension .txt) and files used
+                         by the procedure DOC_LIST (extension .lst)
+
+       def               parameter default files (extension .def) used by
+                         the interface for the higher level procedures
+
+       aux               auxiliary data files (extension .dat) used by 
+                         various library procedures (also contains SVDF.DAT 
+                         and CONTINENT.DAT from IDL Astronomical Users' 
+                         library).
+
+The main directories IDL:[LIB.ROSAT] and /usr1/source/idl/lib/rosat contain
+the ASCII help files AAAREADME.TXT or README, which give an introduction to
+the Rosat IDL Library The doc subdirectories include the following
+additional ASCII help files: 
+
+     File                   contains
+
+     contents.txt           the contents and organization of the library
+     access_guide.txt       information on how to access the library and 
+                            set up for use at your home institution
+     gof_guide.txt          information on how to access and use IDL using GOF
+                            computers      
+     fits_guide.txt         information on the contents and formats of the 
+                            various Rosat FITS files, and how to read these 
+                            in IDL
+     new_user_guide.txt     some IDL hints for users new to IDL
+     news.txt               contains general IDL news items in reverse 
+                            chronological order
+     changes.txt            a list of additions or changes to the Library in
+                            reverse chronological order
+
+These files can also be found in the IDL subdirectory of the GOF anonymous
+ftp account on legacy (/rosat/software/idl) under the obvious corresponding
+file names.
+---------------------------------------------------------------------------
+
+     The library currently contains the following procedures:
+
+For handling Rosat FITS files in general
+(additional procedures may be found in the Astronomical Users' Library)
+
+    DFITSRD     :   Convert Rosat 3D Binary table format FITS files to
+                    ST SDAS format (Astronomical Users' Library)
+    CONVERT3D   :   Driver for DFITSRD (useful for converting lots of files)
+
+(note: it is no longer necessary to convert Rosat FITS files to ST SDAS
+format)
+
+    F3DLIST     :   List Rosat 3D table files which have *not* been converted
+    F3D_EXTS    :   List valid 3D table extensions (FUNCTION)
+    FITSDUMP    :   Dump the contents of the first n records of all fields
+                    in a FITS table file.
+    FITS_READ   :   Procedure to read FITS images, ASCII and Binary tables
+                    which have been converted to ST SDAS format
+    FITS_GET    :   Procedure to parse table data which has been read into
+                    session memory
+    GETHISTVAL  :   Read the value of a quantity given in FITS header 
+                    history record
+    FITS_TO_STRUCT: Read data from an ASCII or Binary FITS extension and
+                    store in a structure variable whose format and tag names
+                    are set by info in the header
+    TAB_TO_STRUCT:  Read data from SDAS binary table and store in a structure
+                    variable whose format and tag names are set by info in
+                    the header
+---------------------------------------------------------------------------
+
+For accessing data in the ancilliary Rosat FITS files
+
+  Aspect data:
+
+    RSASPECT    :   Read Rosat aspect history (.SA, .CAS, .SAS, or .AO)
+                    files and plot data for selected OBIs
+                    Allows user to determine values of various quantities for 
+                    interactively selected times
+                    A higher level procedure using the helpful interface
+    RSGETASP    :   Read aspect history files and return aspect history and
+                    aspect quality data
+    OLDGETASPQU :   Read Rosat aspect quality (.ASP) file and return aspect
+                    quality data (US format only)
+
+    Also OLDGETASP, RDFGETASP
+
+  Event rates data:
+
+    RSEVRATES   :   Read Rosat event rates (.EVR) file and plot data for 
+                    selected OBIs
+                    Allows user to determine values of various quantities for 
+                    interactively selected times
+                    A higher level procedure using the helpful interface
+    RSGETEVR    :   Read .EVR file and return event rates
+
+    Also OLDGETEVR, RDFGETEVR
+
+  Housekeeping data:
+
+    RSGETHKB    :   Read Rosat binned housekeeping data (.HKB) file and 
+                    return housekeeping data
+    RSGETHKSTA  :   Read Rosat housekeeping status data (.STA) file and
+                    return housekeeping status data
+
+    Also OLDGETHKB, RDFGETHKB, OLDGETHKSTA, RDFGETHKSTA
+
+  Orbital data:
+
+    RSORBIT     :   Read Rosat splitted orbit (.SO) file and plot orbit on 
+                    top of continents, SAA
+                    Allows user to determine values of various quantities for 
+                    interactively selected times
+                    A higher level procedure using the helpful interface
+    RSORB_POS   :   Read .SO file and return orbital data
+    RSORB_PLOT  :   Plot orbital data
+    RSGETVG     :   Calculate various viewing geometry angles and codes,
+                    using orbital data
+
+    Also OLDORB_POS, RDFORB_POS
+
+  Temporal status information:
+
+    TSILIST     :   List the temporal status intervals flags for a Rosat
+                    events list (FITS) file
+    TSI_BITCODES:   Translate the temporal status intervals bit codes for a
+                    Rosat events list (FITS) file into ASCII flags
+    RSCHECKTSI  :   Read data in Rosat temporasl status intervals (TSI) table
+                    in an events list (FITS) file, translate & list the flags
+
+    Also OLDCHECKTSI, RDFCHECKTSI
+
+  General:
+
+    GETNOMASP   :   Read nominal aspect information (roll, RA, Dec) from
+                    a Rosat FITS header (will be replaced by RS_NOMASP)
+    RSGETCLVAL  :   Given two time vectors, find the indices of the closest 
+                    values which match to within the specified tolerance
+    RSGETPAR    :   Set values of input parameters for various procedures.
+                    Calls RSGETDEFPAR, RSSETPARVAL.
+    RSGETSEQINFO:   Read sequence information from the sequence header for
+                    a Rosat FITS file (will be replaced by RS_SEQINFO)
+    RSOBITIMES  :   Read OBI start and end times from a Rosat FITS header
+    RSOBSDATE   :   Reads the observation date from the Rosat photon list FITS
+                    file headers (e.g., rp123456.fits or wp123456_events.tfits)
+    RSGTIMES    :   Reads either the MPE format selected times or the US 
+                    format good time intervals 
+    MPE_GTIMES  :   Reads the _events.tfits header (MPE format data) and 
+                    returns the selected times 
+    RDF_GTIMES  :   Reads the _events.tfits header (RDF format data) and 
+                    returns the good time intervals
+    US_GTIMES   :   Reads the _events.tfits header (US format data) and 
+                    returns the good time intervals
+    RS_SEQINFO  :   Reads sequence information from the sequence header for
+                    a ROSAT FITS file (will replace RSGETSEQINFO)
+    MPE_SEQINFO :   Reads sequence information from the sequence header for
+                    a ROSAT (MPE format) FITS file
+    RDF_SEQINFO :   Reads sequence information from the sequence header for
+                    a ROSAT (RDF format) FITS file
+    US_SEQINFO  :   Reads sequence information from the sequence header for
+                    a ROSAT (US format) FITS file
+    RS_NOMASP   :   Reads nominal aspect information from the sequence header 
+                    for a ROSAT FITS file (will replace RSGETNOMASP)
+    FIXOBINFO   :   Fix OBINFO structure variable after reading data from
+                    MPE format ancillary files
+---------------------------------------------------------------------------
+
+For accessing data in the ancilliary Rosat FITS files
+
+    MAKE_LIST   :   Read data from an events list (FITS) file and store in a
+                    photon list structure variable
+    RS_SOURCES  :   Read info on sources in a source list file (e.g.,
+                    _src_fits_1, _sky_fits_1) and store in a structure
+                    variable
+
+    Also OLD_SOURCES, RDF_SOURCES
+
+    RSCHECK_SOURCES:  Check sources in SASS source table against objects in 
+                      SIMBAD sky table (also from SASS), and select those for 
+                      which there is a SIMBAD object which falls within a 
+                      given search radius.
+
+    GET_BFIELD  :   Calculate quantities related to Earth's magnetic field 
+                    in satellite vicinity.
+    EXTRAPSHC   :   Linearly extrapolate spherical harmonic model for the
+                    Earth's magnetic field. Called by GET_BFIELD.
+    FELDC       :   Given the satellite position in Cartesian coordinates,
+                    calculate Earth's magnetic field from the spherical
+                    harmonics model of G. Kluge, European Space Operations 
+                    Centre, Internal Note 61, 1970. Alternative to FELDG.
+    FELDCOF     :   Determine coefficients and dipole moment from IGRF models.
+                    Called by GET_BFIELD.
+    FELDG       :   Given the satellite longitude, latitude, and altitude,
+                    calculate Earth's magnetic field from the spherical
+                    harmonics model of G. Kluge, European Space Operations 
+                    Centre, Internal Note 61, 1970. Called by GET_BFIELD.
+    FELDI       :   Called by GET_BFIELD and SHELLG_GETL.
+    GETSHC      :   Read spherical harmonic coefficients from the specified     
+                    IGRF file into an array. Called by READ_IGRF.
+    INTERPSHC   :   Linearly interpolate spherical harmonic model for the
+                    Earth's magnetic field. Called by GET_BFIELD.
+    READ_IGRF   :   Read the IGRF model data from the IGRF data files.
+                    Called by GET_BFIELD.
+    SHELLG_GETL :   Calculate the MacIlwain L-value for specified Geodetic 
+                    coordinates, altitude, and geomagnetic field model.
+                    Called by GET_BFIELD.
+    STOER       :   Used for field line tracing in SHELLG_GETL.
+
+For data analysis
+
+  General purpose:
+
+    GET_POSI    :   Finds number of elements for each unique value in a
+                    vector (contributed by Q. D. Wang)
+    PARSE_TIME  :   Convert a (PROS style) ASCII descriptor for time filtering 
+                    into start and stop times
+    SCT2UT      :   Convert spacecraft clock times read from Rosat files 
+                    (given in seconds since launch) to UT 
+    TIMESEQ     :   Convert UT seconds to fractional days, i.e. a sequential 
+                    time vector, using OBINFO
+    TIMESTR     :   Convert start and stop time vectors into a PROS style ASCII
+                    string for time filtering
+    UT2SCT      :   Convert UT seconds time (seconds from beginning of day)
+                    to spacecraft clock time (seconds from launch) using
+                    structure variable OBINFO
+    VSORT       :   Finds the unique values in a vector, when the entries will
+                    be quantized more coarsely
+    VSORT_LARGE :   Same as VSORT, except for large vectors (>10,000 elements)
+    WRITESTR    :   Write a vector of ASCII strings to an output file
+                    (one element per line)
+
+  Data Selection:
+
+    TIMEFILTER  :   Allows user to select data from a photon list structure 
+                    for times within a specified interval or intervals
+    TIMEINTSECT :   Finds the time intervals which are the intersections
+                    between one interval and a set of intervals
+    TINTSECT2   :   Finds the time intervals which are the intersections
+                    between two sets of time intervals
+    RDACTFIL    :   Reads ASCII file of accepted time intervals, with one
+                    interval (start and stop times) per line
+
+  Spatial:
+
+    DET2SKY     :   Use aspect information to convert detector to sky image
+                    coordinates 
+    IMDIV       :   Divide one image by another (where denominator may
+                    contain zeroes)
+    PARSE_SIMPLE:   Parse the IRAF/PROS style descriptor of a simple region
+    REG_LIMITS  :   Determine the x and y limits of a simple region
+                    descriptor
+    MAKE_EMAP   :   Generate energy dependent exposure maps for Rosat PSPC
+                    pointed observations
+    MAKE_EMAP_HDR : Create a FITS header for an exposure map (called by 
+                    MAKE_EMAP)
+    DEFIMAP     :   Define PSPC intstrument map file names (called by MAKE_EMAP)
+
+  Spectral:
+
+    DEFGROUP    :   Defines channel groupings for make_spec and make_pha
+    MAKE_PHA    :   Write spectrum into XSPEC format .PHA files
+    MAKE_SPEC   :   Construct spectrum from photon list, using arbitrary 
+                    channel groupings and blocking factors 
+    READ_ASPC   :   Read an ASCII spectral file created by WRITE_ASPC
+    SET_RESPFILES : Defines a system variable containing the default response
+                    matrices to be used in MAKE_PHA
+    WRITE_ASPC  :   Write spectral data to ASCII file  
+                    Useful for transferring spectral data created under
+                    VMS to Unix for spectral fitting in XSPEC
+
+  Timing:
+
+    TIMEBIN     :   Construct binned light curve from photon list, 
+                    in bins of equal (or mostly equal) length
+---------------------------------------------------------------------------
+
+For miscellaneous purposes
+
+    ROSATLIB    :   Add system variables required for Rosat IDL procedures.
+                    Calls ASTROLIB from IDL Astronomical Users' Library.
+
+    CREATE_STRUCT:  Create an IDL structure variable from list of tag names
+                    and data types
+    CT2LST2     :   Converts civil time to local mean sideral time (allows
+                    vector inputs)
+    FILLBOX     :   Calculate the x and y positions of all pixels contained
+                    within a rectangle.
+    FILLREGION  :   Calculate the x and y positions of all pixels
+                    contained within an arbitrary straight-sided region.
+    FILLSIMPLE  :   Calculate the x and y positions of all pixels
+                    contained within an arbitrary, straight-sided,
+                    simple region (i.e., a region where all vertices point
+                    away from the center).
+    FINDSTR     :   Find all occurences of one substring within another.
+    FITSDUMP    :   Dump the contents of the first n records of all fields
+                    in a FITS table file.
+    GETBORDER   :   Calculate the x and y positions of all pixels along a
+                    straight-sided boundary.
+    GETHISTVAL  :   Read the value of a quantity given in FITS header 
+                    history record
+    GETOBIEVR   :   Given up to 5 quantities, find intervals during which
+                    all quantities are nonzero (for plotting event rates
+                    data)
+    GETPLOTINTS :   Find large gaps within a time interval (for plotting)
+    MAKE_CONTINENT: Read ASCII contours and write into a file for CONTINENT
+    MATCH_FILES :   Search a directory for files of a given rootname and
+                    description.
+    NINTREG     :   Return integer values closest to values in X & Y vectors.
+                    Values may be added so that the entire ranges of both
+                    X & Y are encompassed.
+    TO_BIN      :   Translate a non-negative decimal integer to a binary string
+    TO_HEX_LARGE:   Translate a non-negative decimal integer to a hexadecimal 
+                    string. Same as but also works for > 128 elements.
+---------------------------------------------------------------------------

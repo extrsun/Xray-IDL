@@ -1,0 +1,5 @@
+ dmcopy "acisf00361N002_evt2_cti_clean.fits[ccd_id="0,1,2,3"]" ccd0123.fits
+
+dmcopy "ccd0123.fits[bin chipx,chipy]" det0123.fits 
+dmcopy "ccd0234.fits[chipx!=81]" new.fits
+

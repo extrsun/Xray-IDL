@@ -1,0 +1,395 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+  <meta content="text/html; charset=ISO-8859-1"
+ http-equiv="content-type">
+  <title>memo_sdf</title>
+  <meta content="Daniel Wang" name="author">
+</head>
+<body>
+Purposes:<br>
+1. Calculate the source number-flux relation by correcting for the
+detection incompleteness and bias&nbsp; as well as subtraction of
+interlopers (see <a
+ href="http://adsabs.harvard.edu/cgi-bin/nph-bib_query?bibcode=2004ApJ...612..159W&amp;amp;db_key=AST&amp;amp;data_type=HTML&amp;amp;format=&amp;amp;high=3fd79d7fc317467">Wang
+2004</a>).<br>
+2. Predict the residual source contribution in the field to a common
+count rate limit.<br>
+<br>
+The analysis here is a bit complicated. You need to know what you are
+doing!<br>
+Quite some parameters may need to be specified; some are obvious, while
+others are more subtle; pay especially attention to lines with %!!!<br>
+;================================================================<br>
+;get the exposure and background images, etc.<br>
+instr='aciss'<br>
+cenvset,instr<br>
+;define the region. For the purpose 1, just large enough to cover all
+the interested regions;<br>
+;For the purpose 2, the field should be the same as the one to be used
+for imaging analysis.<br>
+block=4 &amp; mdim=512 &amp; ccdid=[6,7,8] ;!!!<br>
+evtroot='n4697_merge' ;!!!<br>
+;bv=[1,2] ;soft band<br>
+;bv=[3,4]<br>
+bv=[1,2,3,4] ;broad band<br>
+;,gradec=[?,?] ; ra and dec of the galaxy center; otherwise the image
+center is used<br>
+evt_image,evtroot,instr,datadir='',hdr=mh,bmin=bmin,bmax=bmax,imdim=mdim,/nofits,imb=block,imccd=ccdid,tbim=tb,dfname=evtroot+'_cbma.fits',dca=dca,bv=bv,tbw=tbw,gradec=gradec
+;,ca,ta,list=l<br>
+;dca has been rebinned<br>
+loadct_self,18<br>
+tv,bscale(tb)<br>
+;---------------<br>
+;define the general region of consideration. Sub-regions can be devided
+later<br>
+radiushi=3. ;!!! outer radius of the region to be considered (in units
+of arcmin)<br>
+tv,bscale(image_cut(tb,radiushi,/keep,block=block)) <br>
+t=image_cut(tb,radiushi,/keep,block=block)<br>
+;---------------------------------<br>
+&nbsp;ss=lindgen(long(mdim(0))*mdim(1)) ;!!!<br>
+;or ss=defroi(mdim(0),mdim(1)) ;or manually select a region to avoid
+edges or so<br>
+;---------------------------------<br>
+sel=where(t(ss) gt 0.001*max(t),nsel) ;remove regions with too little
+exposure<br>
+sel=ss(sel)<br>
+;=====================================================<br>
+dc=total(dca(*,*,bv-1),3) ;detection background map in the selected band<br>
+;set_plot,'ps' ;just for hardcopy output<br>
+;loadct,0&nbsp;&nbsp; &nbsp;<br>
+cor=[0.01,0.99,0.01,0.99]<br>
+cont_grey,dc,mh,cor=cor,barf=0.,mr=0,/noc,/greyl,/notick,f_c=0,/full,greymin=min(dc(sel)),greymax=max(dc(sel)),thick=3<br>
+scale='1''<br>
+scale_plot,cor,mh,0.1,0.9,1,scale,thick=2,char=2,color=0 ;!d.n_colors-1<br>
+;------------------------------<br>
+;source detection parameters; should use the existing detection
+completeness map (smina from<br>
+; sou_main.pro). The following parameters
+should match what is used in sou_main:<br>
+asfrac=0.7 ;!!! source detection energy-encircled fraction <br>
+probth=-6d ;log(P) source detection threshold<br>
+<br>
+;for no PSF image case:<br>
+;get source detection radius at each pixel, which is off-axis dependent<br>
+crpix=sxpar(mh,'crpix*')<br>
+refx=crpix(0)-1 &amp; refy=crpix(1)-1<br>
+dist_circle,dd,mdim,refx,refy<br>
+dd=dd*(block*!size_pixel/60.) ; in units of arcmin<br>
+psf_params,dd(sel),rs,perclimit=asfrac<br>
+;---------<br>
+bs=dc(sel)*(rs/block)^2*!pi ;backgorund counts included in the apertures<br>
+;=====================================================<br>
+; using the existing incomplete map (from sou_main.pro); otherwise, see
+smina construction later<br>
+cast,evtroot+'_map70B_mlm_smina',mh,outa=smina<br>
+;back_prof,smina,d,f,fmin,block=block,radiushi=radiushi*sqrt(2)*60.,filter=smina,samb=1.,choice=2
+;median of the threshold plus the lowest<br>
+back_prof,smina,d,f,fmin,fmax,block=block,filter=smina,siglevel=0.16,refx=refx,refy=refy,samb=1.,radiushi=radiushi*60<br>
+20<br>
+;========================================================<br>
+soufile=evtroot+'_map70BSH_hr'<br>
+sou_fits_info,soufile,slisto,/all ;,probth=probth<br>
+;------------------------------------------<br>
+;remove certain sources (foreground stars etc), not to be used in this
+analysis !!!<br>
+ss=[14,22,25,33,63,65,68,87,64,72]-1 ;e.g., identified cluster members<br>
+remove,ss,slisto<br>
+;=============================================<br>
+;select sources only those selected bins (sel)<br>
+sls=slisto<br>
+sou_rsel,mh,sls,rpsel=sel <br>
+;------------------------------------------------------------------<br>
+;For S band; not used here<br>
+ss=where(strpos(sls.sdb,'S') ne -1) ;all sources detected in S!!!<br>
+slist=sls(ss)<br>
+cntr=slist.cntrb1+slist.cntrb2<br>
+;------------------------------------------------------------------<br>
+;for the B band<br>
+;calculate the off the region center distance (not necessary off-axis)<br>
+trans_dist,gradec(0),gradec(1),sls.ra,sls.dec,/deg,angle=angle,pixsize=60.<br>
+ss=where(strmid(sls.sdb,0,1) eq 'B' and angle lt radiushi,nss) <br>
+ss=where(strpos(slist.sdb,'B') ne -1 and angle lt radiushi,nss) <br>
+slist=sls(ss)<br>
+cntr=slist.cntrb<br>
+;cntr=slist.cntrb1+slist.cntrb2 ;ie. for soft band<br>
+angle=angle(ss)<br>
+;----------------------------<br>
+plot_io,angle,cntr,psym=7,yrange=[min(cntr)*0.7,max(cntr)*1.2],xtit='Off-axis
+angle (arcmin)',ytit='Count rate (counts
+s!U-1!N)',ysty=1,thick=2,chars=1.5<br>
+oplot,d,fmin,thick=2<br>
+oplot,d,f,thick=2<br>
+;========================================================<br>
+;calculate the rsp:<br>
+outr=radiushi ;just one possible choice; could be defined differently<br>
+;outr=1.<br>
+ss=where(dd(sel) lt outr)<br>
+;ss=where(dd(sel) lt outr and dd(sel) ge 1.)<br>
+bc=bs(ss)<br>
+expt=tb(sel(ss))<br>
+sminv=smina(sel(ss))<br>
+;sldn=60 ;!!!<br>
+sldn=30<br>
+sfname='n4697_merge_sou_b_3am_back' ;!!!<br>
+outfname=sfname+'.rsp'<br>
+print,min(sminv)<br>
+slomin=fix(min(sminv)*1e6)*1.e-6 ;B-band and should be a bit lower than
+min(sminv)<br>
+shi=(fix(max(cntr)*1e2)+1)*1.e-2 ;a bit higher than the highest source
+cntr<br>
+;choice =1 ; def, use 0.5-2 keV band for the background AGN number
+estimate<br>
+;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; = 2: 2-10 keV band<br>
+sfdist_rsp,expt,bc,sminv,rsp,minind,lenind,sv=sv,mslv=mslv,esv=esv,sldn=sldn,slo=slomin,shi=shi,outfname=outfname,/def,mesv=mesv,ctof=ctof,tnbs=tnbs,choice=choice<br>
+;the background AGN contribution (tnbs) is calcualted only with pweight<br>
+; def ctof=450/2.2 ;for ACIS-S(0.3-7)/ACISI(0.5-2) appropxiate for
+NH~3e20 and po with gamma=1.4<br>
+;----------------<br>
+nbs=total(tnbs*(block*!size_pixel/3600.)^2)<br>
+print,nbs<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 14.3640<br>
+;---------------------------------<br>
+cast,'ngc4697_k.fits',mh,outa=o <br>
+;the image should more-or-less contain only the emission from the
+galaxy (ie, the backg~0)<br>
+tv,bscale(o,0,5)<br>
+;-----------------------------------<br>
+;remove holes due to bright star removal<br>
+tv,bscale(median(o,8),0,1) ;choose the filter large enough to remove
+star holes<br>
+a=median(o,8)<br>
+ss=where(o eq 0.)<br>
+o(ss)=a(ss)<br>
+tv,bscale(o,0,5)<br>
+;-----------------------------------<br>
+;remove faiter stars:<br>
+tv,bscale(median(o,5),0,5) ;filter small enough, but enough to remove
+the stars<br>
+a=median(o,5) <br>
+;----------------------------------<br>
+;zero the background, neglecting the galactic contribution outside
+region outside a radius !!!<br>
+ss=where(dd gt outr and tb gt 0.)<br>
+print,avg(a(ss))<br>
+mo=(a-avg(a(ss)))&gt; 0.<br>
+tv,bscale(mo,0,5)<br>
+;----------------------------------<br>
+;the weight for the galactic and background sources<br>
+pw=mo(sel)/total(mo(sel))*(1.-nbs/nss)+(nbs/nss)/nsel <br>
+<br>
+sfname='n4697_merge_sou_b_3am' ;!!!<br>
+sfdist_rsp,expt,bc,sminv,rsp,minind,lenind,sv=sv,mslv=mslv,esv=esv,sldn=sldn,slo=slomin,shi=shi,outfname=outfname,/def,mesv=mesv,pw=pw
+;with weight<br>
+;============================<br>
+;plot 2-D matrix:<br>
+cont_grey,rsp,greymin=1.e-5,greymax=10,mh,cor=cor,barf=0.,mr=0,/noc,/greyl,f_c=-1,/notic,pos=pos,/def
+;OK to see ERROR - Invalid NAXIS1<br>
+contour,rsp,/noerase,POSITION=pos,mslv,alog10(mesv), XSTYLE=1,
+YSTYLE=1,lev=1.e20,xtitl='!6 Log(S!do!n)',ytitl='Log(S)'<br>
+;--------------------------------------------------------<br>
+;write sources into the spectral file.<br>
+scntr=cntr(where(angle lt outr))<br>
+;scntr=cntr(where(angle lt outr and angle ge 1.))<br>
+make_fdist,scntr,sv,spec<br>
+writepha,spec,counterr,sfname+'.pha',/poisson,/pi,resp=sfname+'.rsp'<br>
+;====================================================<br>
+;outside IDL, regroup the distribution function:<br>
+grppha m31_merge_sou_b_8am.pha m31_merge_sou_b_8am_g.pha<br>
+group min 6<br>
+good 1-200<br>
+show group<br>
+<br>
+group 42 -&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 60 19<br>
+show group<br>
+exit<br>
+;------------------------<br>
+;Setup the use of the background source distribution model:<br>
+setenv LMODDIR /home/wqd/xspec_models/XSPEC_LMODDIR<br>
+setenv LD_LIBRARY_PATH $LMODDIR":$LD_LIBRARY_PATH"<br>
+;-------------------------<br>
+xspec<br>
+da m31_merge_sou_b_8am_g.pha<br>
+statistic cstat<br>
+cpd /xw<br>
+setplot e<br>
+mo cxbbkgd<br>
+new 1&nbsp; 204.50 0. 0 0 300 300 ;!!! very important; needed to
+overcome the hard boundary <br>
+<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+;!!! renorm 6 to get nbs and then freeze the parameter<br>
+<br>
+add 2 po <br>
+<br>
+fit 30 0.01<br>
+pl ld <br>
+<br>
+good 1000 nosim<br>
+step log 8 <br>
+<br>
+iplot<br>
+la x Source count rate (counts s\u-1\d)<br>
+la y Number of sources per counts s\u-1\d<br>
+la t<br>
+time off<br>
+la f<br>
+lw 3<br>
+cs 1.3<br>
+pl<br>
+<br>
+&nbsp;&nbsp; Current data file : n4697_merge_sou_b_3am_g.pha<br>
+&nbsp;&nbsp; with integration time&nbsp;&nbsp;&nbsp;&nbsp; 1.000<br>
+&nbsp; No current background<br>
+&nbsp; No current correction<br>
+&nbsp; Response (RMF) file&nbsp;&nbsp;&nbsp; : n4697_merge_sou_b_3am.rsp<br>
+&nbsp; Auxiliary (ARF) file&nbsp;&nbsp;&nbsp; : none<br>
+&nbsp; Noticed channels&nbsp;&nbsp;&nbsp;&nbsp; 1 to&nbsp;&nbsp;&nbsp;
+15<br>
+&nbsp; File observed count rate&nbsp;&nbsp;&nbsp;&nbsp;
+100.0&nbsp;&nbsp;&nbsp; +/- 10.000&nbsp;&nbsp;&nbsp;&nbsp; cts/s<br>
+&nbsp;Source file counts :&nbsp;&nbsp;&nbsp; 100.0<br>
+&nbsp; Model predicted rate :&nbsp;&nbsp;&nbsp; 100.1<br>
+<br>
+&nbsp; Model:&nbsp; cxbbkgd&lt;1&gt; + powerlaw&lt;2&gt;<br>
+&nbsp;
+---------------------------------------------------------------------------<br>
+&nbsp;
+---------------------------------------------------------------------------<br>
+&nbsp; Model:&nbsp; cxbbkgd&lt;1&gt; + powerlaw&lt;2&gt;<br>
+&nbsp; Model Fit Model Component&nbsp; Parameter&nbsp;
+Unit&nbsp;&nbsp;&nbsp;&nbsp; Value<br>
+&nbsp; par&nbsp;&nbsp; par comp<br>
+&nbsp;&nbsp;&nbsp; 1&nbsp;&nbsp;&nbsp; 1&nbsp;&nbsp;&nbsp;
+1&nbsp;&nbsp; cxbbkgd&nbsp;&nbsp;&nbsp;
+cts2flux&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+204.500&nbsp;&nbsp;&nbsp;&nbsp; frozen<br>
+&nbsp;&nbsp;&nbsp; 2&nbsp;&nbsp;&nbsp; 2&nbsp;&nbsp;&nbsp;
+1&nbsp;&nbsp; cxbbkgd&nbsp;&nbsp;&nbsp;
+PhoIndx1&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+1.82000&nbsp;&nbsp;&nbsp;&nbsp; frozen<br>
+&nbsp;&nbsp;&nbsp; 3&nbsp;&nbsp;&nbsp; 3&nbsp;&nbsp;&nbsp;
+1&nbsp;&nbsp; cxbbkgd&nbsp;&nbsp;&nbsp;
+Breakf&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+1.48000&nbsp;&nbsp;&nbsp;&nbsp; frozen<br>
+&nbsp;&nbsp;&nbsp; 4&nbsp;&nbsp;&nbsp; 4&nbsp;&nbsp;&nbsp;
+1&nbsp;&nbsp; cxbbkgd&nbsp;&nbsp;&nbsp;
+PhoIndx2&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+0.600000&nbsp;&nbsp;&nbsp;&nbsp; frozen<br>
+&nbsp;&nbsp;&nbsp; 5&nbsp;&nbsp;&nbsp; 5&nbsp;&nbsp;&nbsp;
+1&nbsp;&nbsp; cxbbkgd&nbsp;&nbsp;&nbsp;
+Number&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+6150.00&nbsp;&nbsp;&nbsp;&nbsp; frozen<br>
+&nbsp;&nbsp;&nbsp; 6&nbsp;&nbsp;&nbsp; 6&nbsp;&nbsp;&nbsp;
+1&nbsp;&nbsp; cxbbkgd&nbsp;&nbsp;&nbsp;
+norm&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+7.950000E-03 frozen<br>
+&nbsp;&nbsp;&nbsp; 7&nbsp;&nbsp;&nbsp; 7&nbsp;&nbsp;&nbsp;
+2&nbsp;&nbsp; powerlaw&nbsp;&nbsp;
+PhoIndex&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+1.37543&nbsp;&nbsp;&nbsp;&nbsp; +/-&nbsp; 0.935326E-01<br>
+&nbsp;&nbsp;&nbsp; 8&nbsp;&nbsp;&nbsp; 8&nbsp;&nbsp;&nbsp;
+2&nbsp;&nbsp; powerlaw&nbsp;&nbsp;
+norm&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+1.30102&nbsp;&nbsp;&nbsp;&nbsp; +/-&nbsp; 0.928304<br>
+&nbsp;
+---------------------------------------------------------------------------<br>
+&nbsp;
+---------------------------------------------------------------------------<br>
+&nbsp;C-statistic =&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+20.01655&nbsp;&nbsp;&nbsp;&nbsp; using&nbsp;&nbsp;&nbsp; 15 PHA bins.<br>
+&nbsp;77.10% of realizations have a fit statistic
+&lt;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 20.02<br>
+&nbsp;&nbsp;&nbsp;&nbsp; 7&nbsp;&nbsp;&nbsp;&nbsp;
+1.24062&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+1.51666&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; (&nbsp;&nbsp;
+-0.135289&nbsp;&nbsp;&nbsp; ,&nbsp;&nbsp;&nbsp;&nbsp;
+0.140759&nbsp;&nbsp;&nbsp; )<br>
+&nbsp;&nbsp;&nbsp;&nbsp; 8&nbsp;&nbsp;&nbsp;
+0.452654&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+3.41810&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; (&nbsp;&nbsp;
+-0.842596&nbsp;&nbsp;&nbsp; ,&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+2.12285&nbsp;&nbsp;&nbsp; )<br>
+<br>
+&nbsp;<br>
+&nbsp;&nbsp;&nbsp; 7&nbsp;&nbsp;&nbsp; 7&nbsp;&nbsp;&nbsp;
+2&nbsp;&nbsp; bknpower&nbsp;&nbsp;
+PhoIndx1&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+0.865123&nbsp;&nbsp;&nbsp;&nbsp; +/-&nbsp; 0.198532<br>
+&nbsp;&nbsp;&nbsp; 8&nbsp;&nbsp;&nbsp; 8&nbsp;&nbsp;&nbsp;
+2&nbsp;&nbsp; bknpower&nbsp;&nbsp; BreakE&nbsp;&nbsp;
+keV&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 1.000000E-03 +/-&nbsp; -1.00000<br>
+&nbsp;&nbsp;&nbsp; 9&nbsp;&nbsp;&nbsp; 9&nbsp;&nbsp;&nbsp;
+2&nbsp;&nbsp; bknpower&nbsp;&nbsp;
+PhoIndx2&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+1.87235&nbsp;&nbsp;&nbsp;&nbsp; +/-&nbsp; 0.247301<br>
+&nbsp;&nbsp; 10&nbsp;&nbsp; 10&nbsp;&nbsp;&nbsp; 2&nbsp;&nbsp;
+bknpower&nbsp;&nbsp;
+norm&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+76.1400&nbsp;&nbsp;&nbsp;&nbsp; +/-&nbsp;&nbsp; 117.013<br>
+&nbsp;
+---------------------------------------------------------------------------<br>
+&nbsp;
+---------------------------------------------------------------------------<br>
+&nbsp;C-statistic =&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+11.61090&nbsp;&nbsp;&nbsp;&nbsp; using&nbsp;&nbsp;&nbsp; 15 PHA bins.<br>
+XSPEC&gt;pl<br>
+XSPEC&gt;good 1000 nosim<br>
+&nbsp;27.20% of realizations have a fit statistic
+&lt;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 11.61<br>
+&nbsp;&nbsp;&nbsp;&nbsp; 7&nbsp;&nbsp;&nbsp;
+0.507819&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+1.19498&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; (&nbsp;&nbsp;
+-0.357305&nbsp;&nbsp;&nbsp; ,&nbsp;&nbsp;&nbsp;&nbsp;
+0.329858&nbsp;&nbsp;&nbsp; )<br>
+&nbsp;&nbsp;&nbsp;&nbsp; 8&nbsp;&nbsp;&nbsp;
+7.064762E-04&nbsp;&nbsp;&nbsp; 9.364715E-03&nbsp;&nbsp;&nbsp;
+(&nbsp;&nbsp; -2.935239E-04,&nbsp;&nbsp;&nbsp;&nbsp; 8.364715E-03)<br>
+&nbsp;&nbsp;&nbsp;&nbsp; 9&nbsp;&nbsp;&nbsp;&nbsp;
+1.54490&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+2.24485&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; (&nbsp;&nbsp;
+-0.327449&nbsp;&nbsp;&nbsp; ,&nbsp;&nbsp;&nbsp;&nbsp;
+0.372496&nbsp;&nbsp;&nbsp; )<br>
+&nbsp;;======================================================<br>
+;calculate the count map due to the detection incompleteness<br>
+;first the galaxy part (assuming the power law):<br>
+gamma=1.38<br>
+norm=1.30 ;norm for all sources within the selected region<br>
+; for power law with gamma &lt; 2:<br>
+pw=mo/total(mo(sel)) ;assuming the source distribution follow the
+K-band intensity again<br>
+df=norm/(2.-gamma)*(smina^(2.-gamma)-slomin^(2.-gamma))*pw*tb ;total
+counts in the field<br>
+tv,bscale(df)<br>
+print,total(df) ;total number of counts due to the detection
+incompleteness<br>
+304.677<br>
+<br>
+;now the interloper part (following Eq. 20 in Wang 2004):<br>
+bsp=[1.82, 0.60,1.48,6150] ;0.5-2 keV band<br>
+; just use an approximate power law, appropriate for&nbsp; smina
+&lt;&lt; bsp(2)/ctof<br>
+gamma=1+bsp(1)<br>
+norm=(0.2*ctof)^bsp(0)*bsp(2)^(bsp(1)-bsp(0))*bsp(1)/3600.
+;sources/(arcmin^2*ct/s)<br>
+norm=bsp(3)*0.2^bsp(0)/ctof^bsp(1)*bsp(2)^(bsp(1)-bsp(0))*bsp(1)/3600.
+;sources/(arcmin^2*ct/s)<br>
+bdf=norm*(block*!size_pixel/60.)^2*tb/(2.-gamma)*(smina^(2.-gamma)-slomin^(2.-gamma))<br>
+print,total(bdf(sel)) ;total number of counts due to the detection
+incompleteness<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 43.0953<br>
+print,total(dc(sel))<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 38089.8<br>
+tv,bscale(bdf+df,0,0.05)<br>
+;---------------------------------------------------<br>
+;check where the above background source estimate is not good<br>
+tv,bscale(smina,0,bsp(2)/ctof) ;upper limit is the break count rate<br>
+;regions with color are problematic, assuming the use of loadct_self,18<br>
+<br>
+writefits,'residual_sf_b.fits',bdf+df,mh<br>
+;=========<br>
+;=============================================<br>
+<br>
+</body>
+</html>

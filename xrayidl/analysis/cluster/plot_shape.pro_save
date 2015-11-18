@@ -1,0 +1,85 @@
+pro plot_shape,spara,corner,hdr,gradec,nshape=nshape,lines=lines,color=color,sel=sel,fill=fill,thick=thick
+;+
+; plot an ellipse in an exiting plot
+; 
+; spara - vector containging shape parameters
+;         for nshape=0 - circle: spara=[radius]; units: arcmin
+;         for nshape=1 - box: spara=[xdim,ydim,angle]; 
+;         for nshape=2 - ellipse: spara=[major axis,ellipticity,position angle]
+;                        all dimensions are in units of arcmin; angles
+;                        in degrees and anti-clockwise
+; corner - plot position from cont_grey
+; hdr - fits header of the image
+; gradec - the ra and dec of the ellipse if not coinciding with the
+;          image center (deg)
+; lines, thick, color - curve style, thickness, and color 
+; sel - selected image pixel index within the ellipse
+; fill - if set, filling of the ellipse will be performed
+; thick - the norminal thickness of plot curve
+;
+; written by wqd, 6/17/03
+;-
+if n_params() lt 1 then begin
+print,'CALLING SEQUENCE - plot_shape,spara,corner,hdr,gradec,nshape=nshape'
+print,',lines=lines,color=color,sel=sel,fill=fill,thick=thick'
+return
+endif
+if n_elements(nshape) eq 0 then nshape=0 ;circle
+if n_elements(nd) eq 0 then nd=500
+an=findgen(nd+1)*(2.*!pi/nd)
+   
+case nshape of
+0: begin ;circle
+    rs=spara(0)*60.
+    xs=rs*cos(an)
+    ys=rs*sin(an)
+   end
+1: begin ;box 
+    dmx=spara(0)
+    if n_elements(spara) eq 1 then dmy=dmx else dmy=spara(1)
+    hdmx=dmx/2.*60.         ; in arcsec
+    hdmy=dmy/2.*60.         ; in arcsec
+    xpo=hdmx*[1,1,-1,-1,1]
+    ypo=hdmy*[-1,1,1,-1,-1]
+    if n_elements(spara) eq 3 then begin  
+        an=spara(2)*(!pi/180.)
+        xs=xpo*cos(an)-ypo*sin(an)
+        ys=xpo*sin(an)+ypo*cos(an)
+    endif else begin
+        xs=xpo
+        ys=ypo
+    endelse
+  end
+2: begin ;ellipse
+    if n_elements(spara) lt 3 then begin
+        print,'ellipse needs add least two parameters'
+        ;(half major axis ellipticity)
+        return
+    endif 
+    xxe=(float(spara(0))*60.)*cos(an)
+    yye=(1.-spara(1))*(float(spara(0))*60)*sin(an)
+    if n_elements(spara) eq 3 then begin
+        rpa=spara(2)*!pi/180. 
+         ; get to the plot coordinates
+        xs=xxe*sin(rpa)+yye*cos(rpa)
+        ys=-xxe*cos(rpa)+yye*sin(rpa)
+    endif else begin
+        xs=xxe & ys=yye
+    endelse 
+   end
+3: begin ;to be added
+    print,'shape not implemented yet'
+    end
+endcase
+if n_elements(gradec) ne 0 then begin 
+    crval=sxpar(hdr,'crval*',count=nc)
+    if nc gt 2 then print,'more than 2 crval parameters in the header!!'
+    trans_dist,crval(0),crval(1),gradec(0),gradec(1),xp,yp,/das,/deg
+    xs=xs+xp
+    ys=ys+yp
+endif 
+plot_add,hdr,corner,xs,ys,lines=lines,color=color,fill=fill,thick=thick,sel=sel
+
+return
+end
+

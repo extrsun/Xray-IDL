@@ -1,0 +1,75 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+  <meta content="text/html; charset=ISO-8859-1"
+ http-equiv="content-type">
+  <title>memo_sou_det_merged_file</title>
+</head>
+<body>
+<div style="text-align: center;"><span style="font-weight: bold;">Source
+detection in a merged data set</span><br>
+</div>
+<br>
+Detect sources in merged multiple offset observations, accounting for
+the weighted PSF.<br>
+<br>
+Note: Overlapping of the central region of an observation with the
+outer regions of another observation could actually reduce the
+sensitivity because of the increase of the PSF size, depending on the
+local background level. The use of inr and outr (excluding the outer
+most regions) may be helpful.<br>
+;=====================================================<br>
+Prepare for the merged data:<br>
+;Following memo_merger to get the headers of the merged evt and map
+headers<br>
+;---------------------------------------<br>
+;get psf images for source detection, exposure maps, and image filter<br>
+;If needed, inner and outer radii (arcmin) of selected regions in each
+observation<br>
+;inr=0.&nbsp; &amp; outr=8.5 ; for inner most region outr=4<br>
+;the region is passed to the source detection through filter<br>
+cast_aimpsf,flist,mh,aimpsf_d,ta,fdir=fdir,perclimit=0.7,inr=inr,outr=outr,inarr=filter
+;used for general source detection<br>
+cast_aimpsf,flist,mh,aimpsf_cd,fdir=fdir,perclimit=0.5,inr=inr,outr=outr
+;central region<br>
+cast_aimpsf,flist,mh,aimpsf,fdir=fdir,perclimit=0.9,inr=inr,outr=outr ;
+final quantification<br>
+;---------------------------------------<br>
+;Following memo_merger to get merged event list (with the possible
+filter):<br>
+list_merge,flist,ph,mlist,mtype=mtype,ftail='.fits',fdir=fdir,row=row,ccd=[0,1,2,3],filtero=filter<br>
+;--------------------------------------------------------------------------<br>
+;prepare for the source detection:<br>
+;convert the tag names for source detection with the merged event file<br>
+;dx and dy are now for the original x and y of individual observations<br>
+a=mlist<br>
+mlist.x=a.mx &amp; mlist.y=a.my<br>
+mlist.mx=a.x &amp; mlist.my=a.y<br>
+;just for testing:<br>
+list_image,mlist,1,1,cb,mdim(0)/mblock,mdim(1)/mblock,block=mblock,emin=1000,emax=8000
+<br>
+tv,bscale(cb,0,3)<br>
+;--------------------------------------------------------------------------<br>
+;move the central coordinates to be the same as the standard evt file<br>
+mlist.x=mlist.x+(!pref-(mdim(0)*mblock+1.)/2.)<br>
+mlist.y=mlist.y+(!pref-(mdim(1)*mblock+1.)/2.)<br>
+;--------------------------------------------------------------------------<br>
+;write the converted file into a merged evt file:<br>
+rfname='../xdata/945_evt2file_new_clean.fits' ;example, just for the
+header format <br>
+evtfname='test'<br>
+writefits_evt,evtfname+'.fits',mlist,gradec,[!pref,!pref],pixsize,rfname,h1=h1<br>
+<br>
+;the corresponding merged exposure maps:<br>
+for k=1,4 do writefits,evtfname+'_i'+strtrim(k,2)+'.fits',ta(*,*,k-1),mh<br>
+;========================================================================<br>
+;Actual source detection (following memo_anal):<br>
+detagname='m' ;using mx and my for calculating the off-axis angles of
+individual events<br>
+loadct_self,18<br>
+probth=-7&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <br>
+.run sou_main<br>
+.run sou_final<br>
+<br>
+</body>
+</html>

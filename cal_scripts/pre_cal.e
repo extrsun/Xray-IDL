@@ -1,0 +1,43 @@
+#!/bin/sh
+#======================================================================
+# pre_cal.e
+version=0.0
+echo "pre_cal.e version: " $version 
+#====================================================
+# preparation for the ACIS observation calibration
+#
+# This script should be evaluated first, and must be in the cal directory 
+# within the observation directory
+#
+#*inputs:
+#  $1 == processing choice:
+#	evt1 - from evt1 to evt2 (def)
+#	evt2: just modify evt2
+#	cti - use the cti-corrected (*evt1.no_cti.fits) event file (existing in
+#	current directory)
+#
+# The results from this script should be cut and pasted into the website:
+# http://asc.harvard.edu/cal/ASPECT/fix_offset/fix_offset.cgi
+#
+# following the execution of the instructions on the website, cal_main 
+# may then be executed.
+#
+# wqd, July 4, 2002
+#=======================================================================
+if [ "$1" = "evt2" ] ; then 
+	cp evt2file.fits aspcorr_evt2.fits
+else
+	echo "assuming evt2 reprocessing from evt1"
+	set flt1_file=`ls *flt*`
+	cp evt1file.fits aspcorr_evt2.fits 
+fi
+chmod +w aspcorr_evt2.fits
+
+#gunzip $MAINDIR/secondary/*bpix1.fits.gz
+
+#
+#correct for possible offsets:
+#
+echo "Copy the output into the website: http://asc.harvard.edu/cal/ASPECT/fix_offset/fix_offset.cgi and follow the execution of the instructions on the website."
+echo "After that you are ready for evt1to2.e or post_evt2.e."
+dmlist aspcorr_evt2.fits header,raw,clean | egrep 'TCTYP|TCRVL|ASCDSVER|DATE|OBS_ID'

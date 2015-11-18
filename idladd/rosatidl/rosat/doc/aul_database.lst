@@ -1,0 +1,40 @@
+
+  Database Procedures from Astronomical Users' Library    November, 1993
+    (see [.idlaul.text]database.tex or idlaul/text/database.tex for more 
+     documentation)
+
+    DBBUILD     :   Load or append a database with new entry values.
+    DBCIRCLE    :   Find entries within a specified circular area.
+    DBCLOSE     :   Close a database   
+    DBCREATE    :   Create a new database data, index and/or format file.
+    DBDELETE    :   Delete an entry from a database
+    DBEDIT      :   Interactively edit the entries in a database (Widgets
+                    will be used if available)
+    DBEXT       :   Extract items from a database into IDL variables 
+    DBFIND      :   Find entries meeting specified criteria 
+    DBGET       :   Use instead of DBFIND when search values are in IDL vector
+    DBHELP      :   List names of databases, or entries within a database 
+    DBINDEX     :   Update the database index file.
+    DBMATCH     :   Match database entries one-to-one to specified item values
+    DBOPEN      :   Open a database  
+    DBPRINT     :   Print specified fields about specified entries 
+    DBSORT      :   Sort items from a database  
+    DBUPDATE    :   Update a database with new item values.
+    DB_OR       :   Combine two catalog entry lists, removing duplicate values
+    FIND        :   Find positive brightness perturbations (i.e stars) in a
+                    2 dimensional image and compute centroids, and shape 
+                    parameters
+    IMDBASE     :   Find all catalog sources within the field of an image 
+                    (given a FITS header with astrometry)
+    TAB_TO_DB   :   Add STSDAS table contents to an existing or new database 
+                    file
+    UIT_FIND    :   Find positive brightness perturbations (i.e stars) in a
+                    2 dimensional image and compute centroids, and shape 
+                    parameters
+
+    Lower level database procedures:
+
+    DBEXT_DBF, DBEXT_IND, DBWRT, DBXPUT, DBFPARSE, DBFIND_ENTRY, DBFIND_SORT,
+    DBPUT, DBRD, DBSEARCH, DBTITLE, DBXVAL, DB_INFO, DB_ITEM, DB_ITEM_INFO, 
+    DB_TITLES, DBVAL, DBINDEX_BLK, DBEDIT_BASIC
+

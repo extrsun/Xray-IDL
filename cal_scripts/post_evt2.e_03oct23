@@ -1,0 +1,97 @@
+#!/bin/sh
+#============================================================================
+# post_evt2.e
+version=0.0
+echo "post_evt2.e version: " $version 
+#============================================================================
+# Shell script for post-evt2 calibration
+#
+# Steps:1) destreaks the data and remove extra bad pixels in the ACIS-S
+# 	2) removes the background flares
+#
+# Arguments:
+#  $1 == ROOT name of the evt2 events file (e.g., acisf02025N001_evt2_new)
+#
+# Example: 
+# 	post_evt2.e acisf02025N001_evt2_new aciss
+#
+# wqd, July 4, 2002
+##########################################
+if [ "$1" = "" ] ; then
+	echo "A file root name (e.g., acisf01972N001_evt2_new) is needed!"
+	 exit -1
+else
+	events_root=$1
+	events_file=$events_root.fits
+	if [ -f $events_file ]
+	then 
+	 echo $events_file "is found"
+	else
+	 echo $events_file "does not exist!"
+	 exit -1
+	fi
+fi
+instr=$INSTR
+	
+events_root_clean=${events_root}_clean
+
+####################################################################
+#for ACIS-S, destreak ccd8 and remove extra bad pixels
+####################################################################
+if [ "$instr" = "aciss" ]; then
+	echo "starting the destreak process"
+	#assuming that ccd_id=8 (ACIS-S4) is included:
+	punlearn destreak
+	pset destreak infile=$events_file
+	pset destreak outfile=temp_$events_file
+	pset destreak ccd_id=8
+	pset destreak filter=yes
+	pset destreak clobber=yes
+	pset destreak mode=h
+	destreak verbose=2
+	events_file=temp_$events_file
+
+	echo "removing extra bad pixels in ccd6"
+	fcopy $events_file"[events][!(ccd_id==6&&((chipx==766&&chipy==501)||(chipx==538&&chipy==8)))]" temp_$events_file
+	events_file=temp_$events_file
+fi
+####################################################################
+# remove background flares
+####################################################################
+# First edit the point source region file by removing all spaces and 
+# deleting the first line.
+
+if [ -f source.reg ] ; then 
+    grep 'ellipse' source.reg > temp_source.reg
+    #append the following
+    grep 'circle' source.reg >> temp_source.reg
+
+    sed s/" "//g temp_source.reg > source_edit.reg
+    rm temp_source.reg
+    echo "cat source_edit.reg"
+    cat source_edit.reg
+
+    #first remove the sources:
+    echo "removing sources from $events_file"
+    dmcopy "${events_file}[events][exclude sky=region(source_edit.reg)]" temp_$events_file clobber=yes
+else
+    ln -s ${events_file} temp_$events_file
+fi
+
+echo "constructing light-curve:"
+if [ "$instr" = "aciss" ] ; then
+ $PUBDIR/cal_scripts/lc_clean.e temp_$events_file $PUBDIR/cal_scripts/lc_clean_ccd67.par
+else
+ $PUBDIR/cal_scripts/lc_clean.e temp_$events_file $PUBDIR/cal_scripts/lc_clean_ccd0123.par
+fi
+
+echo "applying the new GTI filter to the events file with sources"
+punlearn dmcopy
+dmcopy "${events_file}[EVENTS][@_eventsfile_clean_gti.fits]" ${events_root_clean}.fits opt=al clobber=yes
+
+echo "The cleaned evt2 file ${events_root_clean}.fits is created!"
+
+####################################################################
+# remove temporary files
+####################################################################
+#rm temp*

@@ -1,0 +1,134 @@
+;Plot X-ray sources detected with Chandra data on galaxies
+;=============================================================================
+; This is more advanced analysis than in memo_anal and is specifically for 
+; nearby galaxy studies.
+;
+; Each galaxy is different. Of course, an observation itself could be 
+; unique. Therefore, the analysis needs to be adjusted accordingly.
+; Various comments are included for references. Those ended with !!!, in 
+; particular, most likely need to be adjusted, accordingly.
+; Most importantly, you need to know what you want. What presented here is 
+; only for your reference. You should make whatever necessary to achieve your
+; goal.
+;
+; written by wqd, May 29, 2003
+;=============================================================================
+; Part 1: plotting sources 
+;=============================================================================
+instr='aciss'
+;instr='acisi'
+cenvset,instr
+
+trans_radian,12,36,20.781,25,59,15.64,cra,cdec,/deg
+gradec=[cra,cdec] ;galaxy center - change accordingly!!!
+
+;block=4 & mdim=[1,1]*512 & ccdid=[6,7,8] ;for aciss. 
+block=80 & mdim=[1,1]*512 ;for 
+;Change accordingly if for example, only chip 7 <is used: ccdid=[7]
+
+;block=6 & mdim=[1,1]*512  & ccdid=[0,1,2,3] ;for acisi
+;define a coversion factor to get the intensity in units of 10^2 cts/s/arcmin^2
+trans=(60./(block*!size_pixel))^2*1.e2 
+
+;evtroot='evt2file_new_clean' ;default file name root
+evtroot='pn' ;default file name root
+bfname='../xdata/bpn.fits'
+evt_image,evtroot,instr,ca,ta,ba=ba,lhdr=lhdr,datadir='../xdata/',hdr=mh,xmin=xmin,ymin=ymin,list=l,imdim=mdim,/nofits,imb=block,bfname=bfname
+;construct a Gaussian smoothed count image:
+;g2=psf_gaussian(fwhm=2,/norm,npix=121)
+;cc=convolve(total(ca,3),g2) ;for count image only
+f=imdiv(ca-ba,ta)
+clo=0 & chi=1
+cc=convolve(total(f(*,*,clo:chi),3),psf_gaussian(fwhm=2,/norm,npix=121))*trans
+tv,bscale(cc,0,2)
+
+;probably need to adjust the image size to remove too much empty space
+;curval,cc	;to find lower right cornor coordinates of the desirable image
+cdim=[100,0]
+cc=cc(cdim(0):mdim(0)-1-cdim(0),cdim(1):mdim(1)-1-cdim(1))
+get_fitshead,cc,msh,mh,cdim=cdim 
+
+;plot areas to be removed for diffuse X-ray study
+soufile='../sou/evt2file_new_clean_map70BSH_hr'
+crval=sxpar(lhdr,'crval*') ;the RA and Dec of the observation aiming center
+;---------
+;generating ps file:
+set_plot,'ps'
+device,bits=8,color=1,xsize=16.,ysiz=16.*(mdim(1)-2.*cdim(1))/(mdim(0)-2*cdim(0)),yoff=0,xoff=2 ;,/land
+loadct_self,30
+;---------------
+cor=[0.01,0.99,0.01,0.99] 
+
+cont_grey,cc,msh,cor=cor,barf=0.,greymin=0.2,greymax=20,mr=0,/noc,/ps,f_c=!d.n_colors-1,thick=2,/def,greyl=2 ;,/noti
+
+;plot an ellipse to illustrate the target and select the pixels included:
+pa=136. & d25=14.9 ;galaxy inclination and position angles and D25
+el=1-2./d25
+;if only major and minor axis info is available, use el=1.-minor/major
+plot_shape,[d25/2.,el,pa],cor,msh,gradec,color=!d.n_colors-1,nsh=2 ;,sel=s
+
+plot_shape,[1],cor,msh,gradec,color=!d.n_colors-1,nsh=0,sel=s,/noplot
+;remove the sources included in the ellipse to avoid the overplotting
+;sou_rsel,msh,rslist,inf=soufile,rpsel=s,image=cc,/rem ;,/ploton
+;source_plot,soufile,cor,msh,slow=0,probth=probth,psym=6,/fits,s_c=!d.n_colors-1,slist=slist,sym=1
+plot_reg,cor,msh,soufile+'.reg',crval=crval
+;plot regions for diffuse X-ray spectral studies (on-galaxy and off-galaxy)
+plot_reg,cor,msh,'../spec/disk.reg',crval=crval,lines=2
+plot_reg,cor,msh,'../spec/bulge.reg',crval=crval,lines=2
+plot_reg,cor,msh,'../spec/halo.reg',crval=crval,lines=2
+plot_reg,cor,msh,'../spec/sw.reg',crval=crval,lines=2
+;defind a #7 chip boundary in ds9 and save it into the region file chip.reg
+plot_reg,cor,msh,'../spec/chip.reg',crval=crval,lines=3
+
+source_plot,'',cor,msh,slow=0,probth=probth,psym=6.,sym=1,/fits,/sou_no,sra=rslist.ra,sdec=rslist.dec,sn=rslist.sn,s_c=!d.n_colors-1,nssh=rslist.sn,xsh=-1.5*rslist.sradius,ysh=-1*rslist.sradius
+;scale='1''
+;scale_plot,cor,msh,0.08,0.03,1,scale,thick=2,char=1.3,color=!d.n_colors-1
+device,/close
+$gv idl.ps
+;==========================================================================
+;plot sources in the crowded region (e.g., the galactic disk):
+block=1 & mdim=[1,1]*300 & ccdid=[7] ;for aciss
+evtroot='evt2file_new_clean' ;default file name root
+;gradec=[167.879042d,55.674111] ;galaxy center, which should be the same as above
+soufile='../sou/evt2file_new_clean_map70BSH_hr'
+trans=(60./(block*!size_pixel))^2*1.e2 ;just a conversion factor
+evt_image,evtroot,instr,ca,ta,ba=ba,tb=tb,datadir='../xdata/',hdr=mh,xmin=xmin,ymin=ymin,bmin=bmin,bmax=bmax,list=l,imdim=mdim,/nofits,imb=block,gradec=gradec
+;,bfname='../back/bevt2file_new_clean_ccd'+strtrim(ccdid,2)+'.fits'
+;construct a Gaussian smoothed count image (adjust the fwhm accordingly!!!):
+;cc=convolve(total(ca,3),) ;for count image only
+f=imdiv(ca-ba,ta)
+clo=0 & chi=3
+cc=convolve(total(f(*,*,clo:chi),3),psf_gaussian(fwhm=1,/norm,npix=121))*trans
+tv,bscale(cc,0,2) ;adjust fwhm accordingly to get the best result!!!
+
+cdim=[1,1]*20 ;any edge of the image to cut?!!!
+cc=cc(cdim(0):mdim(0)-1-cdim(0),cdim(1):mdim(1)-1-cdim(1))
+get_fitshead,cc,msh,mh,cdim=cdim 
+;---------
+;generating ps file:
+set_plot,'ps'
+device,bits=8,/land,color=1,xsize=16.,ysize=16.*(mdim(1)-2.*cdim(1))/(mdim(0)-2.*cdim(0)),yoff=26,xoff=2 ;change xsize according to the roll angle!!!
+loadct_self,30
+;---------------
+lev=[3,6,12,25,100,400,1000]*1 ;adjust to get the best result!!!
+cor=[0.14,0.98,0.1,0.99]
+;cont_grey,cc,msh,cor=cor,barf=0.,greymin=0.4,greymax=20,greyl=2,mr=0,/noim,f_c=!d.n_colors-1,thick=2,lev=lev ;,yunit=0.2,xunit=0.12,nticky=7 ;,/noti,/def
+
+cont_grey,cc,msh,cor=cor,barf=0.,greymin=1,greymax=max(cc),greyl=1,mr=0,f_c=!d.n_colors-1,thick=2,/noc,/def,/ps
+plot_reg,cor,msh,soufile+'.reg',crval=crval
+;source_plot,soufile,cor,msh,slow=0,probth=probth,/fits,s_c=!d.n_colors-1,slist=slist,sym=1,psym=7
+
+;scale='10"'
+;scale_plot,cor,msh,0.04,0.03,1/6.,scale,thick=2,char=1.3,color=!d.n_colors-1
+source_plot,soufile,cor,msh,slow=0,probth=probth,psym=6.,/fits,/sou_no,s_c=!d.n_colors-1,sym=0.7 ;,nssh=[6,36,38,39,52],xsh=[-7,0,-15,-18,0],ysh=[0,5,5,-8,4]
+plot_ell,el,pa,d25/2.,cor,msh,gradec,color=!d.n_colors-1,/deg
+
+device,/close
+$gv idl.ps
+set_plot,'x'
+
+;============================================================
+; Part 2: Comparison with other images (to find counterparts of sources)
+;============================================================
+to be constructed
+

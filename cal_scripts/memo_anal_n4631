@@ -1,0 +1,177 @@
+##########################################################################
+# 	Memo for Post-calibration analysis of Chandra ACIS data
+#
+#Specific analyses:
+#	1) source detection 
+#	2) 3-color image construction
+#	3) overlay of X-ray contours on optical image
+#
+#  You can run the IDL cammands, using copy and paste.
+#  It helps to understand the key procedures, at least the headers
+#	(e.g., using doc_library,'procedure name').
+#
+#
+# Requirements:
+# 1) wqd's idl software (xrayidl) has been installed
+# 2) You may need to setup the IDL appropriately, by including the following 
+#    in your .cshrc file
+#    	setenv xidl $PUBDIR/xrayidl
+#   	setenv IDL_DIR /usr/local/rsi/idl
+#   	alias xidl 'source $xidl/xidl_setup
+#    IDL can then be run by typing "xidl"
+The environment variable PUBDIR needs to be defined (ideally in your 
+#   .cshrc); e.g., setenv PUBDIR /net/xray/pub, which is where you have 
+#    installed cal_scripts directory.
+#
+# Key parameters need to be defined (see the following):
+#  1) instrument choice (i.e., aciss, acisi, acisi_low; def = aciss)
+#
+# You really need to know a bit about IDL to be productive. Also it is useful
+# to copy the commands you are actually using.
+#
+# written by wqd, July, 2002
+##########################################################################
+;Source detection:
+;first produce a directory called sou in the main directory 
+;	(i.e., /d1/n3556/sou) and
+cd sou
+; Now in IDL (by typing xidl)
+evtfname='acisf00797N002_evt2_new_clean' ;change this name
+;
+;copy and paste to run the following:
+instr='aciss' 			;change to the appropriate instrument
+cenvset,instr
+evtfdir='../xdata/'
+mapdir='../xdata/'
+loadct_self,18
+;window,xs=1024,ys=1024
+;greymin=3
+;greymax=100
+nband=4
+plotout=1
+;wavesd=0 ;no wavelet source detection and needs to supply soufile 
+;oldbmap=1 ;if =1 using old backg maps
+;g2=psf_gaussian(fwhm=2,npix=121,/norm)
+;evtfname='acisf02290N001_evt2'
+;------------------------
+;multiple bands:
+sband=['B','S','H']
+.run sou_main
+.run sou_final
+;=============================================================================
+; now source analysis is finished!
+;=============================================================================
+
+Check NED for galaxy parameters (http://nedwww.ipac.caltech.edu/forms/byname.html)
+Record the relevant information:
+
+Galaxy Name	R.A.		Dec.	Type		Diameters	Mag  	E(B-V)
+NGC 2403  	07h36m51.4s +65d36m09s SAB(s)cd		21.9 x  12.3	8.93 	0.040
+		114.214167   65.602583
+
+NGC 3877	176.531595   47.494781 Sc		5.5 x   1.3	11.79	0.023 
+NGC 3556	11h11m31.20s  +55d40m25.0s
+		167.880000   55.673611 
+NGC4631 	12h42m08.00s  +32d32m26.0s		15.5 x   2.7	9.75
+		190.533333   32.540556
+;===================
+; download optical images from
+; http://skyview.gsfc.nasa.gov/cgi-bin/skvadvanced.pl
+; use the above obtained RA and Dec in degrees (add a sign if +; e.g., 167.880000, +55.673611)
+;select DSS2 Red and Blue
+size (pixel): 512
+size(degree)
+     0.139662 (for acis-s; 0.492*512/3600.*2)
+     0.209920 (for acis-i; 0.492*512/3600.*3)
+;save the fits files into dss2_red.fits and dss2_blue.fits in the directory ../mdata (needs to be created if not exits)
+;===================================================================
+;Now in IDL, extract the images of the galaxy in multiple bands:
+;move the anal directory:
+$mkdir ../anal
+cd,'../anal
+evtroot='../xdata/acisf00797N002_evt2_new_clean'       ;change this name 
+evt_image,evtroot,'aciss',gradec=[190.533333,32.540556],imdim=512,datadir='../xdata/'
+;=============================================================
+;==============================================================
+Now run the script under ciao in the same directory:
+$PUBDIR/cal_scripts/mcsmooth.e &
+;=============================================================
+;==============================================================
+;back in IDL:
+target='n4631'		;change to the appropriate name
+soufile='../sou/acisf00797N002_evt2_new_clean_map70BSH_hr' ;change this name
+probth=-7
+edge=6
+read_mimages,4,mh,fs,a,mv,cor=cor,edge=edge,mdim=mdim
+
+read_mimages,4,mh,fs,a,mv,cor=cor,edge=edge,mdim=mdim,mins=[0.5,0.5,1.,1.3],maxs=[20,20,50,80]
+
+;------------------------------
+; only used for rescaling and adjusting the colors
+;for 1+2,3, 4 bands
+a(*,*,0)=bscale(alog10(fs(*,*,0)+fs(*,*,1)),alog10(mv(0)+mv(1)),alog10((mv(0)+mv(1))*10))
+a(*,*,1)=bscale(alog10(fs(*,*,2)),alog10(mv(2)),alog10(mv(2)*10))
+a(*,*,2)=bscale(alog10(fs(*,*,3)),alog10(mv(3)),alog10(mv(3)*10))
+cont_grey,a,mh,cor=cor,true=3,mr=0,/ps,/nocon,/full,f_c=-1,barf=0.
+
+;for 1,2,3+4 bands
+a(*,*,0)=bscale(alog10(fs(*,*,0)),alog10(mv(0)),alog10(mv(0)*10))
+a(*,*,1)=bscale(alog10(fs(*,*,1)),alog10(mv(1)),alog10(mv(1)*10))
+a(*,*,2)=bscale(alog10((fs(*,*,2)+fs(*,*,3))),alog10(mv(2)+mv(3)),alog10((mv(2)+mv(3))*10))
+;-----------------
+;You can use the following for a look of individual channel (e.g.,):
+tv,bscale(alog10(fs(*,*,0)),alog10(mv(0)),alog10(mv(0)*10)),chan=1
+;-------------------------------
+;output jpeg images:
+s=tvrd(0,0,true=3) & write_jpeg,target+'_rgb.jpg',s,true=3
+;-------------------------------
+window,1,xs=mdim(0),ys=mdim(1)
+cont_grey,a,mh,cor=cor,true=3,mr=0,/ps,/nocon,/full,f_c=-1,barf=0.
+scale='1''
+scale_plot,cor,mh,0.08,0.93,1,scale,thick=2,char=2,color=!d.n_colors-1
+source_plot,soufile,cor,mh,/fits,probth=probth,psym=6,sym=2
+source_plot,soufile,cor,mh,/fits,probth=probth,psym=6,sym=1,/sou
+
+s=tvrd(0,0,true=3) & write_jpeg,target+'_rgb_s.jpg',s,true=3
+;-----------------
+;get a broad band X-ray image:
+loadct_self,18
+f=total(fs,3)
+cont_grey,f,mh,cor=cor,/ps,barf=0.,/def,/noc,greymin=total(mv),greymax=30,greylo=1
+;-------------------------------------
+;comparison with optical image:
+o=image_cut(readfits('../mdata/dss2_blue.fits'),mdim(0)/2,/rec,/pix)
+o=o-min(o)*0.99
+lev=[0.5,1,2,4,7,11,16,22,29,37]*0.2+total(mv)
+cont_grey,f,mh,o,cor=cor,/ps,barf=0.,/def,lev=lev,greymin=median(o),mr=0
+s=tvrd(0,0,true=3) & write_jpeg,target+'_f_b.jpg',s,true=3
+;======================================================
+;for optical,1+2,3+4 bands
+cor=[0,1,0,1]
+;a(*,*,0)=bscale(alog10(o),alog10(median(o)),alog10(max(o)))
+a(*,*,0)=bscale(o,median(o),max(o))
+a(*,*,1)=bscale(alog10(fs(*,*,0)+fs(*,*,1)),alog10((mv(0)+mv(1))),alog10((mv(0)+mv(1))*10))
+a(*,*,2)=bscale(alog10(fs(*,*,2)+fs(*,*,3)),alog10(mv(2)+mv(3)),alog10((mv(2)+mv(3))*10))
+cont_grey,a,mh,cor=cor,true=3,mr=0,/ps,/nocon,/full,f_c=-1,barf=0.
+scale='1''
+scale_plot,cor,mh,0.08,0.93,1,scale,thick=2,char=2,color=!d.n_colors-1
+s=tvrd(0,0,true=3) & write_jpeg,target+'_rgb_osh.jpg',s,true=3
+;======================================================
+; Radio image:
+cast,'../mdata/N3556C20NW.FITS',mh,outa=r
+cont_grey,r,mh,a,cor=cor,true=3,mr=0,/ps,/full,f_c=-1,barf=0.,lev=[0.5,1,2,3,4,6,10,15,30,50,100,200]*0.0002,c_c=255
+cor=[0,1,0,1]
+a(*,*,0)=bscale(alog10(r > 1.e-5),alog10(1.e-4),alog10(max(r)))
+a(*,*,1)=bscale(alog10(o),alog10(median(o)),alog10(max(o)))
+a(*,*,2)=bscale(alog10(fs(*,*,0)+fs(*,*,1)),alog10((mv(0)+mv(1))),alog10((mv(0)+mv(1))*5))
+cont_grey,a,mh,cor=cor,true=3,mr=0,/ps,/nocon,/full,f_c=-1,barf=0.
+;--------
+lev=[1,2,4,7,11,16,22,29,37]*0.3+total(mv(0:1))
+cont_grey,total(fs(*,*,0:1),3),mh,a,cor=cor,true=3,mr=0,/ps,/full,f_c=-1,barf=0.,lev=lev
+scale='1''
+scale_plot,cor,mh,0.08,0.93,1,scale,thick=2,char=2,color=!d.n_colors-1
+s=tvrd(0,0,true=3) & write_jpeg,target+'_rgb_ros_c.jpg',s,true=3
+
+;======================================================
+save,file='idlsave_n3556.dat'
+

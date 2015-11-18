@@ -1,0 +1,24 @@
+#This is an example (from NGC3556 analysis) to generate the blank-sky 
+# background for mutiple chips of an ACIS-S observation
+
+#In general follow memo_bg, except for the following:
+set ccd_id="6,7,8"
+
+ ln -s /net/xray/software/acisbg/data/aciss_D_7_bg_evt_021102.fits ${bevtroot}.fits
+dmcopy "${bevtroot}_reproj.fits[EVENTS][grade=0,2,3,4,6,status=0][ccd_id=$ccd_id]" ${bevtroot}_clean.fits opt=all clobber=yes
+mv bevt2file_new_clean.fits bevt2file_new_clean_ccd7.fits
+
+rm ${bevtroot}.fits
+ln -s /net/xray/software/acisbg/data/aciss_D_236_bg_evt_021102.fits ${bevtroot}.fits
+dmcopy "${bevtroot}_reproj.fits[EVENTS][grade=0,2,3,4,6,status=0][ccd_id=$ccd_id]" ${bevtroot}_clean.fits opt=all clobber=yes
+mv bevt2file_new_clean.fits bevt2file_new_clean_ccd6.fits
+
+rm ${bevtroot}.fits
+ln -s /net/xray/software/acisbg/data/aciss_D_8_bg_evt_021102.fits ${bevtroot}.fits
+dmcopy "${bevtroot}_reproj.fits[EVENTS][grade=0,2,3,4,6,status=0][ccd_id=$ccd_id]" ${bevtroot}_clean.fits opt=all clobber=yes
+mv bevt2file_new_clean.fits bevt2file_new_clean_ccd8.fits
+
+;check individual files in IDL:
+evt_image,'bevt2file_new_clean','aciss',/noexp,/nofits,list=lb,xmin=xmin,ymin=ymin 
+list_image,lb,xmin,ymin,c,512,block=6,emin=1000,emax=3000
+ tv,bscale(c,0,3)

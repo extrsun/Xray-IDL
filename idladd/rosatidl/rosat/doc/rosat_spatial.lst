@@ -1,0 +1,13 @@
+  
+  SPATIAL :    Procedures (and functions) useful for spatial analysis
+
+    DET2SKY     :   Use aspect information to convert detector to sky image
+                    coordinates 
+    IMDIV       :   Divide one image by another (where denominator may
+                    contain zeroes)
+    PARSE_SIMPLE:   Parse the IRAF/PROS style descriptor of a simple region
+    REG_LIMITS  :   Determine the x and y limits of a simple region
+                    descriptor
+
+***************************************************************************
+

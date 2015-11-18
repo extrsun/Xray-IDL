@@ -1,0 +1,60 @@
+## lc_clean.par
+## A leading space comments the line out; all lines except in the form 
+## name=value are ignored.
+###
+# Modified to be nearly file-indenpendent. WQD, May, 23, 2002
+# Input event file - _eventsfile.fits
+# Input GTI file - _eventsfile_gti.fits
+# Output GTI file - events_clean_gti.fits
+# Output ASCII light curve - lc_dirty, lc_clean
+#
+# max_sigma=3			- max deviation from the mean rate, sigmas
+# max_factor=1.2		- max increase/decrease factor from the mean
+###
+
+# These are event files (you can use the standard FITSIO filtering syntax).
+# There may be several files; if they are not time-ordered, provide parameter
+# tbeg (in Chandra seconds) to give the beginning of the observation.
+
+num_datafiles=4
+file1=_eventsfile.fits[events][energy>300&&energy<10000&&ccd_id==0]
+file2=_eventsfile.fits[events][energy>300&&energy<10000&&ccd_id==1]
+file3=_eventsfile.fits[events][energy>300&&energy<10000&&ccd_id==2]
+file4=_eventsfile.fits[events][energy>300&&energy<10000&&ccd_id==3]
+
+# This is bin size; 259.28=3.241*80 (3.241 s is the standard frame time).
+
+binsize=259.28
+
+
+# These are input and output GTI filenames:
+
+gti_file=_eventsfile_gti.fits		- input uncleaned GTI file
+clean_gti_file=_eventsfile_clean_gti.fits - (optional) output cleaned GTI file
+
+# These are output ASCII files for uncleaned and cleaned lightcurves.
+# Uncleaned files will be created separately for each chip present in the
+# event file (after the FITSIO filtering, if set), as well as for all chips
+# together. The clean lightcurve will be made only for all chips. "?" will
+# be replaced with either the chip ID or "acis" for all chips:
+
+lc_dirty=lc_dirty.lc			- (optional) files for lightcurves
+lc_clean=lc_clean.lc
+
+
+# The following is used to calculate the mean rate over the uncleaned 
+# lightcurve. Set either of the two: 
+
+clip=3	       	- this many sigmas to clip to calc. mean
+ mean=			- force to use this value (cts/s) as mean rate
+
+
+# The following is used to identify which lightcurve bins are bad.
+# Set either of the two:
+
+max_sigma=3			- max deviation from the mean rate, sigmas
+ max_factor=1.2			- max increase/decrease factor from the mean
+
+
+
+

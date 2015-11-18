@@ -1,0 +1,14 @@
+#
+# Definitions for running IDL at our site (this is an example only)
+#
+setenv IDL_PATH /rsgof/idl/rosat:+/rsgof/idl/rosat/experimental:+/rsgof/idl:+/rsgof/idl/userlib 
+setenv IDL_STARTUP /rsgof/idl/com/startup.pro
+setenv IDL_DEVICE X
+setenv EXPLIB /rsgof/idl/rosat/experimental
+setenv ZDOC /rsgof/idl/rosat/doc
+setenv ZCOM /rsgof/idl/com
+setenv ZDEF /rsgof/idl/rosat/def
+setenv ZAUX /rsgof/idl/rosat/aux
+setenv ZIMAP /rsgof/rosat/pspc/maps
+#
+alias printps "lpq -r -s"

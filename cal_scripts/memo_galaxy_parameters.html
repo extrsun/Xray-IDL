@@ -1,0 +1,195 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+  <meta content="text/html; charset=ISO-8859-1"
+ http-equiv="content-type">
+  <title>memo_galaxy_parameters</title>
+  <meta content="Daniel Wang" name="author">
+</head>
+<body style="color: rgb(0, 0, 0); background-color: rgb(255, 255, 255);"
+ alink="#000088" link="#0000ff" vlink="#ff0000">
+<div style="text-align: center;"><span style="font-weight: bold;">Estimate
+of basic parameters of galaxies</span><br>
+</div>
+<br>
+<br>
+<span style="font-weight: bold;">Calculation of the K-band luminosity
+L_K and </span><span class="quoted1"><span style="font-weight: bold;">its
+conversion to the mass M of a galaxy (from Zhiyuan):</span><br>
+<br>
+</span>The most convenient look-up for delta_nu/nu at a given band is
+probably on Dan<br>
+McIntosh's website: <a class="fixed"
+ href="https://mail-www.oit.umass.edu/horde/util/go.php?url=http%3A%2F%2Fwww.astro.umass.edu%2F%7Edmac%2Fmags.html&amp;Horde=c3a1f854dcc41ed846f03e8ed28aa067"
+ target="_blank">http://www.astro.umass.edu/~dmac/mags.html</a>, in
+which<br>
+delta_nu/nu = 0.23 for K band.<br>
+<br>
+Below are the steps to convert the 2MASS K-band magnitude to the
+luminosity L_K<br>
+and stellar mass M_K.<br>
+<br>
+1. Look up the apparent magnitude m of the target galaxy from NED, with
+the<br>
+value of either K_20 (within 20 mag/arcsec^2 isophote) or K_total (total<br>
+magnitude extroplated by a Sersic fit to the intensity profile, cf.
+Jarrett et<br>
+al.2003, AJ, 125, 525). These values should be available for nearby
+normal<br>
+galaxies.<br>
+<br>
+2. Alternatively, if the 2MASS K-band image of the target galaxy is
+available,<br>
+one may calculate the magnitude with m=m0-2.5*log(f), where m0 is the
+zero point<br>
+calibration magnitude (which may differ from image to image) and f is
+the total<br>
+flux of interest (accumulated from the D25 ellipse, for example), in
+default<br>
+2MASS image units, i.e., corresponding to the pixel value. Refer to<br>
+<a class="fixed"
+ href="https://mail-www.oit.umass.edu/horde/util/go.php?url=http%3A%2F%2Firsa.ipac.caltech.edu%2Fapplications%2F2MASS%2FLGA%2Fcalib.html&amp;Horde=c3a1f854dcc41ed846f03e8ed28aa067"
+ target="_blank">http://irsa.ipac.caltech.edu/applications/2MASS/LGA/calib.html</a>
+for more details.<br>
+<br>
+3. Look up the K-band extinction correction A_K from NED.<br>
+<br>
+4. Calculate the luminosity: L_K=10^(-0.4*(m-A_K-M_sun))*D^2 (in units
+of 10^10<br>
+L_sun), where M_sun=3.41 is the K-band Solar absolute magnitude, D is
+the<br>
+distance of the target in units of Mpc, L_sun=5.67*10^31 erg/s is the
+K-band<br>
+Solar luminosity.<br>
+<br>
+5. Convert L_K to M_K: M_K (in units of 10^10 M_sun) = L_K (in units of
+10^10<br>
+L_sun) * 10^(-0.692+0.652*B_V), whhere B_V is the intrinsic B-V color
+of the<br>
+target galaxy, which can be found from NED. This empirical relation is
+obtained<br>
+by Bell &amp; de Jong 2001, ApJ, 550, 212<br>
+<br>
+<br>
+Reference:<br>
+<table>
+  <tbody>
+    <tr>
+      <td align="left" valign="baseline" width="5%"><a
+ href="http://adsabs.harvard.edu/cgi-bin/nph-data_query?bibcode=2005ApJ...628..113C&amp;db_key=AST&amp;link_type=ABSTRACT">2005ApJ...628..113C</a></td>
+      <td><br>
+      </td>
+      <td align="left" valign="baseline">1.000</td>
+      <td align="left" valign="baseline">07/2005</td>
+      <td align="left" valign="baseline"><a
+ href="http://adsabs.harvard.edu/cgi-bin/nph-data_query?bibcode=2005ApJ...628..113C&amp;db_key=AST&amp;link_type=ABSTRACT"
+ onmouseover="pl(0,+20)" onmouseout="hl(+20)">A</a>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a
+ href="http://adsabs.harvard.edu/cgi-bin/nph-data_query?bibcode=2005ApJ...628..113C&amp;db_key=AST&amp;link_type=EJOURNAL"
+ onmouseover="pl(2,+20)" onmouseout="hl(+20)">E</a>&nbsp;&nbsp;<a
+ href="http://adsabs.harvard.edu/cgi-bin/nph-data_query?bibcode=2005ApJ...628..113C&amp;db_key=AST&amp;link_type=ARTICLE"
+ onmouseover="pl(53,+20)" onmouseout="hl(+20)">F</a>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a
+ href="http://adsabs.harvard.edu/cgi-bin/nph-data_query?bibcode=2005ApJ...628..113C&amp;db_key=AST&amp;link_type=OPENURL"
+ onmouseover="pl(5,+20)" onmouseout="hl(+20)">L</a>&nbsp;&nbsp;<span
+ style="color: rgb(0, 255, 0);"><a
+ href="http://adsabs.harvard.edu/cgi-bin/nph-data_query?bibcode=2005ApJ...628..113C&amp;db_key=AST&amp;link_type=PREPRINT"
+ onmouseover="pl(6,+20)" onmouseout="hl(+20)">X</a></span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a
+ href="http://adsabs.harvard.edu/cgi-bin/nph-data_query?bibcode=2005ApJ...628..113C&amp;db_key=AST&amp;link_type=DATA"
+ onmouseover="pl(9,+20)" onmouseout="hl(+20)">D</a>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a
+ href="http://adsabs.harvard.edu/cgi-bin/nph-data_query?bibcode=2005ApJ...628..113C&amp;db_key=AST&amp;link_type=REFERENCES"
+ onmouseover="pl(62,+20)" onmouseout="hl(+20)">R</a>&nbsp;&nbsp;<a
+ href="http://adsabs.harvard.edu/cgi-bin/nph-data_query?bibcode=2005ApJ...628..113C&amp;db_key=AST&amp;link_type=CITATIONS"
+ onmouseover="pl(13,+20)" onmouseout="hl(+20)">C</a>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a
+ href="http://adsabs.harvard.edu/cgi-bin/nph-data_query?bibcode=2005ApJ...628..113C&amp;db_key=AST&amp;link_type=SIMBAD"
+ onmouseover="pl(16,+20)" onmouseout="hl(+20)">S</a>&nbsp;&nbsp;<a
+ href="http://adsabs.harvard.edu/cgi-bin/nph-data_query?bibcode=2005ApJ...628..113C&amp;db_key=AST&amp;link_type=NED"
+ onmouseover="pl(17,+20)" onmouseout="hl(+20)">N</a>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a
+ href="http://adsabs.harvard.edu/cgi-bin/nph-data_query?bibcode=2005ApJ...628..113C&amp;db_key=AST&amp;link_type=AR"
+ onmouseover="pl(20,+20)" onmouseout="hl(+20)">U</a>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</td>
+    </tr>
+    <tr>
+      <td><br>
+      </td>
+      <td align="left" valign="top" width="25%">Colbert,&nbsp;Edward&nbsp;J.&nbsp;M.;
+Strickland,&nbsp;David&nbsp;K.; Veilleux,&nbsp;Sylvain;
+Weaver,&nbsp;Kimberly&nbsp;A.</td>
+      <td><br>
+      </td>
+      <td colspan="3" align="left" valign="top">Extranuclear X-Ray
+Emission in the Edge-on Seyfert Galaxy NGC 2992</td>
+    </tr>
+  </tbody>
+</table>
+<br>
+===================================================================<br>
+<span style="font-weight: bold;">Calculation of the star formation rate
+and related parameters from infared fluxes (not completed):</span><br>
+<br>
+Rreference:<br>
+&nbsp;
+<a
+ href="http://adsabs.harvard.edu/cgi-bin/nph-data_query?bibcode=2004ApJ...606..829S&amp;db_key=AST&amp;link_type=ABSTRACT">2004ApJ...606..829</a>&nbsp;
+Strickland,&nbsp;David&nbsp;K.; Heckman,&nbsp;Timothy&nbsp;M.;
+Colbert,&nbsp;Edward&nbsp;J.&nbsp;M.; Hoopes,&nbsp;Charles&nbsp;G.;
+Weaver,&nbsp;Kimberly&nbsp;A.<br>
+A
+High Spatial Resolution X-Ray and H&#945; Study of Hot Gas in the Halos of
+Star-forming Disk Galaxies. II. Quantifying Supernova Feedback<br>
+<a
+ href="http://adsabs.harvard.edu/cgi-bin/bib_query?2003AJ....125..525J"><br>
+The 2MASS Large Galaxy Atlas</a> (<a
+ href="http://adsabs.harvard.edu/cgi-bin/author_form?author=Jarrett,+T&amp;fullauthor=Jarrett,%20T.%20H.&amp;charset=UTF-8&amp;db_key=AST">Jarrett,&nbsp;T.&nbsp;H</a>
+et al. 2003)
+<hr>from the note to <b>Table 1 of </b>Strickland et al. (2004):<br>
+<br>
+<i>L</i><sub>IR</sub>/(10<sup>10</sup> <i>L</i><sub><img
+ src="http://www.journals.uchicago.edu/ucp-entities/odot.gif"
+ alt="&amp;odot;" align="bottom" border="0"></sub>) - Total<sup> </sup>IR
+luminosity based on<sup> </sup>the observed <i>IRAS</i> fluxes,<sup> </sup><i>L</i><sub>IR</sub>
+= 5.67 &times;<sup> </sup>10<sup>5</sup><i>D</i><img
+ src="http://www.journals.uchicago.edu/ApJ/journal/issues/ApJ/v606n2/58509/img4.gif"
+ align="middle" border="0">(13.48<i>f</i><sub>12</sub> + 5.16<i>f</i><sub>25</sub>
++<sup> </sup>2.58<i>f</i><sub>60</sub> + <i>f</i><sub>100</sub>) <i>L</i><sub><img
+ src="http://www.journals.uchicago.edu/ucp-entities/odot.gif"
+ alt="&amp;odot;" align="bottom" border="0"></sub><br>
+<i>IRAS</i> fluxes - in<sup> </sup>order of preference: Rice<sup> </sup>et
+al. <a target="article"
+ href="http://www.journals.uchicago.edu/ApJ/journal/issues/ApJ/v606n2/58509/58509.text.html#rf118">1988</a>
+and<sup> </sup>Soifer et al. <a target="article"
+ href="http://www.journals.uchicago.edu/ApJ/journal/issues/ApJ/v606n2/58509/58509.text.html#rf136">1989</a>.<sup>
+<br>
+<br>
+</sup>from the note to <b>Table 2</b>
+<ul>
+  <li><i>f</i><sub>FIR</sub> (Jy) - <i>IRAS</i>FIR flux <i>f</i><sub>FIR</sub>
+=2.58<i>f</i><sub>60</sub> + <i>f</i><sub>100. </sub>Toconvert to
+units ofergs s<sup>-1</sup> cm<sup>-2</sup>, multiplyby 1.26 &times; 10<sup>-11</sup>.</li>
+  <li>SFR<sub>IR,<i>T</i></sub> (<i>M</i><sub><img
+ src="http://www.journals.uchicago.edu/ucp-entities/odot.gif"
+ alt="&amp;odot;" align="bottom" border="0"></sub> yr<sup>-1</sup>) -
+Estimated total galactic SFrate, based on theIR luminosity, where SFR<sub>IR</sub>=
+4.5 &times; 10<sup>-44</sup><i>L</i><sub>IR</sub>(ergs s<sup>-1</sup>)</li>
+  <li><i>f</i><sub>FIR</sub>/<i>D</i><img
+ src="http://www.journals.uchicago.edu/ApJ/journal/issues/ApJ/v606n2/58509/img1.gif"
+ align="middle" border="0"> (mJy arcsec<sup>-2</sup>) - FIR
+luminosityper unit stellar diskarea <i>f</i><sub>FIR</sub>/<i>D</i><img
+ src="http://www.journals.uchicago.edu/ApJ/journal/issues/ApJ/v606n2/58509/img1.gif"
+ align="middle" border="0">, in distance-independentunits. To convert
+tothe commonly used unitsof 10<sup>40</sup> ergs s<sup>-1</sup>kpc<sup>-1</sup>,
+multiply <i>f</i><sub>FIR</sub>/<i>D</i><img
+ src="http://www.journals.uchicago.edu/ApJ/journal/issues/ApJ/v606n2/58509/img1.gif"
+ align="middle" border="0"> by6.484. </li>
+  <li><sub><big style="font-weight: bold;">R</big>SN,<i>T</i></sub>(yr<sup>-1</sup>)
+- Estimatedtotal galactic core-collapse SNrate, where <img
+ src="http://www.journals.uchicago.edu/ucp-entities/Rscr.gif"
+ alt="&amp;Rscr;" align="bottom" border="0"><sub>SN</sub> =0.2<i>L</i><sub>IR</sub>/10<sup>11</sup>
+    <i>L</i><sub><img
+ src="http://www.journals.uchicago.edu/ucp-entities/odot.gif"
+ alt="&amp;odot;" align="bottom" border="0"></sub> (Heckman, Armus,&amp;
+Miley <a target="article"
+ href="http://www.journals.uchicago.edu/ApJ/journal/issues/ApJ/v606n2/58509/58509.text.html#rf58">1990</a>).
+  </li>
+</ul>
+print,(0.4*(3.33- 6.5+5*(alog10(16.5)+5)))+alog10(5.67)+32<br>
+<br>
+</body>
+</html>

@@ -1,0 +1,8 @@
+  
+  TIMING :    Procedures (and functions) useful for timing analysis
+
+    TIMEBIN     :   Construct binned light curve from photon list, 
+                    in bins of equal (or mostly equal) length
+
+***************************************************************************
+

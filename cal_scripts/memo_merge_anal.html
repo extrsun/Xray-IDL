@@ -1,0 +1,50 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+  <meta content="text/html; charset=ISO-8859-1"
+ http-equiv="content-type">
+  <title>memo_merge_anal</title>
+  <meta content="Daniel Wang" name="author">
+</head>
+<body style="color: rgb(0, 0, 0); background-color: rgb(255, 255, 255);"
+ alink="#000088" link="#0000ff" vlink="#ff0000">
+<pre>; Memo for imaging and spectral analysis of individual features based on a merged event file<br>;=============================================================================<br>; Limitation:<br>;<br>; initially drafted by wqd, June 13, 2007<br>;=============================================================================<br>;<span
+ style="font-weight: bold;">Imaging analysis</span><br></pre>
+instr='acisi'<br>
+cenvset,instr <br>
+;-------------------<br>
+;read in the event list<br>
+gradec=[140.510975d,50.976519] ;e.g., from ds9, change accrordingly!!!<br>
+;double precision here is often important!<br>
+<br>
+;csmooth for images with sources:<br>
+block=1 &amp; imdim=512 &amp; imccd=[0,1,2,3] ;for acisi<br>
+trans=(60./(block*!size_pixel))^2*1.e2<br>
+evtroot='evt2file_new_clean' ;default file name root<br>
+fdir='../xdata/'<br>
+soufile='../../sou/evt2file_new_clean_map70BSH_hr'<br>
+; first get the event list (with no fits image output):<br>
+evt_image,evtroot,instr,datadir=fdir,hdr=mh,xmin=xmin,ymin=ymin,bmin=bmin,bmax=bmax,imb=block,list=mlist,gradec=gradec,imdim=imdim,imccd=imccd,expt=expt,/nofits,/noexp,/nomap<br>
+maxbn=1<br>
+emin=bmin(0) &amp; emax=bmax(maxbn)<br>
+list_image,mlist,xmin,ymin,cb,imdim(0),imdim(1),block=block,det=detagname,emin=emin,emax=emax<br>
+tv,bscale(cb,0,2)<br>
+<br>
+print,tag_names(mlist)<br>
+<br>
+;check which observations are included (not tested!!!):<br>
+obsidv=[1111,2222,...] ;your complete obs_id list<br>
+nobsid=n_elements(obsidv)<br>
+for k=0,nobsid-1 do begin &amp;
+s=where_tag(mlist,ns,tag_name='fid',values=obsidv(k)) &amp; if ns ne 0
+then print,obsidv(k),ns &amp; endfor<br>
+<br>
+;one can check images of individual observations, e.g.,<br>
+<br>
+list_image,mlist,xmin,ymin,cb,imdim(0),imdim(1),block=block,det=detagname,emin=emin,emax=emax,fid=???<br>
+tv,bscale(cb,0,1)<br>
+<pre>;=============================================================================<br>;<span
+ style="font-weight: bold;">Spectral analysis</span><br></pre>
+<br>
+</body>
+</html>

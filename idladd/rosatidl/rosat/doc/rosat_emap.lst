@@ -1,0 +1,13 @@
+  
+  EMAP :    Procedures (and functions) relating to exposure maps
+
+    MAKEMOI     :   Create a modified instrument (MOI) bit map
+    MOI_BOX     :   Calculate the x and y positions of all pixels which lie
+                    both within a specified rectangle and within the limits 
+                    of the MOI bit map. Used in MAKEMOI.
+    MOI_LIMIT_PIX : Select the x and y positions of all pixels which lie
+                    within the limits of the MOI bit map and also within a
+                    specified annulus. Used in MAKEMOI.
+
+***************************************************************************
+

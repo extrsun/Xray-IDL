@@ -1,0 +1,46 @@
+ci
+ciao
+
+set dir = ../cal/
+set events_root = evt2file_new_clean
+
+mkdir dstreak
+cd dstreak
+
+ds9 ${dir}${events_root}.fits &
+
+more bkg.reg 
+
+pset dmstat centroid=no sigma=no
+dmstat "${dir}${events_root}.fits[bin sky=8]"
+
+#update the following with the max pixel values:
+set xpeak=4084.5 
+set ypeak=4132.5
+#---------------------------------------------------------------
+#copy and paste the following:
+punlearn dmextract
+pset dmextract infile="${dir}${events_root}.fits[sky=region(bkg.reg)][bin pi=1:1024:1]"
+pset dmextract outfile=bkg_pi.fits
+pset dmextract clobber=yes
+pset dmextract mode=h
+dmextract
+
+punlearn acisreadcorr
+pset acisreadcorr infile=${dir}${events_root}.fits
+pset acisreadcorr outfile=${events_root}_corr.fits
+pset acisreadcorr aspect=@../cal/asol_file
+pset acisreadcorr x=$xpeak y=$ypeak
+pset acisreadcorr dx=40 dy=200
+pset acisreadcorr bkg=bkg_pi.fits
+pset acisreadcorr clobber=yes
+pset acisreadcorr mode=h
+acisreadcorr 
+#---------------------------------------------------------------
+#examine if the removal is satisfactory. If not adjust the parameters (dx etc)
+ds9 ${events_root}_corr.fits &
+
+mv ${dir}${events_root}.fits ${dir}${events_root}.fits_pre_dstreak
+mv ${events_root}_corr.fits ${dir}${events_root}.fits
+
+

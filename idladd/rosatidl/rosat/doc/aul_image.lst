@@ -1,0 +1,46 @@
+
+  Image Manipulation Procedures from Astronomical Users' Library (Nov 1993)
+
+    (see also procedures under topics "IMDISP" and "PLOT")
+
+    BOXAVE      :   Boxave an image, always using at least REAL*4 arithmetic
+    CONVOLVE    :   Convolution of image with Point Spread Function (PSF)
+                    (using product of Fourier transforms as default option)
+    CORREL_IMAGES : Computes the 2-D cross-correlation function of two 
+                    images for a range of (x,y) shifting by pixels of 
+                    one image relative to the other
+    CORREL_OPTIMIZE : Find the optimal (x,y) pixel offset of image_B relative 
+                      to image_A, by means of maximizing the correlation 
+                      function
+    CORRMAT_ANALYZE : Analyze the 2-D cross-correlation function of two images
+                      and find the optimal(x,y) pixel offsets
+                      (intended for use with function CORREL_IMAGES)
+    DIST_CIRCLE :   Create an array where each pixel value is equal to its 
+                    distance to a specified center. Useful for circular 
+                    aperture photometry.
+    DIST_ELLIPSE :  Create a mask array useful for elliptical aperture 
+                    photmetry.
+    FILTER_IMAGE :  Computes the average and/or median of pixels in moving box,
+                    replacing center pixel with the computed average and/or 
+                    median, (using the IDL smooth or median functions)
+                    (allows pixels at edges and corners to be processed, 
+                    and iterative smoothing simulating convolution with 
+                    gaussian to be applied)
+    IMLIST      :   Display pixel values on an image surrounding a specified 
+                    X,Y center (similar to TVLIST)
+    MAX_ENTROPY :   Deconvolution of data by Maximum Entropy analysis, 
+                    given the instrument point spread response function 
+                    (spatially invariant psf)
+    MAX_LIKELIHOOD : Deconvolution of an observed image (or spectrum), given 
+                     the instrument point spread response function (spatially 
+                     invariant psf)
+    MEDARR      :   (MEDian ARRay) Create a 2-d image from a 3-d array taking 
+                    a median filter across the third dimension.  Also 
+                    available as a C function.
+    PSF_GAUSSIAN :  Return a point spread function having Gaussian profiles,
+                    as either a 1D vector, a 2D image, or 3D volumetric-data
+    RINTER      :   Cubic interpolation of an image at a set of reference points
+    SIGMA_FILTER :  Computes the mean and standard deviation of pixels in a box 
+                    centered at each pixel of the image, but excluding the 
+                    center pixel
+

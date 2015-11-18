@@ -1,0 +1,109 @@
+<html>
+<body>
+<font size=5> Background subtraction procedure in spectral analysis of extended objects</font>
+<br>
+NOTES:
+<pre>
+In X-ray imaging spectroscopic data, a "background"refers to signals that are not physically related to the source. In general the background
+consists of two components: sky signals and instrumental  signals.  The former  is real X-ray photons collected by the mirror and thus is vignetted. 
+The latter is detector electronic signals mostly induced by cosmic high energy particles, and is, as a good approximation, non-vignetted. For detailed
+description of the Chandra ACIS instrumental background, refer to http://cxc.harvard.edu/cal/Links/Acis/acis/Cal_prods/bkgrnd/current/. Also refer
+http://xmm.vilspa.esa.es/external/xmm_sw_cal/background/index.shtml for similar descriptions of the XMM-Newton EPIC background.
+<br>
+In spectral studies of extended objects (e.g., diffuse emission), it is by no means straightforward to determine the background. A practical method for
+background determination is to use the so-called "blank-sky background", which is compiled from an increasing number of observations toward high
+Galacitc latitudes (Markevitch 2000) and serves as a background template. The "blank-sky background" contains both instrumental and sky signals.
+However, being a time- and direction-averaged background, the blank-sky background, especially its sky component, could significantly deviate from
+the true background of a certain observation. For example, directions toward low Galactic latitudes often suffer from heavy absorption, making the  
+sky background along these directions much different from that toward high Galactic lattitudes.
+<br>
+Therefore, adopting a local background is often the best choice. However often in cases, the source covers a large part (if not all) of the field of view,
+leaving little room for the extraction of a clean and statistically significant background spectrum. Moreover, the vignetting effect results in an
+apparently uneven sky background, the level of which decreasing from the aim-point of the observation. Even a region for background extraction
+is desirable, a direct subtraction of this background from the source spectrum, i.e., without correcting for the vignetting effect, could result in an
+under-estimate of the true local background. The proper way to account for the sky background is to adopt the so-called "double-subtraction" procedure,
+which consists of two steps: 1)  Direct subtraction of the non-vignetted instrumental background from both the source and total (sky+instrumental)
+background spectra; 2)  Subtraction of the sky backround from the instrumental background-removed source spectrum, in terms of a spectral model
+component in the fit. This requires a reasonable spectral characterization of the sky background.  An example of the procedure on Chandra ACIS data is
+given below.
+<br>
+1) Extract the source and local background spectra and the corresponding response files for both spectra.
+<br>  
+     source spectrum: sou.pi, sou.rmf, sou.arf
+     background spectrum: bkg.pi, bkg.rmf, bkg.arf
+<br>
+2) Extract the corresponding instrumental background, i.e., from exactly the same detector regions, for both the source and the background spectra.
+    For this purpose, there are the Chandra "stowed background" data and the XMM-Newton "Filter Wheel Closed" data.
+<br>  
+    instrumental spectrum for the source region: b_sou.pi
+    instrumental spectrum for the background region: b_bkg.pi
+<br>
+3) Set the instrumental spectra as default background for the total spectra
+<br>
+     fparkey BACKFILE sou.pi b_sou.pi add=yes
+     fparkey BACKFILE bkg.pi b_bkg.pi add=yes
+<br>
+4) Fit the local background spectrum in XSPEC. For high latitude observations, a practical characterization of the sky background is a
+combination of a power-law model (PL) and a thermal plasma model (e.g., MEKAL), with the amount of Galactic foreground absorption. The PL
+accounts for the collective emission of unresolved distant AGNs dominating high energies (above 2 keV), and the MEKAL accounts for emission
+from the Galactic halo and the Local Bubble dominating soft energies (below 2 keV). Fixing the photon-index of the PL  at 1.4 is  practical. Typical
+temperatures of the MEKAL are 0.1-0.3 keV.
+<br>
+In IDL:
+IDL>  sp_group,'bkg.pi','b_bkg.pi',ctonth=2,fout='bkg.grp'
+
+<br>
+grppha bkg.pi bkg_g.pi
+GRPPHA[] group bkg.grp
+<br>
+In XSPEC
+XSPEC> data 1:1 bkg_g.pi
+XSPEC> ignore 0.0-0.5 7.-**
+XSPEC> model wab(po)+wab(mekal)
+<br> 
+ 5) With the best-fit model obtained from the above step, create a fake sky background spectrum for the source region, i.e., with the corresponding response
+files.  Notice that the proper sky area for the source region should be considered, i.e., the normalizations of the background models should be rescaled
+according to the ratio between the source and background region before the fake spectrum is made.
+<br>
+dmlist sou.pi header |grep EXPOSURE
+30000.
+dmlist sou.pi header |grep BACKSCAL
+0.04895054621258
+dmlist bkg.pi header |grep BACKSCAL
+0.142504
+<br>
+In XSPEC
+XSPEC> fakeit none
+For fake data, file #   1 needs response file:  bkg.rmf
+                     ... and ancillary response file:   bkg.arf
+Use randomization in creating fake data? (y) y
+Input optional fake file prefix (max 5 chars): sky
+Fake data filename (skybkg.fak) [/ to use default]: skybkg.fak
+Exposure time, correction norm  (1, 1):  30000, 0
+<br>
+6) Coadd the fake sky background spectrum and the (exposure-normalized) instrumental spectrum to produce an artifical background spectrum as if it was
+extracted from the source region. This spectrum, with the vignetting effect corrected for, is to be directly subtracted from the source spectrum. One may then
+group and fit the source spectrum.
+<br>
+In IDL
+skyfile='skybkg.fak' 
+insfile='b_sou.pi'
+
+outfile='sou_bkg.fak'  ; the output spectrum of total sky and instrumental background
+primary=mrdfits(skyfile,0,h0)
+skyspec=mrdfits(skyfile,1,h1)
+exp=sxpar(h1,'EXPOSURE')
+insspec=mrdfits(insfile,1,hb)
+bexp=sxpar(hb,'EXPOSURE')
+chan=skyspec.channel
+count=float(skyspec.counts+insspec.counts*exp/bexp)
+fxwrite,outfile,h0,primary
+fxbcreate,unit,outfile,h1
+fxbwritm,unit,['CHANNEL','COUNTS'],chan,count
+fxbfinish,unit
+
+fxhmodify,outfile,'BACKSCAL', sxpar(hb,'BACKSCAL'),ext=1
+<br>
+7) Alternatively, one may, at step 5) above, jointly fit the source and local background spectra.  This could be a better way to preserve the true counting statistics.
+</body>
+</html>

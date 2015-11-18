@@ -1,0 +1,19 @@
+Rosat standard default parameters for turning photon lists into images
+30
+0,PLINP=1,Controls inputs for PLIST selection (1 or .def file)
+1,IMGFIL=,(Full) name of output FITS image (or NONE)
+2,ZVAL=INT,Z-axis value (INT=default or PHI)
+3,INSTR=P,Instrument (default is P for PSPC)
+4,IMTYP=SKY,Coordinate type for image (def=SKY, or same as CTYP)
+6,XCEN=0,X value image center (0=on axis or list center)
+7,YCEN=0,Y value image center (0=on axis or list center)
+8,PIXEL=UNBL,Pixel convention (def=UNBL=unblocked, BL=blocked)
+9,BLOCK=1,Blocking factor (def = 1)
+12,BINSIZ=15,Size of image bin (in arcsec)
+13,NXBIN=512,Image X size (<= 1024)
+14,NYBIN=512,Image Y size (<= 1024)
+21,TMIN=0,Min time for photon selection. (0 for none)
+22,TMAX=0,Max time for photon selection. (0 for none)
+23,PIMIN=0,Minimum PHI channel (0=list min)
+24,PIMAX=0,Maximum PHI channel (0=list max)
+29,CHATTER=1,Controls chattiness of program

@@ -1,0 +1,125 @@
+pro hr_out,slist,nslist,hr,hre,hr2,hr2e,hr1,hr1e,soufile=soufile,outfile=outfile,texfile=texfile,tabfile=tabfile,dig=dig,hrslow=hrslow,probth=probth,nband=nband
+;+
+; calculate hardness ratios and output the results in Latex delux table format
+; 
+; slist - source structure list
+; nslist - new source structure list with hardness ratios included
+; soufile - source fits file. If provided, slist will be read out from the file
+; hr, hr2, hr1 - HR, HR2, and HR1 (if nband=4)
+; hre, hr2e, hr1e - errors of HR, HR2, and HR1
+; outfile - output file name
+; texfile - output file in the Latex format, which should be consistent with
+; 	tabfile.
+; tabfile - table Latex head and tail
+; dig - output digits of the source positions (RA) (def = 2)
+; hrslow - lower limit of the S/N for calculating the hardness ratios
+;		(def=4)
+; probth - probability threshold for selecting the output sources
+; 
+; written by wqd, 6/21/2001
+;-
+if n_params() eq 0 then begin
+print,'CALLING SEQUENCE - hr_out,slist,nslist,hr,hre,hr1,hr1e,hr2,hr2e'
+print,',soufile=soufile,outfile=outfile,texfile=texfile,tabfile=tabfile'
+print,',dig=dig,hrslow=hrslow,probth=probth,nband=nband'
+return
+endif
+if n_elements(hrslow) eq 0 then hrslow=4.
+
+if n_elements(soufile) ne 0 then $
+ 	sou_fits_info,soufile,slist,flow=flow,probth=probth,/all,nsel=ns $
+else begin
+	sel=where(slist.prob lt probth,ns)
+	if ns ne 0 then slist=slist(sel) else begin 
+		print,'No source above the probth threshold"
+		return
+	endelse 
+endelse
+if n_elements(nband) eq 0 then nband=4
+cntrth=1.e-10
+ca=fltarr(nband,ns)
+cea=ca
+ca(0,*)=slist.cntrb1 
+ca(1,*)=slist.cntrb2 
+ca(2,*)=slist.cntrb3 
+cea(0,*)=slist.cntrbe1
+cea(1,*)=slist.cntrbe2
+cea(2,*)=slist.cntrbe3
+if nband eq 4 then begin
+	ca(3,*)=slist.cntrb4 
+	cea(3,*)=slist.cntrbe4
+	hr1=imdiv(ca(1,*)-ca(0,*),(ca(1,*)+ca(0,*)) > cntrth)
+	hr1e=2/((ca(0,*)+ca(1,*)) > cntrth)^2 $
+	*sqrt((cea(0,*)*ca(1,*))^2+(cea(1,*)*ca(0,*))^2)
+	hr1 = (hr1 > (-1.)) < 1.
+	sel=where((ca(0,*)+ca(1,*)) le hrslow*sqrt(cea(0,*)^2+cea(1,*)^2),nsel)
+	if nsel ne 0 then hr1e(sel)=999 ;the error estimate is not good for
+		; for poor  counting statstics.
+	struct_col_add,slist,reform([hr1,hr1e],ns,2),['HR1','HR1E'],0.0*[1,1],nslist
+endif else nslist=slist
+hr=imdiv(total(ca(nband-2:nband-1,*),1)-total(ca(0:nband-3,*),1),total(ca,1) > cntrth)
+hre=2/(total(ca,1) > cntrth)^2*sqrt(total(cea(0:nband-3,*)^2,1)*(total(ca(nband-2:nband-1,*),1))^2+total(cea(nband-2:nband-1,*)^2,1)*(total(ca(0:nband-3,*),1))^2)
+hr2=imdiv(ca(nband-1,*)-ca(nband-2,*),total(ca(nband-2:nband-1,*),1) > cntrth)
+hr2e=2/(total(ca(nband-2:nband-1,*),1) > cntrth)^2*sqrt((cea(nband-2,*)*ca(nband-1,*))^2+(cea(nband-1,*)*ca(nband-2,*))^2)
+hr = (hr > (-1.)) < 1.
+hr2 = (hr2 > (-1.)) < 1.
+
+sel=where(total(ca,1) le hrslow*sqrt(total(cea^2,1)),nsel)
+if nsel ne 0 then hr2e(sel)=999 
+sel=where(total(ca(nband-2:nband-1,*),1) le hrslow*sqrt(total(cea(nband-2:nband-1,*)^2,1)),nsel)
+if nsel ne 0 then hre(sel)=999 
+struct_col_add,nslist,reform([hr,hre,hr2,hr2e],ns,4),['HR','HRE','HR2','HR2E'],0.0*[1,1,1,1],temp_slist
+nslist=temp_slist
+
+
+if n_elements(dig) ne 0 then radec_out,nslist.ra,slist.dec,iau=iau else $
+	iau=nslist.iauid
+
+if n_elements(outfile) ne 0 then sou_struct_fits,nslist,outfile
+
+if n_elements(texfile) eq 0 then texfile='hr_out.tex'
+openw,un,texfile,/get_lun
+
+if n_elements(tabfile) eq 0 then begin
+	case nband of 
+		3: tabfile='$PUBDIR/tab_chandra/tab_source_3b.tex'
+		4: tabfile='$PUBDIR/tab_chandra/tab_source_4b.tex'
+		else: stop,'please give tabfile'
+	endcase
+endif
+openr,untab,tabfile,/get_lun
+tabtext=''
+while not eof(untab) do begin
+ readf,untab,tabtext
+ if tabtext ne '' then printf,un,tabtext $
+ else begin
+  shr='$'+string(hr,'(f5.2)')+'\pm'+string(hre,'(f4.2)')+'$ & '
+  sel=where(hre gt 1,nsel)
+  if nsel ne 0 then shr(sel)='--& '
+  if nband eq 4 then begin
+	shrs='$'+string(hr1,'(f5.2)')+'\pm'+string(hr1e,'(f4.2)')+'$ & '
+	sel=where(hr1e gt 1,nsel)
+	if nsel ne 0 then shrs(sel)='--& '
+	shr=shr+shrs
+	format='(I4,a3,a16,a3,(f4.1,a3),(f6.1,a3),(f9.2,a5,f7.2,a3),a51,a10,a3)'
+  endif else $
+	format='(I4,a3,a16,a3,(f4.1,a3),(f6.1,a3),(f9.2,a5,f7.2,a3),a34,a10,a3)'
+  shrs='$'+string(hr2,'(f5.2)')+'\pm'+string(hr2e,'(f4.2)')+'$ &'
+  sel=where(hr2e gt 1,nsel)
+  if nsel ne 0 then shrs(sel)='-- & '
+  shr=shr+shrs
+  for k=0,(ns-1) do begin
+ 	print,k+1,' & ',iau(k),' &  ',nslist(k).perr,' &$',nslist(k).prob,'$&$' $
+	,nslist(k).cntrb*1.e3,'\pm',nslist(k).cntrbe*1.e3 $
+	,'$& ',shr(k),nslist(k).sdb,' \\',format=format
+ 	printf,un,k+1,' & ',iau(k),' &  ',nslist(k).perr,' &$',nslist(k).prob,'$&$' $
+	,nslist(k).cntrb*1.e3,'\pm',nslist(k).cntrbe*1.e3 $
+	,'$& ',shr(k),nslist(k).sdb,' \\',format=format
+  endfor
+ endelse
+endwhile
+free_lun,un
+free_lun,untab
+if !debug eq 2 then stop
+return
+end

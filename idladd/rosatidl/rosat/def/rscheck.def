@@ -1,0 +1,6 @@
+Rosat standard default parameters for reading data in ancilliary files
+12
+0,OBSEQ=,Root name of input file
+1,DIR=,Directory containing data file
+3,INSTR=P,Instrument (default is P for PSPC)
+9,CHATTER=1,Controls chattiness of program

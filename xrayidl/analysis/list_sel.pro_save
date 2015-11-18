@@ -1,0 +1,144 @@
+pro list_sel,filelist,mlist,msel,ccd=ccd,fdir=fdir,ftail=ftail,probth=probth $
+,soufile=soufile,slow=slow,flow=flow,instr=instr,subfac=subfac,psffile=psffile $
+,eband=eband,fname=fname,flagsub=flagsub,filter=filter,mdim=mdim,mblock=mblock,mxmin=mxmin,mymin=mymin,bmin=mbmin,bmax=mbmax,detagname=detagname,cim=cim,bexpt=bexpt
+;+
+; select events in a list, which may be merged from multiple
+; observations. Event files are used to get the pointing astrometry
+;
+;
+;*INPUTS:
+; filelist - file list: each row contains an event file name, used
+;            only when fname is not provided.
+; mlist - merged or single event list 
+;
+;*OUTPUTS:
+; msel - event index in mlist selected with the projected filter value
+;        > 0 
+;
+;*OPTIONAL Inputs:
+; fname - a single event file name, if set, overriding filelist
+; ccd - selected ccd ID numbers
+; fdir - file directory (def ='../xdata/')
+; ftail - characters appended to the filenames in filelist (e.g., '.fit')
+; soufile - source file name
+; flagsub - source subtraction replacement value: -1 (def) to select
+;           off-source events, or 1 to get on-source events
+; filter - image with > 0 regions selected for msel
+; probth, slow, flow  - the source selection threshold: ML
+;                       probability, signal-to-noise, and/or count
+;                       rate, for source subtraction
+; instr - instrument name (def = !instr)
+; subfac - subtraction factor of the source energy-encircled radius as
+;		defined in sou_det_params
+; psffile = psf file name. Def = psffile from sou_det_params if eband is not
+;		specified, otherwise use the bpsffile(eband-1)
+; eband - energy band (1,2,3). If given bsffile and emin(eband-1) and
+;		emax(eband-1) are used
+; 
+; mdim, mblock,,mxmin,mymin,bmin,bmax,detagname - parameters for
+;                                                 output images 
+; cim - output stack of images
+; bexpt - background event file exposure 
+;
+; revision of the old list_sel by wqd May 24, 2003
+;-
+if n_params() eq 0 then begin
+print,'CALL SEQUENCE - list_sel,filelist,mlist,msel,ccd=ccd,fdir=fdir'
+print,',ftail=ftail,probth=probth,slow=slow,flow=flow,soufile=soufile'
+print,',instr=instr,subfac=subfac,psffile=psffile,eband=eband'
+print,',fname=fname,flagsub=flagsub,filter=filter,mdim=mdim,mblock=mblock,mxmin=mxmin,mymin=mymin,bmin=mbmin,bmax=mbmax,detagname=detagname,cim=cim,bexpt=bexpt'
+return
+endif
+if n_elements(flagsub) eq 0 then  flagsub=-1 ;sources too be removed
+if n_elements(fdir) eq 0 then fdir='../xdata/'
+if n_elements(ftail) eq 0 then ftail=''
+if n_elements(soufile) ne 0 then $
+  sou_fits_info,soufile,slist,probth=probth,slow=slow,flow=flow,/all
+
+;setup the source detection parameters:
+if n_elements(instr) eq 0 then instr=!instr
+sou_det_params,instr,dim,block,ccd,bmin,bmax $
+	,dsfrac,asfrac,psffiled,bpsffile,oftail,aimoff,osubfac
+if n_elements(subfac) eq 0 then subfac=osubfac
+if n_elements(psffile) eq 0 then begin
+	if n_elements(eband) ne 0 then psffile=bpsffile(eband-1) $
+	else psffile=psffiled
+    endif
+
+
+filtero=replicate(-flagsub,dim,dim)
+if n_elements(fname) eq 0 then begin
+    openr,un,filelist,/get
+    filename=''
+    fname=['-999']
+    while not eof(un) do begin
+	readf,un,filename
+        fname=[fname,filename]
+    endwhile
+    free_lun,un
+    fname=fname(1:*)
+    sfileflag=0
+endif else sfileflag=1
+msel=[-999L]
+filename=fdir+fname+ftail
+nf=n_elements(filename)
+
+if n_elements(mdim) ne 0 then begin
+    if n_elements(mbmin) eq 0 then mbmin=bmin
+    if n_elements(mbmax) eq 0 then mbmax=bmax
+    nb=n_elements(mbmin) 
+    cim=fltarr(mdim(0),mdim(1),nb)
+    if n_elements(detagname) eq 0 then detagname='m'
+    if n_elements(mxmin) eq 0 then mxmin=1 
+    if n_elements(mymin) eq 0 then mymin=1 
+    if nf ne n_elements(bexpt) then bexpt=fltarr(nf)+bexpt 
+             ;assume to be the same
+endif else begin
+    nb=0
+    ;cim=fltarr(dim,dim,nb)
+endelse
+
+for kk=0,nf-1 do begin
+	print,filename(kk)
+	file_params,filename(kk),fhdr,fra,fdec,expt,nra,ndec,xoff,yoff,roll $
+		,aimoff=aimoff,hdr=hdr
+	xmin=!pref+xoff-dim*block/2 ;low left pixel of the subimage
+	ymin=!pref+yoff-dim*block/2
+        if n_elements(soufile) ne 0 then begin
+	  filter=source_sub_v(filtero,fra,fdec,slist.ra,slist.dec,slist.cntr $
+          ,subvalue=flagsub,block=block,fac=subfac,/deg,perc=asfrac $
+          ,psffile=psffile) ;,sradius=slist.sradius) 
+      endif else filter=filtero
+        if sfileflag then begin
+            nfound=n_elements(mlist)
+            fsel=lindgen(nfound)
+        endif else begin
+            fidname=sxpar(hdr,'OBS_ID')
+            fsel=where_tag(mlist,nfound,tag_name='fid',value=fidname)
+        endelse 
+	if nfound ne 0 then begin
+            flist=mlist(fsel)
+            list_image,flist,xmin,ymin,cb,dim,block=block $
+	   	,filter=filter,sel=sel,nsel=nsel
+            if nsel gt 0 then begin
+                if nb ne 0 then begin
+                 for k=0,nb-1 do begin
+                    list_image,flist(sel),mxmin,mymin,cb,mdim(0),mdim(1) $
+                      ,block=mblock,emin=mbmin(k),emax=mbmax(k),det=detagname
+                    if n_elements(bexpt) ne 0 then cb=cb*(expt/bexpt(kk))
+                     cim(*,*,k)=cim(*,*,k)+cb 
+                  endfor
+                 endif
+                 msel=[msel,fsel(sel)]
+             endif 
+         endif else print,'no counts found in ',fidname
+;tv,bscale(cb)
+if !debug eq 2 then stop
+endfor
+nmsel=n_elements(msel)-1
+if nmsel eq 0 then print,'no count in msel!!!' else begin
+    msel=msel(1:*)
+    print,nmsel,' counts are selected in msel.'
+endelse
+return
+end

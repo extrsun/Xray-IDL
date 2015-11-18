@@ -1,0 +1,163 @@
+
+  SERTS Image Display Procedures from Astronomical Users' Library (Nov 1993)
+
+    (IMAGELIB adds the system variables used by these procedures)
+
+    (see also procedures under topics "IMG" and "PLOT")
+
+    ADJUST      :   Adjust the intensity of an image (pixels equal to 
+                    MISSING ignored)
+    ADJUST_COLOR :  Use the graphics cursor to control the lower limit and 
+                    range of the color tables
+    AVG         :   Calculate the average value of an array, or the average 
+                    value over one dimension of an array as a function of all 
+                    the other dimensions
+    BLINK       :   Blinks two images together by modifying the color tables
+    BOOST_ARRAY :   Add array APPEND to array DESTINATION, allowing the 
+                    dimensions of DESTINATION to adjust to accomodate it
+    BSCALE      :   Scale images into byte arrays suitable for displaying
+    COLOR_BAR   :   Display a color bar on an image display screen
+    COMBINE_COLORS: Combines two color tables into one
+    COMBINE_VEL :   Combines the current color table with the velocity color 
+                    table as formed by LOAD_VEL
+    CONGRDI     :   This procedure interpolates an array into another array
+                    (emulates CONGRIDI, except that the image is smoothed from 
+                    edge to edge)
+    CONTV       :   Places contour plots over images displayed with the EXPTV 
+                    or similar procedure
+    CROSS_CORR2 :   Takes two-dimensional cross-correlation between two arrays
+    CW_TVZOOM   :   Compound widget displaying an original image in one 
+                    window and another window in which a portion of the 
+                    original window is displayed
+    ENABLEFLAG  :   Reenables one of the previously set flag fields in 
+                    the !IMAGE structure (use only if value has already 
+                    been set by SETFLAG, but was disabled using UNSETFLAG)
+    EXPAND_TV   :   Expands an image to the dimensions MX, MY and displays
+                    it at position IX, IY on the image display screen
+                    (called from EXPTV and other routines)
+    EXPTV       :   Uses SCALE_TV and EXPAND_TV to place an image on the TV 
+                    display screen
+    FORM_FILENAME : Tests whether or not a given filename already has an
+                    extension on it, and if not appends a default extension
+    FORM_INT    :   Takes an intensity image, and scales it into a byte array 
+                    suitable for use with the combined intensity/velocity color 
+                    table created by COMBINE_VEL
+    FORM_VEL    :   Takes a velocity image, and scales it into a byte array 
+                    suitable for use with the velocity color table created by 
+                    LOAD_VEL
+    GET_IM_KEYWORD: Gets the value of KEYWORD (called by SERTS image display 
+                    routines)
+    GET_TV_SCALE :  Retrieves information about images displayed by EXPTV, PUT, 
+                    and other routines, as stored by STORE_TV_SCALE
+    GET_VIEWPORT :  Gets the current values of the viewport, in the form of the
+                    old-fashioned variables !SC1, !SC2, !SC3, and !SC4.
+    GOOD_PIXELS :   Returns a vector array containing only those pixels that 
+                    are not equal to the missing pixel flag value
+    GRADIENT   :    Calculate the absolute value of the gradient of an array
+    HAVE_WIDGETS :  Tests to see whether the current graphics device supports 
+                    widgets
+    HAVE_WINDOWS :  Tests to see whether the current graphics device supports 
+                    windows
+    HISCAL     :    Scales an array such that the histogram of the output array 
+                    is approximately the same for all data values
+    IMAGELIB   :    Defines variables and common blocks needed for the 
+                    SERTS IMAGE library
+    IM_KEYWORD_SET: Decides whether a particular SERTS image display keyword 
+                    is set, or whether the equivalent element in the !IMAGE 
+                    structure is set (use in place of KEYWORD_SET)
+    INTERP2    :    Performs a two-dimensional interpolation on IMAGE at the 
+                    point(s) X,Y
+    INT_STRETCH :   Stretch one of the two combined image display color tables 
+                    so the full range runs from one color index to another
+    LABEL_IMAGE :   Puts labels on images
+    LAPLACIAN  :    Calculate the Laplacian of an array
+    LINECOLOR  :    Set one particular element in each of the red, green and 
+                    blue color tables to some standard values for line plotting
+    LOAD       :    Load predefined color tables
+    LOAD_VEL   :    Loads a velocity color table.  Velocity arrays can be 
+                    scaled for  display for this color table using FORM_VEL
+    MOVE_AND_BLINK: Moves and blinks two images together by modifying the 
+                    color tables
+    OCONTOUR    :   Draws contour plots over existing plots
+    OPLOT_IMAGE :   Displays images over pre-existing plots
+    PLOT_IMAGE :    Display images with plot axes around it
+    POLY_VAL   :    Returns values from selected polygonal areas of displayed 
+                    images
+    PROF       :    Returns profiles from arrays along the path XVAL, YVAL
+    PS         :    Sets the system variables needed to write PostScript 
+                    printer plot files
+    PSCLOSE    :    Close a PostScript plot file and reset the graphics device
+    PSPLOT     :    Send a PostScript plot file generated by IDL to the 
+                    PostScript laser printer
+    PUT        :    Uses SETIMAGE, SCALE_TV and EXPAND_TV to place an image on 
+                    the TV display screen
+    REMOVE_SPOT :   Sets selected areas of displayed images to a constant 
+                    background
+    SCALE_TV   :    Scales the size of an image to best fit the size of an 
+                    available area on the image display screen
+                    (called from EXPTV and other routines)
+    SELECT_BOX :    Allows the user to interactively select a box on the 
+                    graphics display
+    SETFLAG    :    Sets one of the flag fields in the !IMAGE structure
+    SETIMAGE   :    Allow several images in one window, arranged horizontally 
+                    and/or vertically
+    SETPLOT    :    Switches among the various available plotting devices
+    SETSCALE   :    Sets the plot scale such that it is the same in the X and 
+                    Y directions
+    SHOWFLAGS  :    Shows the flag fields in the !IMAGE structure as set 
+                    the routines SETFLAG, UNSETFLAG, and ENABLEFLAG
+    SHOW_COLORS :   Displays the current color table
+    SIGRANGE   :    Selects out the most significant range in the data to be 
+                    used in displaying images
+    STORE_TV_SCALE:  Store information about images displayed by EXPTV, PUT, 
+                    and other routines (called from SCALE_TV)
+    SUM        :    Total up an array over one of its dimensions
+    TRIM       :    Convert numbers into a string representation, and trim off 
+                    leading and/or trailing blanks
+    TVAXIS     :    Places X and/or Y axes on images displayed with the EXPTV 
+                    or similar procedure
+    TVBOX      :    Places X and/or Y axes on images displayed with the EXPTV 
+                    or similar procedure
+    TVDEVICE   :    Defines a given device and/or window as the default for 
+                    image display
+    TVERASE    :    If TVDEVICE has been called then erases special image 
+                    display device or window; otherwise erases current window
+    TVOUT      :    Outputs text onto images
+    TVPLOT_TRACE :  Plots traces over images displayed with EXPTV or a similar 
+                    procedure
+    TVPLT      :    Plots points on displayed images
+    TVPOINTS   :    Uses the cursor to select a series of points from a 
+                    displayed image (called by such routines as TVPROF, 
+                    POLY_VAL, etc.)
+    TVPOS      :    Returns cursor positions on displayed images
+    TVPRINT    :    Reads the contents of a graphics window and creates and 
+                    prints a PostScript file
+    TVPROF     :    Uses the cursor to get a profile from a displayed image
+    TVPROFILE  :    Interactively draw profiles of an image in a separate 
+                    window
+    TVREAD     :    Reads the contents of an image display screen, or window, 
+                    into an array
+    TVSCREEN   :    Creates separate window 512 (or 256) pixels on a side for 
+                    image display
+    TVSELECT   :    Select the image display device and/or window as set by 
+                    the routine TVDEVICE
+    TVUNSELECT :    Reset to the graphics device and/or window that was 
+                    current when TVSELECT was called
+    TVVALUE    :    Interactively display the values in an image
+    TVZOOM     :    Display part of an image (or graphics) from the current 
+                    window expanded in another window
+    UNSETFLAG  :    Unsets one of the flag fields in the !IMAGE structure
+                    (Inverse procedure to SETFLAG and ENABLEFLAG)
+    VEL_STRETCH :   Stretch one of the two combined image display color tables 
+                    so the full range runs from one color index to another
+    WDISPLAY   :    Displays images in a window all their own, sized to fit
+    XGAMMA     :    A widgets-based interface to the routine GAMMA_CT, to 
+                    control the brightness of the screen
+    XLOAD      :    Provides a graphical interface to allow the user to load 
+                    one of the standard color tables, or the special SERTS 
+                    velocity color table, and to interactively adjust these 
+                    color tables in various ways
+    XMOVIE     :    Animates a series of images in a widget controlled X window
+    ZOOM       :    Display part of an image (or graphics) from the current 
+                    window enlarged in another window
+

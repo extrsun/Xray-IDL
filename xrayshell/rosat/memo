@@ -1,0 +1,43 @@
+==================
+# Model count rate and flux as function of alpha and NH
+# for Chandra ACIS-I
+!instr='pspcb' ;for IDL
+set instr = 'pspcb'
+set fname = $instr'.fak'
+#set fluxlo=1
+#set fluxhi=2.
+#----------------------------
+set outfname=$instr'_vr_a0.5e_44'
+#----------------------------------------
+set file = 'temp'
+set abund = 0.5
+set blow = 51
+set bhigh = 70
+set outfname = $instr'_vr_a0.5e_44'             
+#$instr'_vp_a'${abund}e'$blow'_'$bhigh
+
+set tt = 0.05
+./rosat_vro.sh $blow $bhigh $tt ${file}$tt $abund $blow $bhigh $fname
+foreach tt (0.06 0.07 0.09 0.11 0.14 0.16 0.20 0.25 0.30 0.37 0.45 0.54 0.66 0.81 0.99 1.20 1.47 1.79 2.19 2.67 3.25 3.97 4.84 5.91 7.21 8.80 10.73 13.09 15.9)
+ ./rosat_vr.sh $blow $bhigh $tt ${file}$tt  $abund $blow $bhigh $fname
+end
+
+paste ${file}0.05   ${file}0.06   ${file}0.07   ${file}0.09   ${file}0.11 ${file}0.14   ${file}0.16   ${file}0.20   ${file}0.25   ${file}0.30 > t1
+paste ${file}0.37   ${file}0.45   ${file}0.54   ${file}0.66   ${file}0.81 ${file}0.99   ${file}1.20   ${file}1.47   ${file}1.79   ${file}2.19 > t2
+paste  ${file}2.67 ${file}3.25    ${file}3.97    ${file}4.84    ${file}5.91 ${file}7.21 ${file}8.80 ${file}10.73 ${file}13.09   ${file}15.9 > t3
+
+echo 30 96 $blow $bhigh > $outfname
+paste t1 t2 t3 >> $outfname
+
+==================
+fname='/home/wqd/xrayshell/rates/rosat/pspcc_vr_a0.5e_44'
+read_mcntr,tv,nv,cntr,fname=fname,flux=f
+em=1.34*3.6e-4*(1./cntr) ;count intensity in units of 10^-6 counts/s arcmin^2
+binterp,tv,nv,em,tv,tv*0.+0.02,conv
+plot_oo,tv,conv,xtit='T (keV)',ytit='EM (cm!u-6!n pc)'
+binterp,tv,nv,em,tv,tv*0.+0.08,conv
+oplot,tv,conv,line=1
+binterp,tv,nv,em,tv,tv*0.+0.16,conv
+oplot,tv,conv,line=2
+
+xyouts,0.6,0.8,'NH=2E20, 8E20, 16E20',/norm

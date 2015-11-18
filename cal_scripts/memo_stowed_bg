@@ -1,0 +1,33 @@
+#===========================================================
+# Construct an ACIS background event file, using the stowed (instrument) background data
+# see http://cxc.harvard.edu/contrib/maxim/acisbg/
+# 
+# written by wqd, July 13, 2004, based on the info provided by ShiKui Tang
+#===========================================================
+#in the main directory of the observation
+mkdir back 
+cd back
+setenv MAINDIR ..
+set evtroot='evt2file_new_clean'
+
+set bevtroot=b${evtroot}
+
+#auto find the the aoff file 
+ln -s  $MAINDIR/cal/${evtroot}.fits ${evtroot}.fits
+find $MAINDIR -name 'acis*_aoff1.fits.gz' -exec gunzip {} \;
+find $MAINDIR -name 'acis*_aoff1.fits' -exec ln -s {} aoff.fits \;
+
+#Assuming all the stowed data and related files are in (make sure that they are the latest) 
+set STOWDIR='/net1/hobby/CHANDRA/stow'
+cp ${STOWDIR}/acis_D_0123567_stowed_evt_170404.fits ${bevtroot}.fits
+#The above file will be modified
+
+cp ${STOWDIR}/make_acisbg.par ./
+#emacs make_acisbg.par 
+#to see the defaults and to make appropriate changes
+
+#ln -s ../cal/evt2file_new_clean_gti.fits ./gti.fits
+ln -s ../cal/_eventsfile_gti.fits ./gti.fits
+
+${STOWDIR}/make_acisbg
+

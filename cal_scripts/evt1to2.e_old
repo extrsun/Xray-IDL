@@ -1,0 +1,110 @@
+#!/bin/sh
+#======================================================================
+# evt1to2.e
+version=0.1
+echo "evt1to2.e version: " $version 
+#============================================================================
+# script for the level 1 to level 2 event calibration
+# 
+# Requirements:
+# $PUBDIR should have been defined, which contains the cal_scripts directory
+#
+# This script should be run after completing offset adjustment 
+# procedure using the website: 
+# http://asc.harvard.edu/cal/ASPECT/fix_offset/fix_offset.cgi
+# resulting in a file aspcorr_evt2.fits, used here
+#
+#*outputs:
+# The finished new evt2 file is the original input file with the suffix 
+# _new.fits
+# 
+# wqd, July 4, 2002
+# modify to include the CTI correction for acisi data 
+# (acis_process_events), wqd, Dec. 5, 2002
+# add check keyword chvf for reducing the background in the timed VF mode
+# (a significant fraction of the source events may be flagged and removed 
+# for moderately bright to bright sources.)
+#======================================================================
+if [ "$1" = "" ]
+then
+	echo "A file root name (e.g., acisf01972N001_evt2) is needed!"
+	 exit -1
+else
+	events_root=$1
+	events_file=$events_root.fits
+fi
+
+if [ "$2" = "" ]
+then
+	instr=aciss
+	echo "Assuming $instr data!"
+else 
+	instr=$2
+fi
+
+if [ "$3" = "" ]
+then
+	chvf=no
+	echo "Assuming $instr data!"
+else 
+	chvf=$3
+fi
+
+#output file name root (before the background flare cleaning)
+events_new_root=${events_root}_new
+
+# set default file names:
+events_new_file=${events_new_root}.fits
+
+badpixfile=`ls *bpix*`
+echo "Badpixel file = $badpixfile"
+flt1_file=`ls *flt*`
+#gunzip $MAINDIR/primary/pcadf*.gz
+#asol_file=`ls $MAINDIR/primary/pcadf*`
+#asol_file=`ls *asol*`
+#echo $asol_file
+
+#ls $asol_file > pcad_asol1.lis 
+#cat pcad_asol1.lis
+
+#echo $MAINDIR
+#echo $badpixfile
+
+# Start the evt1 processing:
+echo "starting evt1 processing"
+
+echo "starting acis_process_events"
+if [ "$instr" = "acisi" ]
+then
+#with the cti correction
+punlearn acis_process_events
+ acis_process_events infile=aspcorr_evt2.fits\
+ outfile=temp_${events_file} acaofffile=@asol_file apply_cti=yes\
+ gainfile=CALDB badpixfile=$badpixfile eventdef=")stdlev1"\
+ doevtgrade=yes stop=none clobber=yes verbose=2 check_vf_pha=$chvf
+else
+#without the cti correction
+punlearn acis_process_events
+ acis_process_events infile=aspcorr_evt2.fits\
+ outfile=temp_${events_file} acaofffile=@asol_file\
+ gainfile=CALDB badpixfile=$badpixfile eventdef=")stdlev1"\
+ doevtgrade=no stop=none clobber=yes verbose=2 check_vf_pha=$chvf
+fi
+
+# Sometimes, the error message from the above could be misleading. For example,
+# it could complain about CALDB even if the problem is with finding 
+# $events_file
+
+echo "selecting grades."
+punlearn dmcopy
+dmcopy "temp_${events_file}[EVENTS][grade=0,2,3,4,6,status=0]" temp1_${events_file} opt=all clobber=yes
+#dmcopy also removes the events with stauts not=0
+echo "done"
+
+echo "applying GTI filters"
+punlearn dmcopy
+dmcopy "temp1_${events_file}[EVENTS][@$flt1_file]" $events_new_file opt=al clobber=yes
+
+echo " The new evt2 file $events_new_file is produced!"
+#Compare the size of the files
+ls -ltr $MAINDIR/primary/*evt?.fits $events_new_file

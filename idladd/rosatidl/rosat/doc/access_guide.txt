@@ -1,0 +1,154 @@
+
+03 October 1993
+
+How to access the IDL Rosat Library for use at your home institution:
+
+     Rosat GOs may also wish to analyze their data at their home institutions.
+The Rosat IDL library is available both via DECNET copy from the HEASRC Vax
+workstation on the LHEA Vax cluster, and via anonymous ftp from the GOF account
+on the Decstation legacy.nasa.gsfc.gov.
+
+
+I. via DECNET copy from HEASRC:
+
+     The IDL procedures are stored on the HEASRC Vax workstation under the
+account IDL:[LIB.ROSAT].  The directory is organized into the following
+subdirectories:
+
+      Subdirectory       contains
+
+     [.EXPERIMENTAL]     experimental procedure files (extension .pro)
+                         All Rosat IDL procedures are currently regarded as
+                         experimental.
+
+     [.WORKING]          working procedure files (i.e., those which have been
+                         tested and are no longer experimental)
+
+     [.DOC]              online help files (extension .txt) and files used
+                         by the procedure DOC_LIST (extension .lst)
+
+     [.DEF]              parameter default files (extension .def) used by
+                         the interface for the higher level procedures
+
+     [.AUX]              auxiliary data files (extension .dat) used by 
+                         various library procedures (also contains SVDF.DAT 
+                         and CONTINENT.DAT from IDL Astronomical Users' 
+                         library).
+
+You will also need the file startup.pro in IDL:[LIB.COM]. You may find it
+useful to copy the file idldef.com from the same directory.
+
+      As an example, to obtain the procedure (extension .pro) files containing 
+the code, type
+
+   copy heasrc::idl:[lib.rosat.experimental]*.* (your node and directory)
+
+Please be sure that your institution is running IDL version 2.
+
+     All of the Rosat specific .pro files are stored in the experimental
+directory because all of the software is currently experimental. Software will
+be moved to the working directory once it has been sufficiently debugged.
+
+     A copy of the Rosat IDL Recipes Cookbook is also stored in the three
+*IDL_RECIPES*.TEX files in the [.DOC] subdirectory. Copy all three .TEX
+files, and run Latex on the file LX_IDL_RECIPES.TEX. Print as you would
+normally print a Latex file. 
+
+
+II. Via anonymous ftp from the GOF account on legacy.gsfc.nasa.gov:
+
+     The IDL procedure, online help, parameter default, and auxiliary data
+files are stored in an uncompressed tar file in the directory
+/rosat/software/idl. The subdirectory structure of the original files is
+preserved. To reach the GOF account, type: 
+
+     ftp legacy.gsfc.nasa.gov
+
+and at the FTP login prompt type
+
+LEGACY.GSFC.NASA.GOV> login anonymous  (or login ftp)
+
+and give your identity as the password (e.g., your username at your home
+institution).  Use the cd command to change to the IDL directory
+
+     cd /rosat/software/idl
+
+To obtain the tar file, type 
+
+     binary                  (the file should be transferred in binary mode)
+     get rosat_lib.tar       (what you want to name it)
+
+You will then need to unpack the tar file. If you are on a Unix machine,
+you can do this by simply typing 
+ 
+     tar -xvf rosat_lib.tar        (unpacks tar file and creates 
+                                    subdirectory structure)
+
+Note that tar should be run from the directory which you wish to be your
+IDL top level directory. All of the IDL subdirectories from the tar file
+will be subdirectories under this directory. 
+
+(further note: If you are not on a Unix machine, then I don't know how you
+should do this. But in that case, why aren't you using DECNET copy?) 
+ 
+     The result will be a set of files in subdirectories under your current
+directory. The subdirectory structure will be similar to that used for the
+HEASRC account IDL:[LIB.ROSAT], with the obvious Unix translations:
+experimental/, working/, doc/, def/, aux/.
+
+     For now, all of the Rosat specific .pro files are stored in the
+experimental directory experimental/, because all of the software is currently
+experimental. Software will be moved to the working directory once it has been
+sufficiently debugged.
+
+     A copy of the Rosat IDL Recipes Cookbook can be also be obtained from
+the anonymous ftp account, from directory /software/idl. Pull over all 
+three .TEX files, and run Latex on the file LX_IDL_RECIPES.TEX. Print as 
+you would normally print a Latex file.
+
+III. Using the IDL Rosat Library at your home institution:
+
+     IDL can be run under both VMS and Unix operating systems. In either case,
+the Rosat procedures assume that either some system logicals (VMS) or some
+environmental variables (Unix) have been defined (best done before entering 
+IDL).
+
+Under VMS, type:
+
+  define zdef   (physical device containing the parameter default .def files)
+  define zdoc   (   "                  "        doc_list .lst files)
+  define zaux   (   "                  "        auxiliary data .dat files)
+  define zcom   (   "                  "        command .com files)
+  assign zcom:startup.pro IDL_STARTUP
+     
+Under Unix, type
+
+  setenv ZDEF   (physical device containing the parameter default .def files)
+  setenv ZDOC   (   "                  "        doc_list .lst files)
+  setenv ZAUX   (   "                  "        auxiliary data .dat files)
+  setenv ZCOM   (physical device containing the command .com files)
+  setenv IDL_STARTUP $ZCOM/startup.pro
+
+     You will also need to add the directories which contain the procedure
+.pro files to the system logical/environmental variable IDL_PATH (see IDL
+manual for more details). 
+
+     You may find it convenient to add these define/setenv commands to your
+login.com/login file. 
+
+
+IV. Don't forget the IDL Astronomical Users' Library:
+
+     The procedures in the Rosat IDL library rely heavily on the IDL
+Astronomical Users' Library developed by Wayne Landsman, Frank Varosi, and
+others in Code 681 at NASA/GSFC. GOs wishing to use the Rosat IDL library at
+their home institution should first obtain the Astronomical Users' Library.
+Please be sure that you have the latest versions of the procedures which handle
+the Rosat binary FITS extensions. For instructions on how to obtain the
+Astronomical Users' Library, contact Wayne Landsman (STARS::LANDSMAN,
+LANDSMAN@STARS.GSFC.NASA.GOV).
+
+     Be sure that the definition of your IDL_PATH variable also includes
+the directories in which you store the procedure files (*.pro) for the IDL
+Users' Library. 
+

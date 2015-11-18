@@ -1,0 +1,6 @@
+Rosat standard default parameters for making XSPEC format pha file
+5
+0,FNAME=source.pha,name of output PHA file (w/o extension)
+1,BKFIL=source.bkg,name of assoc bkgd file (def = NONE)
+2,RSPFIL= ,/data3/expmaps/pspcb_93jan12.rmf,name of assoc response file 
+3,CORFIL=none,name of assoc correction file (def = NONE)

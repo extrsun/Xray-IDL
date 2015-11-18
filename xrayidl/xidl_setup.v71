@@ -1,0 +1,48 @@
+#! /bin/sh -x
+# xrayidl startup script       wqd 3/01; a modified version of JEF  7/95
+# Assuming that source $xdir/xidl_setup has been defined in .schrc
+# One can, for example, use
+# xrayidl
+#
+# these are now defined in .cshrc
+
+# setenv itt_DIR /Users/sunwei/ProgramFiles/itt
+# setenv IDL_DIR ${itt_DIR}/idl
+# setenv xidl    /Users/sunwei/ProgramFiles/addition/pub/xrayidl
+# source /Users/sunwei/ProgramFiles/itt/idl/bin/idl_setup
+
+#setenv PUBDIR /Users/sunwei/ProgramFiles/addtion/pub
+#for Users
+# setenv PUBDIR ~
+
+setenv ENTRY_IDL_PATH ${IDL_PATH}
+setenv IDL_PATH ${ENTRY_IDL_PATH}:\+$PUBDIR/xrayidl:\+$PUBDIR/idladd:\+$PUBDIR/tara:\+$PUBDIR/yaqoob:\+$PUBDIR/ljtastro:\+$PUBDIR/Zhiyuanprocedure:
+
+alias idl $IDL_DIR/bin/idl
+alias idlde $IDL_DIR/bin/idlde
+alias idldemo $IDL_DIR/bin/idldemo
+alias idldeclient $IDL_DIR/bin/idldeclient
+alias idlhelp  $IDL_DIR/bin/idlhelp
+alias idlrpc $IDL_DIR/bin/idlrpc
+alias insight $IDL_DIR/bin/insight
+#setenv ASTRO_DATA /Users/sunwei/ProgramFiles/idlastronlib/data
+#source $IDL_DIR/bin/idl_setup
+
+setenv IDL_STARTUP $PUBDIR/xrayidl/xraysysv.pro
+
+#setenv ZDOC $IDL_DIR/xrayidl/doc
+setenv ZDEF $IDL_DIR/xrayidl/def
+setenv ZAUX $IDL_DIR/xrayidl/aux
+setenv EXPLIB $IDL_DIR/xrayidl/experimental
+
+#
+#if ( $# -gt 0 ) idl${1} else idl
+#endif
+idl
+#
+#unsetenv IDL_DIR
+setenv IDL_PATH ${ENTRY_IDL_PATH}
+unsetenv ENTRY_IDL_PATH
+unsetenv IDL_STARTUP
+#unsetenv ASTRO_DATA
+#unsetenv EXPLIB

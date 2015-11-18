@@ -1,0 +1,129 @@
+#===========================================================
+# Construct an ACIS background event file, using the Blank-Sky Files
+# see http://asc.harvard.edu/ciao/threads/acisbackground/
+# It is extremely important to find the match background files:
+# different periods and different processings:
+# Maxim's files are the most updated, which are not yet incorporated in caldb
+# 
+# written by wqd, Dec. 17, 2002
+#===========================================================
+#in the main directory of the observation
+mkdir back 
+cd back
+setenv MAINDIR ..
+set bevtroot='bevt2file_new'
+set evtroot='evt2file_new_clean'
+
+#For an aciss observation, you may only need to deal with chip 7. But to 
+#include the adjacent chip 6 and 8, see memo_bg_aciss for additional info.
+#set ccd_id="7" 
+
+#for an acisi observation (and using the FI chips only):
+set ccd_id="0,1,2,3"
+set band="300:12000"
+
+#auto find the the asol file (e.g., pcadf114999371N002_asol1.fits)
+ln -s  $MAINDIR/xdata/${evtroot}.fits ${evtroot}.fits
+find $MAINDIR -name 'pcadf*_asol1.fits' -exec sh -c 'ls {} >> asol_file' \;
+
+#check to see if they are actually OK
+ls -ltr asol_file ${evtroot}.fits
+
+#First find the observing period (e.g., C, D)
+# (http://cxc.harvard.edu/contrib/maxim/acisbg/data/README; the name 
+# convention may be different, however. Locally the background files are in 
+# /net/xray/usr/local/ciao_2.3/CALDB/data/chandra/acis/bcf/bkgrnd/):
+
+#(e.g., for an acisi obs and for chip 3, 1):
+acis_bkgrnd_lookup 31 i ${evtroot}.fits
+#for an aciss pointing and for chip 7
+#acis_bkgrnd_lookup 7 s ${evtroot}.fits
+
+#Then see which background file in the MAXIM's directory should be used.
+#For FI chips, follow the instruction to get the cti corrected background file
+
+#If only a couple of chips are needed:
+# dmcopy "/net/xray/software/acisbg/data/acisi_D_01236_bg_evt_031102.fits[ccd_id=3]" ${bevtroot}.fits clobber=no
+
+#otherwise:
+ln -s  /net/xray/software/acisbg/data/acisi_D_01236_bg_evt_031102.fits ${bevtroot}.fits
+
+punlearn reproject_events
+pset reproject_events infile="${bevtroot}.fits[cols -time]"
+pset reproject_events outfile=${bevtroot}_reproj.fits
+pset reproject_events aspect=@asol_file
+pset reproject_events match=${evtroot}.fits
+pset reproject_events random=0
+pset reproject_events mode=h;
+pset reproject_events clobber=yes;
+reproject_events
+#The chip selection are taken from the match file (GTI file)
+
+punlearn dmcopy
+dmcopy "${bevtroot}_reproj.fits[EVENTS][ccd_id=$ccd_id][energy=$band]" ${bevtroot}_clean.fits opt=all clobber=yes
+
+#if ${bevtroot}_reproj.fits is nolonger needed:
+rm ${bevtroot}_reproj.fits
+#===========================================================
+# Use fv to check the exposure of the created files with that shown in 
+# the MAXIM's website for the same observation period. 
+# After dmcopy, the exposure information often gets lost in the header (for
+# an unknown reason), which will cause problems later. You then need to 
+# re-add the exposure, using fv.
+#===========================================================
+#end of the background eventfile construction
+#The rest is for more sutle manuplation of the background files.
+#===========================================================
+#The background probably needs to be adjusted to account for minor differences
+# in the background levels between your observation and the "blank sky" backg.
+# One simple ways (but not always work): change the value of the EXPOSURE 
+# keyword in the background file
+# I handle this with IDL
+#===========================================================
+#Other useful commands:
+dmkeypar ${evtroot}.fits TSTART ; pget dmkeypar value
+
+#add dummy time:
+dmlist "b${evtroot}.fits[#row=1][cols time]" data,clean
+
+punlearn dmtcalc
+dmtcalc infile=${bevtroot}_clean.fits outfile=test.fits expr="TIME=114998797.17706"
+dmtcalc infile=${bevtroot}_clean.fits outfile=test.fits expr="TIME=114998798.0"
+
+#construct images:
+
+dmcopy "${bevtroot}_clean.fits[energy=300:10000,ccd_id="0,1,2,3"][bin sky=8]" test.fits clobber=yes
+
+#===========================================================
+#comments and potential problems:
+Read the caveats at the end of http://asc.harvard.edu/ciao/threads/acisbackground/
+
+For A2125 for example:
+
+The background file uses gain tables:
+acisD2000-01-29gain_ctiN0001 for the -120C data (periods C D, CTI-corr).
+
+While the data uses
+
+ln -s $CALDB/data/chandra/acis/bcf/cti/acisD2000-01-29ctiN0002.fits  acisD2000-01-29ctiN0002.fits
+
+acis_process_events \
+ infile=bg.fits\
+ outfile=new_bgevt2_c3_reproj.fits \
+ acaofffile=NONE doevtgrade=no\
+ gainfile=acisD2000-01-29ctiN0002.fits\
+ eventdef="{s:ccd_id,s:node_id,s:chip,l:pha,f:energy,s:pi,s:fltgrade,s:grade,f:det,f:sky,d:time}"\
+ clobber = yes
+
+ ERROR: Unable to open the principal extension of the gain file acisD2000-01-29ctiN0002.fits. 
+
+
+#if doevtgrade=yes
+
+# 30415: acis_process_events: 
+ ERROR: A data dependency on phas, ccdid, and ccdnode (or chipx and chipy) columns was not met. 
+
+;=============================================
+instr='acisi'
+cenvset,instr
+evtfdir='../xdata/'

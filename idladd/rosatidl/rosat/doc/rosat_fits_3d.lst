@@ -1,0 +1,92 @@
+  
+  FITS :    Procedures (and functions) useful for FITS file I/O
+
+  most useful procedures for ROSAT FITS files
+
+    FITS_READ   :   Read a header and image (or table) data from a 
+                    converted FITS file. Combines SXHREAD, STRD, FTREAD, 
+                    and TBREAD.
+    FITS_GET    :   Extract a specified field from a column in a converted FITS
+                    table file. Combines FTGET and TBGET.
+
+    TBDIR       :   Give a directory of STSADS and converted FITS tables on disk
+                    (ext .HHH, .HHD) 
+    TBHELP      :   Print abbreviated version of header (ST SDAS format)
+    TBREAD      :   Read a converted 3D Binary table FITS file
+    TBGET       :   Extract a specified field from a column in a converted 
+                    FITS 3D Binary table (FUNCTION)
+
+    FTDIR       :   Give a directory of STSDAS and converted FITS tables on disk
+                    (ext .HHH, .HHD) 
+                    gives list in a different format than TBDIR
+    FTHELP      :   Display the fields in a FITS ASCII table header
+    FTREAD      :   Read a converted ASCII table FITS file
+    FTGET       :   Extract a specified field from a column in a converted 
+                    FITS ASCII table (FUNCTION)
+
+    HPRINT      :   Print a FITS header (with blank lines removed)
+    DFITSRD     :   Convert Rosat 3D Binary table format FITS files to 
+                    ST SDAS format
+    CONVERT3D   :   Driver for DFITSRD (useful for converting lots of files)
+    F3DLIST     :   List Rosat 3D table files which have *not* been converted
+    F3D_EXTS    :   List valid 3D table extensions (FUNCTION)
+    FITSDUMP    :   Dump the contents of the first n records of all fields
+                    in a FITS table file.
+    GETHISTVAL  :   Read the value of a quantity given in FITS header 
+                    history record
+
+    TAB_TO_STRUC:   Read info from SDAS binary table and store in a structure
+                    variable
+
+  other procedures for FITS 3D Binary Table I/O 
+
+    TBDELCOL    :   Delete specified column from a FITS 3D Binary table
+    TBDELROW    :   Delete specified row(s) from a FITS 3D Binary table
+    TBINFO      :   Give information about a specified field in a FITS 3D 
+                    Binary table
+    TBPRINT     :   Print specified columns and rows in a FITS 3D Binary table
+    TBSIZE      :   Return the size and number of fields in a FITS 3D Binary 
+                    table
+
+
+  other procedures for FITS ASCII Table I/O      
+
+    FTADDCOL    :   Add a new column to a FITS ASCII table
+    FTCREATE    :   Create an empty FITS ASCII table (H and TAB)
+    FTDELCOL    :   Delete specified column from a FITS ASCII table
+    FTDELROW    :   Delete specified row(s) from a FITS ASCII table
+    FTHMOD      :   Modify the attributes of a field in a FITS ASCII table
+    FTINFO      :   Give information about a specified field in a FITS ASCII 
+                    table
+    FTPRINT     :   Print specified columns and rows in a FITS ASCII table
+    FTPUT       :   Update or add data to a field in a FITS ASCII table
+    FTSIZE      :   Return the size and number of fields in a FITS ASCII table
+    FTSORT      :   Sort a table according to the values in a specified field.
+    FTWRITE     :   Write a table in modified disk FITS ASCII format.
+
+
+  other procedures for STSDAS image (ASCII) files (ext .HHH, .HHD)
+
+    STRD        :   Combine functions of SXOPEN and SXREAD to read 
+                    STSDAS disk files into IDL data and header variables
+    STWRT       :   Combine functions of SXOPEN and SXWRITE to write 
+                    IDL data and header variables to STSDAS disk files
+    SXADDHIST   :   Add a history record to a FITS header
+    SXADDPAR    :   Add or modify a parameter in a FITS header
+    SXDELPAR    :   Delete a keyword from a FITS header
+    SXGPAR      :   Obtain group parameter values from a FITS header and 
+                    parameter block
+    SXGREAD     :   Read group parameters from an STSDAS file
+    SXHCOPY     :   Copy a selected portion of one header into another
+    SXHEDIT     :   Interactively edit a FITS header using EDT
+    SXHREAD     :   Read a FITS header from disk
+    SXHWRITE    :   Write a FITS header to disk
+    SXMAKE      :   Make a basic FITS header from an IDL array
+    SXOPEN      :   Open an STSDAS (modified FITS) disk header for 
+                    subsequent I/O
+    SXPAR       :   Obtain the value of a keyword in a FITS header
+    SXREAD      :   Read an STSDAS (modified FITS) image from disk
+    SXWRITE     :   Write an image to STSDAS (modified FITS) format
+
+***************************************************************************
+

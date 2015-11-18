@@ -1,0 +1,35 @@
+pro list_cast,seq_no,cra,cdec,list,emin=emin,emax=emax,phaorpi=phaorpi,tsel=tsel,radius=radius,pixsize=pixsize
+;-
+; cast the count list from an off-set observation to a norminal pointing 
+; direction
+; radius -- if given (arcmin), only counts within the radius are included.
+; written by wqd Jun/18/98
+;+
+if n_params() eq 0 then begin
+print,'CALL SEQUENCE - list_cast,seq_no,cra,cdec,list'
+return
+endif
+if n_elements(emin) eq 0 then emin=0
+if n_elements(emax) eq 0 then emax=0
+if n_elements(phaorpi) eq 0 then phaorpi=0
+seq_no_o=!seq_no
+!seq_no=seq_no
+image_center,cra2,cdec2,/deg
+if keyword_set(tsel) ne 0 then $
+ getlistimage,list,emin=emin,emax=emax,refp=refp,phaorpi=phaorpi $
+ else getlistimage,list,emin=emin,emax=emax,tmin=0,refp=refp,phaorpi=phaorpi
+if n_elements(radius) ne 0 then begin
+		if !instr eq 'h' then $
+			list=list(where(((list.dx-2000.)^2+(list.dy-2000.)^2) $
+				le (radius*108.857)^2))  $
+			;in detector coordinates from cast_daa_hri.f
+		else list=list(where(((list.x-refp)^2+(list.y-refp)^2) $
+				le (radius*120.)^2))
+endif
+trans_loct,list.x-refp,list.y-refp,cra2,cdec2,crap,cdecp,/deg,pixsize=pixsize
+trans_dist,cra,cdec,crap,cdecp,xp,yp,/deg,pixsize=pixsize
+list.x=nint(xp+refp)
+list.y=nint(yp+refp)
+!seq_no=seq_no_o
+return
+end

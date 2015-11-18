@@ -1,0 +1,45 @@
+#===========================================================
+# Construct an ACIS background event file, using either the blank-sky background
+# or the stowed (instrument) background data
+# see http://cxc.harvard.edu/contrib/maxim/acisbg/
+# 
+# written by wqd, July 13, 2004, based on the info provided by ShiKui Tang
+# modified to include the construction of the blank-sky backg, wqd, Aug. 24, 05
+#===========================================================
+#in the main directory of the observation
+mkdir back 
+cd back
+setenv MAINDIR ..
+set evtroot='evt2file_new_clean'
+
+set bevtroot=b${evtroot}
+
+#auto find the the aoff file 
+ln -s  $MAINDIR/cal/${evtroot}.fits ${evtroot}.fits
+find $MAINDIR -name 'acis*_aoff1.fits.gz' -exec gunzip {} \;
+find $MAINDIR -name 'acis*_aoff1.fits' -exec ln -s {} aoff.fits \;
+
+#Assuming all the background data and related files are in (make sure that they are the latest) 
+#for the particle background only
+set STOWDIR='/net1/hobby/CHANDRA/stow'
+cp ${STOWDIR}/acis_D_0123567_stowed_evt_170404.fits ${bevtroot}.fits
+#for the blank-sky background:
+set STOWDIR='/net1/hobby/data/caldb_3.0.0/data/chandra/acis/bcf/bkgrnd/'
+cp ${STOWDIR}/acisiD2000-12-01bkgrnd_ctiN0001.fits ${bevtroot}.fits
+chmod a+rwx ${bevtroot}.fits
+#The above file needs to be modified, according to the observing phase and instr
+
+cp /net1/hobby/CHANDRA/stow/make_acisbg.par ./
+#emacs make_acisbg.par 
+#to see the defaults and to make appropriate changes
+
+#ln -s ../cal/evt2file_new_clean_gti.fits ./gti.fits
+ln -s ../cal/_eventsfile_gti.fits ./gti.fits
+
+/net1/hobby/CHANDRA/stow/make_acisbg
+#end for single observation
+
+#for processing multiple observations; e.g.,
+
+/net1/hobby/pub/cal_scripts/bg_mob.e "2954 2953 3392 3663 1561_0 3665 1561_1 3393" /d2/gc_new/ "0,1,2,3" "/net1/hobby/data/caldb_3.0.0/data/chandra/acis/bcf/bkgrnd/" "acisiD2000-12-01bkgrnd_ctiN0001.fits"
+

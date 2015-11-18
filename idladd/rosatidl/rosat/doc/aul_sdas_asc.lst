@@ -1,0 +1,35 @@
+
+  Procedures for manipulating STSDAS ASCII Images 
+    (from Astronomical Users' Library   November, 1993)
+
+    CONV_STSDAS :   Convert the internal format of an STSDAS image (.hhh 
+                    and .hhd file) to the host machine architecture
+    STRD        :   Combine functions of SXOPEN and SXREAD to read STSDAS disk 
+                    files into IDL data and header variables
+    STSUB       :   Read a subset of a space telescope SDAS image file
+                    (caled by STSUBIM)
+    STSUBIM     :   Open an SDAS file and read a portion of the file into an 
+                    array
+    STWRT       :   Combine functions of SXOPEN and SXWRITE to write IDL data 
+                    and header variables to STSDAS disk files
+    SXADDHIST   :   Add a history record to a FITS header
+    SXADDPAR    :   Add or modify a parameter in a FITS header
+    SXDELPAR    :   Delete a keyword from a FITS header
+    SXGINFO     :   Return datatype, starting byte, and number bytes for all
+                    group parameters in an STSDAS file (greatly speeds up 
+                    execution time in subsequent calls to SXGPAR)
+    SXGPAR      :   Obtain group parameter values from a FITS header and 
+                    parameter block
+    SXGREAD     :   Read group parameters from an STSDAS file
+    SXHCOPY     :   Copy a selected portion of one header into another
+    SXHEDIT     :   Interactively edit a FITS header using EDT            
+    SXHMAKE     :   Create a basic St header file from an IDL data array
+    SXHREAD     :   Read a FITS header from disk
+    SXHWRITE    :   Write a FITS header to disk
+    SXMAKE      :   Make a basic FITS header from an IDL array
+    SXOPEN      :   Open an STSDAS (modified FITS) disk header for subsequent 
+                    I/O
+    SXPAR       :   Obtain the value of a keyword in a FITS header
+    SXREAD      :   Read an STSDAS (modified FITS) image from disk
+    SXWRITE     :   Write an image to STSDAS (modified FITS) format
+

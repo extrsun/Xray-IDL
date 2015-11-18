@@ -1,0 +1,64 @@
+Date: Tue, 27 Feb 2001 13:39:18 +0100
+From: Dieter Breitschwerdt <breitsch@xray.mpe.mpg.de>
+To: Stefan Immler <immler@xray.astro.umass.edu>
+Cc: breitsch@mpe.mpg.de
+Subject: Re: NGC4631 
+
+
+Hallo Stefan,
+
+ich habe mir Deine Fitmodelle angesehen.
+Meine Rechnungen beziehen sich nur auf den Halo, da sie eine 
+Ausstroemung von heissem Gas aus der Scheibe beschreiben, und 
+streng genommen sollte man sie auch ab z ~ 1 kpc anwenden. 
+Ich werde sie deshalb am besten an Deine Haloregion 1 anpassen, 
+d.h. z =1.65 kpc.
+
+Mein Vorschlag waere folgender:
+
+1. Wir fitten zuerst ein Gesamtspektrum: z=1.65 kpc - 8.8 kpc
+
+2. Wir fitten dann die Haloregionen 1 und 2 separat um zu sehen, ob 
+   das Spektrum sich aendert, z.B. haerter wird
+
+Was ich aus Deinen Fits ersehen konnte, sieht ganz gut 
+aus. Mein Modell hatte die Anfangstemperatur von T = 2 10^6 K, und man 
+sieht daher im Spektrum Linien bei ~0.16 keV entsprechend dieser Temperatur. 
+Aufgrund der Ausbreitung des Plasmas und der verzoegerten Rekombination, 
+treten die Sauerstofflinien zwischen 0.54 - 0.65 keV hervor (Du kannst das 
+gut in dem Spektrum erkennen, das ich Daniel geschickt habe). Hast Du eine 
+Kopie, sonst schicke ich Dir eine. 
+Ausserdem koennten evtl. noch Fe Linien bei 0.8 keV bis zu etwa 1.2 keV 
+auftreten. Bei 1.7 keV sehe ich allerdings keine Linie eines diffusen 
+Gases, wie stark ist sie? Koennte es sich um ein Artefakt handeln?
+Koenntest Du mir mal ein PS-File eines Spektrums 
+schicken, damit ich sehe wie das aussieht. 
+
+Noch eine Frage: wieso ist das weiche Spektrum von Halo 1 bei Dir unabsorbiert? 
+Hat man nicht mindestens die gal. Absorption? D.h., man sollte im Fit 
+eigentlich eine untere Grenze angeben. 
+
+Was ich noch benoetigen wuerde (fuer Konsistenz):
+
+1. Deinen Wert fuer die Entfernung von N4631 (ich habe 7.5 Mpc genommen)
+
+2. Was fuer Werte fue n_e (Teilchendichte) leitest Du aus dem Emissionsmass 
+   ab?
+
+Was die Einbindung eines gerechneten Spektrums in XSPEC betrifft, so muss 
+ich gestehen, dass ich kein Experte mit XSPEC bin; ich habe nur einfache 
+Fits damit gemacht. Mit Michael Freyberg haben wir meine Spektren 
+(in der Form in der ich sie Dir geschickt habe) mit MIDAS in entsprechende 
+Tabellen umgewandelt, dann wurde noch als Spalte die effektive 
+Flaeche hinzugefuegt. Was man erhalten hat waren 256 PSPC-Kanaele 
+mit Pulshoehenspektren. Um diese synthetischen Spektren dann mit 
+EXSAS behandeln zu koennen wie beobachtete Spektren, wurde zusaetzlich noch 
+Poisson-Noise daruebergelegt und dann mit der Instrumentenresponse gefaltet 
+und mit EXSAS gefittet. 
+
+Frage doch einfach mal bei Michael nach den Details; er kann Dir da 
+bestimmt weiterhelfen, wenn Du noch mehr Information benoetigst. 
+
+Gruss,
+
+Dieter 

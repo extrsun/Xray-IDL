@@ -1,0 +1,25 @@
+;.run $EXPLIB/match_files2
+
+;modified procedures in the rosat lib
+;
+;.run make_list_new_m
+.run make_list_m
+.run make_spec_m
+.run make_pha_m
+.run imdiv_m
+.run rsorb_pos_new_m
+.run rsgetvg_m
+.run gettok_m
+.run rsgetseqinfo_m
+;.run ploterr_m
+.run glactc_m
+; the following procedures are used by cont_grey and have been modified in 
+; the current idl astron library
+;.run ad2xy_old
+;.run cons_ra_old
+;.run cons_dec_old
+;.run xy2ad_old
+;.run getrot_old
+
+
+.run $LOCALLIB/idl/extast_m

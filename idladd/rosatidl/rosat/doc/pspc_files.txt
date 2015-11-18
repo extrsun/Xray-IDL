@@ -1,0 +1,138 @@
+
+GSFC raw SASS files for PSPC:
+
+Files in 3D TABLE FITS format:
+
+.ASP ASPQU file    Aspect Quality File
+
+contains time & subsec time of corrected aspect (in sec and 1/64 sec) 
+         aspect quality flag (0 - 5, or 9 for gap) 
+         star tracker flag (-1=missing frame, 0=no tracker, 1=tracker 1, 
+                             2=tracker 2, 3=both trackers)
+
+.CAS CORAS file    Corrected Aspect File (SPASP + Boresight)
+contains time & subsec time of corrected aspect (in sec and 1/64 sec) 
+         corrected roll angle, X- and Y-translations in NS system (0.5 arcsec)
+         cos & sin of corrected roll angle
+
+.DMP DTMAT (DTMAT+EGRID+NOFLT/BORFLT) file
+                   Compressed Detector Matrix + EGRID (energy bins)
+
+contains energy grid in eV at bin center, width of bin in eV, transmission
+         fraction for the filter used
+
+.EVR EVRAT file    (event rates)
+
+.HKB HKBIN file    Binned Housekeeping Data 
+
+contains time of value change (sec)
+         missing housekeeping information (0=okay, 1=last before window,
+              2=not complete after window, 3=first after window,
+              4=last reading (time=end+1) after window)
+         temperature of PSPC, pressure, High Voltage
+         filter wheel position (0=cup, 1=calib, 2=open, 3=closed,
+              4=filter, 5=other)
+         filter Wheel Position (0.1 degrees)
+         instrument in use (0=other, 1=PSPC #1, 2=PSPC #2, 3=HRI)
+
+.STA HKSTA file    Housekeeping Status Changes 
+
+contains time of status change (sec)
+         status flags for high voltage, carousel, gas system (1=ok, 0=not ok,
+              -1=no data)
+         status flag for detector (1=ok, 0=not ok, 2=calibration, -1=no data)
+         status flags for temperature, low voltage, current (1=ok, 0=not ok,
+              -1=no data)
+         instrument in use (0=other, 1=PSPC #1, 2=PSPC #2, 3=HRI)
+         filter wheel position (0=cup, 1=calib, 2=open, 3=closed,
+              4=filter, 5=other, 6=undefined, -1=no data)
+         send mode (1=interval:normal, 2=contact, -1=no data)
+         
+.MDS MDSET file (with additions to bypass small maps) Master Data Set
+
+contains time & subsec time of photon arrival (sec & 1/8192 sec)
+         uncorrected energy amplitude in channel units
+         X & Y positions of event (pixels)
+         corrected energy amplitude in channel units
+         X- & Y- coordinates in NS system (0.5 arcsec, small map coded!)
+         number of small map (for use with IN_MDS, IYN_MDS)
+         X- & Y- coordinates in NS system (0.5 arcsec, not small map coded)
+
+    .OAR OFFAR file    Off Axis Areas file?
+
+    .RCR RACAR file    Radiation Calibration Result file
+
+contains beginning & end of calibration (spacecraft clock)
+         beginning of calibration (UTC, YYMMDD & UTC, millisec of day)
+         end of calibration (UTC, YYMMDD & UTC, millisec of day)
+         mean pulse height amplitudes from PRESCOTT-fit and COM (center-
+             of mass) methods 
+         FWHM of amplitude distributions from Prescott and COM methods
+             mean CHI**2 of amplitude-distribution fit
+         intrument in use from housekeeping data
+         mean pressure, high voltage, & temperature during calibration
+         lower and higher limits of pressure, High Voltage, and temperature
+             during calibration
+         total number of photons during calibration, number of photons
+             in PRESCOTT-fit
+         fits of parameter a & b to background, & errors of fit parameters
+             a & b
+         error of mean pulse height amplitude and error of FWHM (PRESCOTT)
+
+.SAS SMOAS file    Smoothed Aspect File (CORAS + FFT)
+
+contains time & subsec time of smoothed aspect (in sec and 1/8192 sec) 
+         smoothed roll angle, X- & Y-translations in NS system (0.5 arcsec),
+         cos & sin of smoothed roll angle
+
+.SA  SPASP file    Split Aspect File 
+
+contains UTC date (YYMMDD), UTC time & subsec time of day (sec & 1.e-4 sec)
+         corrected time & subsec time of split aspect (sec & 1/64 sec)
+         R.A. & 1-sigma error, Dec. & 1-sigma error, Roll angle & 1-sigma 
+             error (0.5 arcsec)
+         uncorrected time & subsec time of split aspect (sec & 1/64 sec)
+
+.SO  SPORB file    Split Orbit File
+
+(Note that this file has been made identical in format to the HRI version)
+
+contains UTC date (YYMMDD), UTC time & subsec time of day (sec & 1.e-4 sec)
+         X, Y, & Z components of Sun, Moon, and Satellite unit vectors in
+             ECF (earth Centered Fixed) frame (1.e-8)
+         Longitude east and Geodetic latitude N in ECF frame (0.1 arcsec)
+         Altitude above ellipsoid (meters), Greenwich Hour angle (0.1 arcsec)
+         Azimuth & elevation of satellite (0.1 arcsec)
+         distance of satellite to Weilheim station (meters)
+
+Files in ASCII TABLE FITS format:
+
+.ASC ASCII outputs
+    These files appear as extention tables in one fits file and simply
+    repeat the hard copy output. They need never really appear as
+    individual files.
+    .CLU CLUST file
+    .DSA DETSA file
+    .EXT EXTEN file
+    .FFT FFTFL file
+    .FIT FITSS file
+    .HRD HRDRT file
+    .LSL LSLST file (presently 3 such files)
+         The existance of multiple files could be handled by .LSn
+    .MAS MASOL file
+    .MLL MLLST file
+    .MSL MSLST file
+    .MPC MPLSC file
+    .MPL MPLST file
+    .MPX MPLSX file
+    .MSL MSLST file (presently 3 such files)
+         The existance of multiple files could be handled by .MSn
+    .SOL SOLST file
+    .VAR SOVAR file
+
+.PAR PAR files     Parameter file documenting processing
+
+documents pipeline processing
+
+.VGN VIGN file     (Vignetting file?)
+

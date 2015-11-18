@@ -1,0 +1,13 @@
+  
+  SPECTRAL :    Procedures (and functions) useful for spectral analysis
+
+    MAKE_PHA    :   Write spectrum into XSPEC format .PHA files
+    MAKE_SPEC   :   Construct spectrum from photon list, using arbitrary 
+                    channel groupings and blocking factors 
+    READ_ASPC   :   Read an ASCII spectral file created by WRITE_ASPC
+    WRITE_ASPC  :   Write spectral data to ASCII file  
+                    Useful for transferring spectral data created under
+                    VMS to Unix for spectral fitting in XSPEC
+
+***************************************************************************
+

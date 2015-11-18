@@ -1,0 +1,99 @@
+  
+  CALIB :    Procedures (and functions) dealing with ROSAT calibration
+             and information contained in other ancillary FITS files
+
+  Aspect data:
+
+    RSASPECT    :   Read Rosat aspect history (.SA, .CAS, .SAS, or .AO)
+                    files and plot data for selected OBIs
+                    Allows user to determine values of various quantities for 
+                    interactively selected times
+                    A higher level procedure using the helpful interface
+    RSGETASP    :   Read aspect history files and return aspect history and
+                    aspect quality data
+    OLDGETASPQU :   Read Rosat aspect quality (.ASP) file and return aspect
+                    quality data (US format only)
+
+    Also OLDGETASP, RDFGETASP
+
+  Event rates data:
+
+    RSEVRATES   :   Read Rosat event rates (.EVR) file and plot data for 
+                    selected OBIs
+                    Allows user to determine values of various quantities for 
+                    interactively selected times
+                    A higher level procedure using the helpful interface
+    RSGETEVR    :   Read .EVR file and return event rates
+
+    Also OLDGETEVR, RDFGETEVR
+
+  Housekeeping data:
+
+    RSGETHKB    :   Read Rosat binned housekeeping data (.HKB) file and 
+                    return housekeeping data
+    RSGETHKSTA  :   Read Rosat housekeeping status data (.STA) file and
+                    return housekeeping status data
+
+    Also OLDGETHKB, RDFGETHKB, OLDGETHKSTA, RDFGETHKSTA
+
+  Orbital data:
+
+    RSORBIT     :   Read Rosat splitted orbit (.SO) file and plot orbit on 
+                    top of continents, SAA
+                    Allows user to determine values of various quantities for 
+                    interactively selected times
+                    A higher level procedure using the helpful interface
+    RSORB_POS   :   Read .SO file and return orbital data
+    RSORB_PLOT  :   Plot orbital data
+    RSGETVG     :   Calculate various viewing geometry angles and codes,
+                    using orbital data
+
+    Also OLDORB_POS, RDFORB_POS
+
+  Temporal status information:
+
+    TSILIST     :   List the temporal status intervals flags for a Rosat
+                    events list (FITS) file
+    TSI_BITCODES:   Translate the temporal status intervals bit codes for a
+                    Rosat events list (FITS) file into ASCII flags
+    RSCHECKTSI  :   Read data in Rosat temporasl status intervals (TSI) table
+                    in an events list (FITS) file, translate & list the flags
+
+    Also OLDCHECKTSI, RDFCHECKTSI
+
+  General:
+
+    GETNOMASP   :   Read nominal aspect information (roll, RA, Dec) from
+                    a Rosat FITS header (will be replaced by RS_NOMASP)
+    RSGETCLVAL  :   Given two time vectors, find the indices of the closest 
+                    values which match to within the specified tolerance
+    RSGETPAR    :   Set values of input parameters for various procedures.
+                    Calls RSGETDEFPAR, RSSETPARVAL.
+    RSGETSEQINFO:   Read sequence information from the sequence header for
+                    a Rosat FITS file (will be replaced by RS_SEQINFO)
+    RSOBITIMES  :   Read OBI start and end times from a Rosat FITS header
+    RSOBSDATE   :   Reads the observation date from the Rosat photon list FITS
+                    file headers (e.g., rp123456.fits or wp123456_events.tfits)
+    RSGTIMES    :   Reads either the MPE format selected times or the US 
+                    format good time intervals 
+    MPE_GTIMES  :   Reads the _events.tfits header (MPE format data) and 
+                    returns the selected times 
+    RDF_GTIMES  :   Reads the _events.tfits header (RDF format data) and 
+                    returns the good time intervals
+    US_GTIMES   :   Reads the _events.tfits header (US format data) and 
+                    returns the good time intervals
+    RS_SEQINFO  :   Reads sequence information from the sequence header for
+                    a ROSAT FITS file (will replace RSGETSEQINFO)
+    MPE_SEQINFO :   Reads sequence information from the sequence header for
+                    a ROSAT (MPE format) FITS file
+    RDF_SEQINFO :   Reads sequence information from the sequence header for
+                    a ROSAT (RDF format) FITS file
+    US_SEQINFO  :   Reads sequence information from the sequence header for
+                    a ROSAT (US format) FITS file
+    RS_NOMASP   :   Reads nominal aspect information from the sequence header 
+                    for a ROSAT FITS file (will replace RSGETNOMASP)
+    FIXOBINFO   :   Fix OBINFO structure variable after reading data from
+                    MPE format ancillary files
+
+***************************************************************************
+

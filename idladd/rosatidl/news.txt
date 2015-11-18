@@ -1,0 +1,222 @@
+
+03 March 1994
+
+Changes made to the library since 09 Sep 1993 are documented in the file
+changes.txt. The most important changes since 04 Jan 1994 are that bugs
+have been fixed in procedure make_list, and the off-axis parameterization
+for the HRI psf has been added to procedures rspsfh, calcpsfh, make_psf,
+and rsprofile. Procedures to compute UT and modified Julian dates from
+(corrected) spacecraft clock times, and for calculating quantities related
+to the Geomagnetic field at the position of the satellite, have also been
+added. 
+
+Please note that in PROS 2.3, when the position ordered photon events FITS file
+is converted to .qp format, and then converted back to FITS format, the 
+header of the new FITS file is updated to the new rationalized (RDF) format,
+but the structure of the data in the FITS file remains unchanged. The 
+procedure make_emap_hdr has been updated to allow exposure maps to be made 
+using position ordered FITS files which have been rewritten in this manner.
+Please alert G. Reichert (reichert@heasrc.gsfc.nasa.gov; heasrc::reichert) 
+if similar problems are found when using any of the other IDL routines.
+
+Please also note that the Rosat IDL procedures have not (yet) been updated to 
+be compatible with the newest release of the IDL Astronomy Users' Library
+(04 Feb 1994).
+
+**************************************************************************
+
+04 January 1994
+
+Changes made to the library since 09 Sep 1993 are documented in the file
+changes.txt. The most important change since 19 Nov 1993 is that the
+following procedures have been updated to work with files in the new
+rationalized (RDF) formats:
+
+RSASPECT, RSEVRATES, RSORBIT, RSCHECKTSI, RSGETASP, RSGETEVR, RSORB_POS,
+RSORB_PLOT, RSGETHKB, RSGETHKSTA, MAKE_EMAP, MAKE_EMAP_HDR,
+RSGET_EMAP_DATA, MAKE_LIST, RSGTIMES, RSLIVETIME, RSOBITIMES, RSOBSDATE,
+RS_NOMASP, RS_SEQINFO, RS_SOURCES 
+
+In most cases this was done by converting the RS... routines to shell
+routines calling the corresponding OLD... or RDF... routine, depending on
+file format. Previous RS... routines were renamed to OLD... (e.g.,
+RSGETASP to OLDGETASP, etc.) and new RDF... routines were added. 
+
+In addition, RSGETEVR now returns all of the events rates and counters in
+the ancillary file; the command syntax has been changed and the tag names
+in the output data structures have been simplified. RSGETASP now returns
+aspect quality as well as spacecraft attitude, and the name of RSGETASPQU
+has been changed to OLDGETASPQU. RS_SOURCES also now uses the parameter 
+interface. Writing privileges are no longer required in order to run
+RS_SOURCES.
+
+**************************************************************************
+
+19 November 1993
+
+Changes made to the library since 09 Sep 1993 are documented in the file
+changes.txt. The most important change is that a few routines (RSMAKE_PROF,
+RSPSFPROF, RSPROFILE) have been added to allow users to 1) compute an
+observed radially averaged profile and 2) to compare this with the best
+matching point source response function. 
+
+**************************************************************************
+
+04 October 1993:
+
+     MAKE_EMAP, the procedure to calculate mean exposure maps for Rosat
+PSPC pointed observations, has been added to the library. The procedure is
+based on code contributed by J. Mendenhall (Penn State Univ). See the file
+make_emap.help for details on how to run it. Other important changes are
+listed below: 
+
+1. RSLIVETIME was changed to include the additional 0.0001 sec deadtime per
+   acepted event, which compensates for the removal of all events less than
+   0.35 ms after a previous event (done to remove some of the the AP
+   background). 
+
+2. The normalization of the scattering term in the PSPC PSF was changed to
+   match G. Hasinger's current best value.
+
+3. ROSATLIB now defines IDL system variables !docdir and !imapdir. This
+   was done to make running these routines more transparent at other 
+   institutions, and also to allow users to change the defaults within IDL.
+   !docdir and !imapdir are set to the values of the system logicals/
+   environmental variables ZDOC and ZIMAP. The definition of !defdir was also 
+   changed, and RSGETDEFPAR was changed to match.
+
+4. Procedure MEXDIV has been added to allow users to divide PSPC images by 
+   mean exposure maps. Corrections are applied only to those pixels for
+   which the exposure map is greater than some threshold fraction of the
+   total exposure time. This sets a maximum limit to the multiplicative
+   correction of 1./threshold. The procedure also defines a mask image,
+   which locates the rib structure and outer edge of the exposure map.
+
+5.  Procedure FIXOBINFO has been added to allow users to fix the OBINFO
+    structure variable when reading data from MPE format ancillary files.
+
+**************************************************************************
+
+26 August 1993:
+
+
+     There have been substantial changes to the library. A number of new
+procedures have been added; see contents.txt in the doc subdirectory, or
+use DOC_LIST. A specific history of changes/additions can be found in
+changes.txt. The most important changes are discussed below:
+
+1. MAKE_PSF now calculates off-axis position angles. The normalization of
+   the scattering term has been reduced by 30%, to better match the 
+   calibration data.
+
+2. MAKE_LIST now reads photon events data from MPE files. Selection by 
+   arrival time, pi energy, and event number are now allowed. A number of
+   accepted time intervals can be used to select by arrival time. 
+   Procedure TIMEFILTER can be used to time filter an existing photon list 
+   over a number of accepted time intervals. Procedure RDACTFIL can be
+   used to read in the accepted time intervals from an ASCII file.
+
+3. A procedure MAKE_IMAGE has been added, to accumulate images from a
+   photon list structure variable. The photon list can be defined, or
+   MAKE_IMAGE can be used to create a photon list according to the 
+   specified selection criteria.
+
+4. Procedures RSGETASP, RSGETEVR, RSORB_POS, RSGETHKB, and RSGETHKSTA
+   and RSGET_EMAP_DATA read data from MPE format files as well as from US
+   format files. Procedures RSASPECT, RSEVRATES, and RSORBIT are being
+   modified.
+
+5. Procedures RSGETNOMASP and RSGETSEQINFO will be replaced by RS_NOMASP 
+   and RS_SEQINFO, which read information from MPE format headers as
+   well as from US format headers.
+
+6. MAKE_SPEC has been fixed to allow spectral binning at full resolution.
+   A photon list information structure variable (created by MAKE_LIST) is
+   now used to pass the information about the exposure time and number of
+   pixels. 
+
+7. Procedure DEFGROUP has been added to define channel groupings for 
+   MAKE_SPEC. Procedure SET_RESPFILES has been added to define default
+   response matrices for MAKE_SPEC; users should change this procedure in 
+   accordance with the default file names at their own institutions.
+
+---------------------------------------------------------------------------
+   
+   Under development:
+
+   A procedure to create XSPEC FITS format spectral files
+
+   A procedure to accumulate images directly from photon events FITS files,
+   without first creating a photon list structure variable. The procedure
+   is meant to use less memory and run faster when dealing with very large 
+   files.
+
+   Procedures to calculate background maps, based on maps created by 
+   S. Snowden and code developed by S. Snowden and J. Mendenhall
+
+   A procedure to allow users to remove point sources when analyzing images
+   of extended emission
+
+---------------------------------------------------------------------------
+
+   The following specific procedures have been added to the library:
+
+    DEFGROUP      : Defines channel groupings for make_spec and make_pha
+    DEFIMAP       : Defines file names for PSPC instrument maps to be used
+                    for calculating mean exposure maps
+    GET_POSI      : Finds number of elements for each unique value in a
+                    vector (contributed by Q. D. Wang)
+    FIXOBINFO     : "Fixes" OBINFO structure variable when reading MPE 
+                    format ancillary data
+    LIMIT_GROUP   : Limits groups in a channel grouping vector to those
+                    groups entirely contained within specified pi channel 
+                    (or energy) limits
+    LIMIT_MEX     : Derives the correction factors for a mean exposure map,
+                    and sets a maximum threshold to the exposure correction
+    MAKE_EMAP     : Calculates mean exposure maps for Rosat PSPC pointed
+                    observations
+    MAKE_EMAP_HDR : Creates FITS header for mean exposure map
+    MEXDIV        : Divides PSPC image by mean exposure map (i.e., flat 
+                    fields image)
+    MPE_GTIMES    : Reads the _events.tfits header (MPE format data) and 
+                    returns the selected times 
+    MPE_SEQINFO   : Reads sequence information from the sequence header for
+                    a ROSAT (MPE format) FITS file
+    RDACTFIL      : Reads ASCII file of accepted time intervals, with one
+                    interval (start and stop times) per line
+    RSGTIMES      : Reads either the MPE format selected times or the US 
+                    format good time intervals 
+    RSMAKE_PROF   : Creates a source radial profile from a photon events list 
+                    structure. Applies the mean exposure map correction, 
+                    if desired.
+    RSPROFILE     : Creates a source radial profile from a photon events list 
+                    structure, and compares this with the PSF calculated for 
+                    the appropriate spectrum. Applies the mean exposure map 
+                    correction, if desired.
+                    Calls RSMAKE_PROF and RSPSFPROF
+    RSPSFPROF     : Creates a 1d radial profile of the PSF for specific angular
+                    bins (for the appropriate spectrum, if PSPC)
+    RSOBSDATE     : Reads the observation date from the Rosat photon list FITS
+                    file headers (e.g., rp123456.fits or wp123456_events.tfits)
+    RS_NOMASP     : Reads nominal aspect information from the sequence header 
+                    for a ROSAT FITS file (will replace RSGETNOMASP)
+    RS_SEQINFO    : Reads sequence information from the sequence header for
+                    a ROSAT FITS file (will replace RSGETSEQINFO)
+    SET_RESPFILES : Defines a system variable containing the default response
+                    matrices to be used in make_pha
+    TIMEFILTER    : Allows user to select data from a photon list structure 
+                    for times within a specified interval or intervals
+    TIMEINTSECT   : Finds the time intervals which are the intersections
+                    between one interval and a set of intervals
+    TINTSECT2     : Finds the time intervals which are the intersections
+                    between two sets of time intervals
+    US_GTIMES     : Reads the _events.tfits header (US format data) and 
+                    returns the good time intervals
+    US_SEQINFO    : Reads sequence information from the sequence header for
+                    a ROSAT (US format) FITS file
+    VSORT         : Finds the unique values in a vector, when the entries will
+                    be quantized more coarsely
+    VSORT_LARGE   : Same as VSORT, except for large vectors (>10,000 elements)
+
+**************************************************************************
+

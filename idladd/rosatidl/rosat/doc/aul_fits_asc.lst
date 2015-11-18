@@ -1,0 +1,24 @@
+
+  FITS ASCII Table I/O Procedures from Astronomical Users' Library (Nov '93)
+    (see [.idlaul.text]ft.tex or idlaul/text/ft.tex for more documentation)
+
+    FTADDCOL    :   Add a new column to a FITS ASCII table
+    FTCREATE    :   Create an empty FITS ASCII table (H and TAB)
+    FTDELCOL    :   Delete specified column from a FITS ASCII table
+    FTDELROW    :   Delete specified row(s) from a FITS ASCII table
+    FTDIR       :   Give a directory of modified FITS ASCII tables on disk
+    FTGET       :   Extract a specified field from a column in a FITS ASCII 
+                    table
+    FTHELP      :   Display the fields in a FITS ASCII table header
+    FTHMOD      :   Modify the attributes of a field in a FITS ASCII table
+    FTINFO      :   Give information about a specified field in a FITS ASCII 
+                    table
+    FTKEEPROW   :   Subscripts (and reorders) a FITS table.  (companion to
+                    FTDELROW)
+    FTPRINT     :   Print specified columns and rows in a FITS ASCII table
+    FTPUT       :   Update or add data to a field in a FITS ASCII table
+    FTREAD      :   Read a table in modified disk FITS ASCII table format.
+    FTSIZE      :   Return the size and number of fields in a FITS ASCII table
+    FTSORT      :   Sort a table according to the values in a specified field.
+    FTWRITE     :   Write a table in modified disk FITS ASCII format.
+                                                    

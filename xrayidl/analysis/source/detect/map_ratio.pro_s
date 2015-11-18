@@ -1,0 +1,136 @@
+;++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+pro map_ratio,lc,cra,cdec,emin,emax,image_t,image_b,tblock=tblock, $
+nra=nra,ndec=ndec,radius=radius,threshold=threshold,psffile=psffile $
+,infile=infile,outfile=outfile,append=append,sfrac=sfrac,rc=rc
+;-
+; Calaculate count rates in individual bands with 
+; background and exposure maps and a photon list
+;
+; lc - photon list containing counts of all on-source and background regions
+; cra, cdec - the center of the observation
+; emin, emax - vectors containing lower and upper limits of the energy bands
+;		in units of eV for Chandra data
+; image_t, image_b - stacked exposure and background COUNT images in
+; 		the 2-2, 4-5, and 6-7 bands.
+;		The two images must have the SAME size.
+; tblock - the block size of the images (def = !block)
+; nra, ndec - Ra nd Dec of the image center
+; radius - within which sources are to be analyzed (arcmin, def = 18')
+; threshold - the threshold above which analyzed sources will be counted
+;		(def = 3).
+; psffile - vector
+; infile - input file name (def = !seq_no+'_sou.dat') 
+; outfile - output file name (def = !seq_no+'_souanal.dat')
+; append - if set, append the source list to the existing file
+; sfrac - fraction of counts in the on-source aperture 
+;		(def = 0.9) used in get_snr.pro
+; rc - the size of the aperture for collecting the counts used in the fit.
+; 	if set, overruling the 90% radius and dfac.
+; verb - if set, the initial and fitting parameters will be printed
+; 
+; writen by wqd, april 24, 1996
+;+
+if n_params() eq 0 then begin
+print,'Calling procedure - '
+print,'map_ratio,lc,cra,cdec,image_t,image_b,tblock=tblock,'
+print,' radius=radius,threshold=threshold,infile=infile,outfile=outfile'
+print,' ,append=append,sfrac=sfrac,rc=rc'
+return
+endif
+;
+if n_elements(threshold) eq 0 then threshold=0.
+if n_elements(tblock) eq 0 then tblock=!block
+if n_elements(radius) eq 0 then radius=18. ;arcmin
+if n_elements(sfrac) eq 0 then sfrac=0.8
+if n_elements(infile) eq 0 then infile='sou_map_ml'
+;
+nb=n_elements(emin)
+if n_elements(outfile) eq 0 then outfile=infile+'_ratio' 
+if strupcase(outfile) ne 'NONE' then begin
+	if keyword_set(append) eq 0 then $
+	openw,un,outfile,/get_lun else $
+	openw,un,outfile,/get_lun,/append
+endif
+;------------------------------------------------------------
+; read the sources from the input source file
+source_info,sn,sra,sdec,sigma,cntr,dif,dis,ns=ns,soufile=infile $
+	,slow=threshold,/deg,/deci,perr=perr
+if n_elements(nra) eq 0 then begin
+	nra=cra & ndec=cdec
+endif
+
+sz=size(image_t)
+trans_dist,nra,ndec,sra,sdec,xp,yp,/deg,pixsize=!size_pixel
+dis=sqrt(xp^2+yp^2)*(!size_pixel/60.)
+if n_elements(radius) ne 0 then begin
+	sel=where(dis le radius and abs(xp) lt (sz(1)*0.5*tblock) $
+		and abs(yp) lt (sz(2)*0.5*tblock), nsel)
+	if nsel eq 0 then stop,'no source within the radius!'
+	sn=sn(sel)
+	sra=sra(sel)
+	sdec=sdec(sel)
+	cntr=cntr(sel)
+	sigma=sigma(sel)
+	xp=xp(sel)
+	yp=yp(sel)
+	ns=nsel
+endif
+; get source pixel positions
+loc=long(yp/tblock+sz(2)*0.5)*sz(1)+long(xp/tblock+sz(1)*0.5)
+;off axis angle
+trans_dist,cra,cdec,sra,sdec,xp,yp,/deg,pixsize=!size_pixel
+xo=!pref+xp
+yo=!pref+yp
+dis=sqrt(xp^2+yp^2)*(!size_pixel/60.) ;now off-axis angle
+cntra=fltarr(ns,nb)
+cntrea=cntra
+csv=fltarr(ns)
+for n=0,nb-1 do begin
+	if n_elements(rc) ne 0 then rs=rc else $
+	psf_params,dis,rs,perclimit=sfrac,psffile=psffile(n)
+	image_t2=image_t(*,*,n)
+	expt=image_t2(loc) 
+	; loop over individual sources
+	srs=rs^2
+	nbin_s=srs*!pi 
+	image_b2=image_b(*,*,n)
+	bc=image_b2(loc)*(nbin_s/float(tblock)^2)
+	ls=lc(where(lc.pi ge emin(n) and lc.pi lt emax(n)))
+	for k=0L,(ns-1) do $
+		csv(k)=total(((ls.x-xo(k))^2+(ls.y-yo(k))^2) le srs(k))
+	get_snr,csv,nbin_s,bc,nbin_s,csn,snr,sfrac=sfrac,/bmap 
+		;nbin_s is not used
+	cntra(*,n)=csn/expt
+	cntrea(*,n)=snr
+endfor
+cntrea=cntra/cntrea
+cntrat=total(cntra,2)
+cntreat=sqrt(total(cntrea^2,2))
+
+trans_degree,sra,sdec,ra_hour,ra_min,ra_sec,dec_deg,dec_min,dec_sec,/deg
+for k=0,(ns-1) do begin
+;	perr=sqrt((float(strmid(text(k),101,9)))^2+(float(strmid(text(k),100,9)))^2)*!size_pixel
+ 	print, k+1, ra_hour(k),ra_min(k),ra_sec(k) $
+ 	,dec_deg(k),dec_min(k),dec_sec(k),sigma(k),cntr(k) $
+	,cntrat(k),cntreat(k),cntra(k,0),cntrea(k,0),cntra(k,1),cntrea(k,1) $
+	,cntra(k,2),cntrea(k,2),perr,dis(k),$
+		format='(I3, 2(2i4, f7.2), f9.2,9f9.5,2f6.2)'
+	if strupcase(outfile) ne 'NONE' then $
+ 	  printf,un, sn(k),' |', ra_hour(k),ra_min(k) $
+	  ,ra_sec(k),' |',dec_deg(k),dec_min(k),dec_sec(k),' |',sigma(k) $
+	 ,' |',cntrat(k),' |', cntreat(k),' |' $
+	  ,cntra(k,0),' |', cntrea(k,0),' |',cntra(k,1),' |' ,cntrea(k,1), $
+	  ' |',cntra(k,2),' |',cntrea(k,2),' |',dis(k), $
+   	  ' |',cntr(k),' &',sra(k),' &',sdec(k),' &',perr,' &'  $
+	  ,format='(I3,a2,2(2i3, f7.2,a2), 9(f8.5,a2),f8.2,a2,f8.5,a2,2(f11.6,a2),(f8.5,a2))'
+;
+; 	  printf,un, sn(k),' |', ra_hour(k),ra_min(k) $
+;	  ,ra_sec(k),' |',dec_deg(k),dec_min(k),dec_sec(k),' |',sigma(k), $
+;   	  ' |',cntr(k),' |',cntrat(k),' |', cntreat(k),' |' $
+;	  ,cntra(k,0),' |', cntrea(k,0),' |',cntra(k,1),' |' $
+;	  ,cntrea(k,1),' |',cntra(k,2),' |',cntrea(k,2),' |',dis(k),' |'  $
+;	  ,format='(I3,a2,2(2i3, f7.2,a2), f8.2,a2, 10(f8.5,a2))'
+endfor
+if strupcase(outfile) ne 'NONE' then free_lun,un
+return
+end

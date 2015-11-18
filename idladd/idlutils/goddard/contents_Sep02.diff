@@ -1,0 +1,62 @@
+1c1
+<         Contents of IDL Astronomy User's Library              July, 2004
+---
+>         Contents of IDL Astronomy User's Library              September, 2002
+98a99,103
+> WCSSPH2XY - Convert between longitude,latitude to X,Y angular coordinates for
+>         25 different map projection types
+> WCSXY2SPH - Inverse of WCSSPH2XY
+> WCS_DEMO - Demo program for WCSSPH2XY and WCSXY2SPH
+> WCS_ROTATE - Rotate between standard (e.g. celestial) and native coordinates
+110c115
+< CNTRD -  Obtain the centroid of a star by locating where derivatives go to zero
+---
+> CNTRD - Obtain the centroid of a star in an image array, using the FIND algorithm
+115d119
+< GCNTRD - Determine centroid by Gaussian fits to the marginal X,Y distributions
+197c201
+< FITS_CD_FIX - Update obsolete representations of the CD matrix in a FITS header
+---
+> FITS_CD_FIX - Convert between different representations of the CD matrix
+209,210d212
+< HEULER - Convert between Galactic, celestial and ecliptic coordinates in FITS a
+< header
+224,229d225
+< WCS_GETPOLE -  Compute the coordinates of the native pole for non-polar projection
+< WCSSPH2XY - Convert between longitude,latitude to X,Y angular coordinates for
+<         25 different map projection types
+< WCSXY2SPH - Inverse of WCSSPH2XY
+< WCS_DEMO - Demo program for WCSSPH2XY and WCSXY2SPH
+< WCS_ROTATE - Rotate between standard (e.g. celestial) and native coordinates
+309c305
+< FXBOPEN           - Open FITS binary table extension  for read or update
+---
+> FXBOPEN           - Open binary table extension in a disk FITS file for reading
+335,336d330
+< FITS_ADD_CHECKSUM - Add/update the CHECKSUM/DATASUM keywords in a FITS header
+< FITS_ASCII_ENCODE() - Encode an unsigned longword as an ASCII string
+341d334
+< FITS_TEST_CHECKSUM() - Verify the values of the CHECKSUM/DATASUM FITS keywords
+401,402d393
+< KUIPERONE - Compute the one-sided Kuiper statistic (NR)
+< KUIPERTWO - Compute the two-sided Kuiper statistic (NR)
+418d408
+< PROB_KUIPER - Return the significance of the Kuiper statistic
+428a419
+> VALUE_LOCATE() - Emulate V5.3 intrinsic function to find an effective index
+513,515c504,505
+< QUERYSIMBAD - Query the SIMBAD or NED name resolver to obtain J2000 coordinates
+< QUERYUSNO() - Query the USNO-A2.0 Catalog at the ESO/ST-ECF Archive by position
+< QUERYVIZIER() - Positional query of any catalog in the VIZIER database.
+---
+> QUERYSIMBAD - Query the SIMBAD name resolver at ESO to obtain J2000 coordinates
+>
+539,540d528
+< BLKSHIFT - Shift a block of data to a new (possibly overlapping) position in a
+<           file
+571d558
+< IDL_VALIDNAME - Emulate intrinsic IDL_VALIDNAME() function for V5.6 and earlier
+612a600
+> VALUE_LOCATE() - Emulate intrinsic VALUE_LOCATE function for V5.2 & earlier
+614a603
+> WHERE_NEGZERO() - Find locations of IEEE -0.0 values

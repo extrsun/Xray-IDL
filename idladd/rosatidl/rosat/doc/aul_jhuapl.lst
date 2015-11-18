@@ -1,0 +1,9 @@
+
+  Astronomy Related Procedures from the JHU APL IDL Library (November 1993)
+
+  (developed by Ray Steiner, taken from anonymous FTP account fermi.jhuapl.edu)
+
+    POLREC      :   Convert 2-d polar coordinates to rectangular coordinates
+    RECPOL      :   Convert 2-d rectangular coordinates to polar coordinates    
+    SPHDIST     :   Angular distance between points on a sphere
+

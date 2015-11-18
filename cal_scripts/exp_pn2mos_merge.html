@@ -1,0 +1,92 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+  <meta content="text/html; charset=ISO-8859-1"
+ http-equiv="content-type">
+  <title>exp_pn2mos_merge</title>
+  <meta content="Daniel Wang" name="author">
+</head>
+<body>
+<h2 style="font-weight: bold; text-align: center;">Memo on merging pn
+and MOS exposure maps</h2>
+;Purpose: to merge the exposure maps, accounting for the different
+energy-dependent sensitivities.<br>
+<ul>
+  <li>Create the exposure maps in the "standard" way for each
+individual instrument (ideally alias them to files with the deflaut
+names pn_i?.fits, mos1_i?.fits and mos2_i?.fits, where ? =1,2,3, or 4).</li>
+  <li>use the IDL routine exp_comb.pro to combine the maps in each
+band: exp_comb,'pn2mos',ta ;assuming the default names</li>
+  <li>combine the event files (Zhiyuan should finish this part!!!)</li>
+  <li>the resultant images and event file can then be used for source
+detection and other imaging processes under the setting for 'epic'
+(e.g., cenvset,'epic').</li>
+</ul>
+<br>
+exp_comb.pro uses the count rate ratios of mos1 to pn and mos2 to pn in
+individual bands (assumed to be 0.5-1, 1-2, 2-4.5, 4.5-7.5 keV at this
+point), which are calculated in XSPEC:<br>
+<br>
+;update the arf and rmf files from
+ftp://legacy.gsfc.nasa.gov/xmm/data/responses/qd/:<br>
+mos1-thin.arf.gz&nbsp; mos1-thin.rmf.gz&nbsp; mos2-thin.arf.gz&nbsp;
+mos2-thin.rmf.gz&nbsp; pn-thin.arf.gz&nbsp; pn-thin.rmf.gz<br>
+<br>
+;Using the xspec model:<br>
+&nbsp;---------------------------------------------------------------------------<br>
+&nbsp; Model:&nbsp; ( powerlaw&lt;1&gt; )wabs&lt;2&gt;<br>
+&nbsp; Model Fit Model Component&nbsp; Parameter&nbsp;
+Unit&nbsp;&nbsp;&nbsp;&nbsp; Value<br>
+&nbsp; par&nbsp;&nbsp; par comp<br>
+&nbsp;&nbsp;&nbsp; 1&nbsp;&nbsp;&nbsp; 1&nbsp;&nbsp;&nbsp;
+1&nbsp;&nbsp; powerlaw&nbsp;&nbsp;
+PhoIndex&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+1.70000&nbsp;&nbsp;&nbsp;&nbsp; +/-&nbsp;&nbsp; 0.00000<br>
+&nbsp;&nbsp;&nbsp; 2&nbsp;&nbsp;&nbsp; 2&nbsp;&nbsp;&nbsp;
+1&nbsp;&nbsp; powerlaw&nbsp;&nbsp;
+norm&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+1.00000&nbsp;&nbsp;&nbsp;&nbsp; +/-&nbsp;&nbsp; 0.00000<br>
+&nbsp;&nbsp;&nbsp; 3&nbsp;&nbsp;&nbsp; 3&nbsp;&nbsp;&nbsp;
+2&nbsp;&nbsp; wabs&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+nH&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+10^22&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 1.00000&nbsp;&nbsp;&nbsp;&nbsp;
++/-&nbsp;&nbsp; 0.00000<br>
+&nbsp;
+---------------------------------------------------------------------------<br>
+<br>
+;For each instrument (only key parameters are given here):<br>
+fake none<br>
+exposure = 10000<br>
+<br>
+ig **-0.5 1.0-**<br>
+show<br>
+no 0.5-7.5<br>
+ig **-1.0 2.0-**<br>
+show<br>
+no 0.5-7.5<br>
+ig **-2.0 4.5-**<br>
+show<br>
+no 0.5-7.5<br>
+ig **-4.5 7.5-**<br>
+show<br>
+no 0.5-7.5<br>
+show<br>
+<br>
+;record the count rates in each band:<br>
+pn=[14.99,184.7,204.0,86.89]<br>
+mos1=[4.036,62.95,76.03,23.87]<br>
+mos2=[3.983,62.67,77.06,25.39]<br>
+<br>
+IDL&gt; print,mos1/pn<br>
+&nbsp;&nbsp;&nbsp;&nbsp; 0.269246&nbsp;&nbsp;&nbsp;&nbsp;
+0.340823&nbsp;&nbsp;&nbsp;&nbsp; 0.372696&nbsp;&nbsp;&nbsp;&nbsp;
+0.274715<br>
+IDL&gt; print,mos2/pn<br>
+&nbsp;&nbsp;&nbsp;&nbsp; 0.265710&nbsp;&nbsp;&nbsp;&nbsp;
+0.339307&nbsp;&nbsp;&nbsp;&nbsp; 0.377745&nbsp;&nbsp;&nbsp;&nbsp;
+0.292209<br>
+<br>
+<br>
+<br>
+</body>
+</html>

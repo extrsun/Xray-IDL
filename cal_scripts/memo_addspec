@@ -1,0 +1,32 @@
+ This is a slightly revised version of the original meno by Shikui on
+ combining few spectrum files together.
+
+ 1) copy all the files(including source spectra,  ancrfile, respfile, and 
+ background spectra) into one directory, and check the header of spectrum file,
+ which should have the correct values for BACKFILE, ANCRFILE (using fv or CIAO
+ command dmlist/dmhedit to list or edit these keywords; e.g.,)
+
+ dmlist the_spectrum header,clean,raw | egrep 'BACKFILE|ANCRFILE'
+ dmhedit the_spectrum_file  (then following the prompts)
+
+ 2) list all the source spectrum files into one file (each line for one file) 
+ and all the spectrum are not grouped(or grouped in the exact way,I guess)
+ ls *_source_spectrum.pi > infile
+
+ 3)run the command addspec with the parameter of error calculation:
+
+  addspec infile errmeth='Gauss' properr='yes'
+
+ (then following the prompts)
+
+ 4) You need to have the background spectra combined for each source, even if 
+ they are going to be shared by different sources. The addspec add the
+ source related scaling information to the combined background spectrum
+ (according to what have been told; wqd).
+
+ To get detail information for all the parameters, typing:
+ fhelp addspec
+
+ If there is anything still unclear, please let Shikui know. 
+ 
+ tangsk@astro.umass.edu

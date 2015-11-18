@@ -1,0 +1,43 @@
+  
+  ORBIT :    Procedures (and functions) related to ROSAT orbital data
+
+    RSORB_POS   :   Read Rosat splitted orbit (.SO) file and return orbital data
+    RSORB_PLOT  :   Plot orbital data
+    RSORBIT     :   Read .SO file and plot orbit on top of continents, SAA
+    RSGETVG     :   Calculate various viewing geometry angles and codes,
+                    using orbital data
+
+    Also OLDORB_POS, RDFORB_POS
+
+    IGRF        :   Calculate Earth's geomagnetic field at specified
+                    longitude and latitude 
+    CONTINENT   :   Plot map of continents
+
+    GET_BFIELD  :   Calculate quantities related to Earth's magnetic field 
+                    in satellite vicinity.
+    EXTRAPSHC   :   Linearly extrapolate spherical harmonic model for the
+                    Earth's magnetic field. Called by GET_BFIELD.
+    FELDC       :   Given the satellite position in Cartesian coordinates,
+                    calculate Earth's magnetic field from the spherical
+                    harmonics model of G. Kluge, European Space Operations 
+                    Centre, Internal Note 61, 1970. Alternative to FELDG.
+    FELDCOF     :   Determine coefficients and dipole moment from IGRF models.
+                    Called by GET_BFIELD.
+    FELDG       :   Given the satellite longitude, latitude, and altitude,
+                    calculate Earth's magnetic field from the spherical
+                    harmonics model of G. Kluge, European Space Operations 
+                    Centre, Internal Note 61, 1970. Called by GET_BFIELD.
+    FELDI       :   Called by GET_BFIELD and SHELLG_GETL.
+    GETSHC      :   Read spherical harmonic coefficients from the specified     
+                    IGRF file into an array. Called by READ_IGRF.
+    INTERPSHC   :   Linearly interpolate spherical harmonic model for the
+                    Earth's magnetic field. Called by GET_BFIELD.
+    READ_IGRF   :   Read the IGRF model data from the IGRF data files.
+                    Called by GET_BFIELD.
+    SHELLG_GETL :   Calculate the MacIlwain L-value for specified Geodetic 
+                    coordinates, altitude, and geomagnetic field model.
+                    Called by GET_BFIELD.
+    STOER       :   Used for field line tracing in SHELLG_GETL.
+
+***************************************************************************
+

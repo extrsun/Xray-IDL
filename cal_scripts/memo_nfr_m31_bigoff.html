@@ -1,0 +1,223 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+  <meta content="text/html; charset=ISO-8859-1"
+ http-equiv="content-type">
+  <title>memo_sdf</title>
+  <meta content="Daniel Wang" name="author">
+</head>
+<body>
+NFR analysis for the off bulge (disk) regions<br>
+;================================================================<br>
+;get the exposure and background images, etc.<br>
+instr='acisi'<br>
+cenvset,instr<br>
+;define the region. For the purpose 1, just large enough to cover all
+the interested regions;<br>
+;For the purpose 2, the field should be the same as the one to be used
+for imaging analysis.<br>
+;block=4 &amp; mdim=512 &amp; ccdid=[6,7,8] ;!!!<br>
+block=12 &amp; mdim=1024/2 &amp; ccdid=[0,1,2,3,6] ;for acisi **<br>
+evtroot='M31_merge' ;!!!<br>
+;bv=[1,2] ;soft band<br>
+;bv=[3,4]<br>
+bv=[1,2,3,4] ;broad band<br>
+;,gradec=[?,?] ; ra and dec of the galaxy center; otherwise the image
+center is used<br>
+evt_image,evtroot,instr,datadir='',hdr=mh,bmin=bmin,bmax=bmax,imdim=mdim,/nofits,imb=block,imccd=ccdid,tbim=tb,dfname=evtroot+'_cbma.fits',dca=dca,bv=bv,tbw=tbw,gradec=gradec
+;,ca,ta,list=l<br>
+;dca has been rebinned<br>
+loadct_self,18<br>
+tv,bscale(tb)<br>
+;=====================================================<br>
+dc=total(dca(*,*,bv-1),3) ;detection background map in the selected band<br>
+tv,bscale(dc,0,10)<br>
+;;---------------<br>
+;define the general region of consideration. Sub-regions can be devided
+later<br>
+radiushi=11.67 ;!!! outer radius of the region to be considered (in
+units of arcmin)<br>
+;for no PSF image case:<br>
+;get source detection radius at each pixel, which is off-axis dependent<br>
+crpix=sxpar(mh,'crpix*')<br>
+refx=crpix(0)-1 &amp; refy=crpix(1)-1<br>
+;----------------------------------<br>
+;for elliptical coordinates:<br>
+;pa=45<br>
+;ee=1-0.56<br>
+pa=50<br>
+ee=1-0.5<br>
+dist_ellipse,edd,mdim(0),refx,refy,ee,(90.+pa)*!pi/180.<br>
+edd=edd*(block*!size_pixel/60.) ; in units of arcmin<br>
+t=tb<br>
+t(where(edd lt radiushi))=0 ;**<br>
+;----------------------------------<br>
+;for circular coordinates:<br>
+dist_circle,dd,mdim,refx,refy<br>
+dd=dd*(block*!size_pixel/60.) ; in units of arcmin<br>
+tv,bscale(image_cut(tb,radiushi,/keep,block=block)) <br>
+t=image_cut(tb,radiushi,/keep,block=block)<br>
+;----------------------------------<br>
+tv,bscale(t) <br>
+ss=lindgen(long(mdim(0))*mdim(1)) ;!!!<br>
+;or ss=defroi(mdim(0),mdim(1)) ;or manually select a region to avoid
+edges or so<br>
+;---------------------------------<br>
+sel=where(t(ss) gt 0.001*max(t),nsel) ;remove regions with too little
+exposure<br>
+sel=ss(sel)<br>
+=====================================================<br>
+;psf_params,dd(sel),rs,perclimit=asfrac<br>
+;for merged image:<br>
+aimpsf=readfits('aimpsf_'+evtroot+'.fits',h)<br>
+map_impsf,a,aimpsf,bv=bv,tbw=tbw<br>
+cast,'',mh,outa=impsf,ina=a,inh=h<br>
+tv,bscale(impsf)<br>
+sel=where(t gt 0 and impsf lt 25.) ;**<br>
+rs=impsf(sel)<br>
+<br>
+;---------<br>
+bs=dc(sel)*(rs/block)^2*!pi ;backgorund counts included in the apertures<br>
+;---------------------------------<br>
+; using the existing incomplete map (from sou_main.pro); otherwise, see
+smina construction later<br>
+cast,evtroot+'_map70B_mlm_smina',mh,outa=smina<br>
+;========================================================<br>
+;source detection parameters; should use the existing detection
+completeness map (smina from<br>
+; sou_main.pro). The following parameters
+should match what is used in sou_main:<br>
+asfrac=0.7 ;!!! source detection energy-encircled fraction <br>
+probth=-6d ;log(P) source detection threshold
+<br>
+soufile=evtroot+'_map70BSH_hr'<br>
+sou_fits_info,soufile,slisto,/all ;,probth=probth<br>
+;=============================================<br>
+;select sources only those selected bins (sel)<br>
+sls=slisto<br>
+sou_rsel,mh,sls,rpsel=sel <br>
+<pre>cast,'M31_km_4096_sub.fits',mh,out=o<br>cor=[0.01,0.99,0.01,0.99] <br>cont_grey,o,mh,cor=cor,barf=0.,greymin=0.1,greymax=1.e3,greylo=2,mr=0,/noc,/ps,f_c=!d.n_colors-1,thick=2,/def ;,/noti<br>;plot an ellipse to illustrate the target and select the pixels included:<br>plot_shape,[radiushi,ee,pa],cor,mh,gradec,color=!d.n_colors-1,nsh=2,sel=ss<br>source_plot,soufile,cor,mh,psym=7,sym=1,/fits,sra=sls.ra,sdec=sls.dec<br>;--------------------------------------------------------------------<br>back_prof,smina,d,f,fmin,fmax,block=block,filter=smina,siglevel=0.16,refx=refx,refy=refy,samb=1.,radiushi=radiushi*60 ;,ee=ee,pa=pa<br>20<br>trans_dist,gradec(0),gradec(1),slisto.ra,slisto.dec,/deg,angle=ang,pixsize=60.<br>ss=where(strpos(slisto.sdb,'B') ne -1 and ang lt radiushi) <br>cntr=slisto(ss).cntrb<br>ang=ang(ss)<br>plot_io,ang,cntr,psym=7,yrange=[min(cntr)*0.7,max(cntr)*1.2],xtit='Off-axis angle (arcmin)',ytit='Count rate (counts s!U-1!N)',ysty=1,thick=2,chars=1.5<br>;oplot,d,fmin,thick=2<br>oplot,d,f,thick=2<br><br>;------------------------------------------------------------------</pre>
+;for the B band<br>
+;calculate the off the region center distance (not necessary off-axis)<br>
+ss=where(strpos(sls.sdb,'B') ne -1.,nss) <br>
+slist=sls(ss)<br>
+cntr=slist.cntrb<br>
+;cntr=slist.cntrb1+slist.cntrb2 ;ie. for soft band<br>
+;----------------------------------------------------------<br>
+plot_io,angle,cntr,psym=7,yrange=[min(cntr)*0.7,max(cntr)*1.2],xtit='Off-axis
+angle (arcmin)',ytit='Count rate (counts
+s!U-1!N)',ysty=1,thick=2,chars=1.5<br>
+;not for elliptical coordinates:<br>
+oplot,d,fmin,thick=2<br>
+oplot,d,f,thick=2<br>
+;========================================================<br>
+;calculate the rsp:<br>
+bc=bs<br>
+ssel=sel<br>
+expt=tb(ssel)<br>
+sminv=smina(ssel)<br>
+;sldn=60 ;!!!<br>
+sldn=30<br>
+sfname='M31_merge_sou_b_bigoff' ;!!!<br>
+outfname=sfname+'.rsp'<br>
+print,min(sminv)<br>
+slomin=fix(min(sminv)*1e6)*1.e-6 ;B-band and should be a bit lower than
+min(sminv)<br>
+shi=(fix(max(cntr)*1e2)+1)*1.e-2 ;a bit higher than the highest source
+cntr<br>
+;choice =1 ; def, use 0.5-2 keV band for the background AGN number
+estimate<br>
+;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &nbsp; &nbsp; &nbsp; = 2: 2-10 keV band<br>
+ctof=452 ;for ACIS-I 0.5-2 ke, appropxiate for
+NH~6.7e20 and po with gamma=1.4 (see later)<br>
+sfdist_rsp,expt,bc,sminv,rsp,minind,lenind,sv=sv,mslv=mslv,esv=esv,sldn=sldn,slo=slomin,shi=shi,outfname=outfname,/def,mesv=mesv,ctof=ctof,tnbs=tnbs,choice=choice<br>
+;the background AGN contribution (tnbs) is calcualted only without
+pweight<br>
+;----------------<br>
+nbs=total(tnbs*(block*!size_pixel/3600.)^2)<br>
+print,nbs<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 44.6513<br>
+;---------------------------------<br>
+;============================<br>
+;plot 2-D matrix:<br>
+cont_grey,rsp,greymin=1.e-5,greymax=10,mh,cor=cor,barf=0.,mr=0,/noc,/greyl,f_c=-1,/notic,pos=pos,/def
+;OK to see ERROR - Invalid NAXIS1<br>
+contour,rsp,/noerase,POSITION=pos,mslv,alog10(mesv), XSTYLE=1,
+YSTYLE=1,lev=1.e20,xtitl='!6 Log(S!do!n)',ytitl='Log(S)'<br>
+;--------------------------------------------------------<br>
+;write sources into the spectral file.<br>
+;scntr=cntr(where(angle lt outr))<br>
+scntr=cntr<span style="font-family: monospace;"><br>
+</span>make_fdist,scntr,sv,spec<br>
+writepha,spec,counterr,sfname+'.pha',/poisson,/pi,resp=sfname+'.rsp'<br>
+;====================================================<br>
+;<br>
+&nbsp; Current data file : M31_merge_sou_b_bigoff_g.pha<br>
+&nbsp;&nbsp; with integration time&nbsp;&nbsp;&nbsp;&nbsp; 1.000<br>
+&nbsp; No current background<br>
+&nbsp; No current correction<br>
+&nbsp; Response (RMF) file&nbsp;&nbsp;&nbsp; :
+M31_merge_sou_b_bigoff.rsp<br>
+&nbsp; Auxiliary (ARF) file&nbsp;&nbsp;&nbsp; : none<br>
+&nbsp; Noticed channels&nbsp;&nbsp;&nbsp;&nbsp; 1 to&nbsp;&nbsp;&nbsp;
+13<br>
+&nbsp; File observed count rate&nbsp;&nbsp;&nbsp;&nbsp;
+82.00&nbsp;&nbsp;&nbsp; +/- 9.0554&nbsp;&nbsp;&nbsp;&nbsp; cts/s<br>
+&nbsp; Source file counts :&nbsp;&nbsp;&nbsp; 82.00<br>
+&nbsp; Model predicted rate :&nbsp;&nbsp;&nbsp; 84.72<br>
+<br>
+&nbsp; Model:&nbsp; cxbbkgd&lt;1&gt; + powerlaw&lt;2&gt;<br>
+&nbsp;
+---------------------------------------------------------------------------<br>
+&nbsp;
+---------------------------------------------------------------------------<br>
+&nbsp; Model:&nbsp; cxbbkgd&lt;1&gt; + powerlaw&lt;2&gt;<br>
+&nbsp; Model Fit Model Component&nbsp; Parameter&nbsp;
+Unit&nbsp;&nbsp;&nbsp;&nbsp; Value<br>
+&nbsp; par&nbsp;&nbsp; par comp<br>
+&nbsp;&nbsp;&nbsp; 1&nbsp;&nbsp;&nbsp; 1&nbsp;&nbsp;&nbsp;
+1&nbsp;&nbsp; cxbbkgd&nbsp;&nbsp;&nbsp;
+cts2flux&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+452.000&nbsp;&nbsp;&nbsp;&nbsp; frozen<br>
+&nbsp;&nbsp;&nbsp; 2&nbsp;&nbsp;&nbsp; 2&nbsp;&nbsp;&nbsp;
+1&nbsp;&nbsp; cxbbkgd&nbsp;&nbsp;&nbsp;
+PhoIndx1&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+1.82000&nbsp;&nbsp;&nbsp;&nbsp; frozen<br>
+&nbsp;&nbsp;&nbsp; 3&nbsp;&nbsp;&nbsp; 3&nbsp;&nbsp;&nbsp;
+1&nbsp;&nbsp; cxbbkgd&nbsp;&nbsp;&nbsp;
+Breakf&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+1.48000&nbsp;&nbsp;&nbsp;&nbsp; frozen<br>
+&nbsp;&nbsp;&nbsp; 4&nbsp;&nbsp;&nbsp; 4&nbsp;&nbsp;&nbsp;
+1&nbsp;&nbsp; cxbbkgd&nbsp;&nbsp;&nbsp;
+PhoIndx2&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+0.600000&nbsp;&nbsp;&nbsp;&nbsp; frozen<br>
+&nbsp;&nbsp;&nbsp; 5&nbsp;&nbsp;&nbsp; 5&nbsp;&nbsp;&nbsp;
+1&nbsp;&nbsp; cxbbkgd&nbsp;&nbsp;&nbsp;
+Number&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+6150.00&nbsp;&nbsp;&nbsp;&nbsp; frozen<br>
+&nbsp;&nbsp;&nbsp; 6&nbsp;&nbsp;&nbsp; 6&nbsp;&nbsp;&nbsp;
+1&nbsp;&nbsp; cxbbkgd&nbsp;&nbsp;&nbsp;
+norm&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+0.150000&nbsp;&nbsp;&nbsp;&nbsp; frozen<br>
+&nbsp;&nbsp;&nbsp; 7&nbsp;&nbsp;&nbsp; 7&nbsp;&nbsp;&nbsp;
+2&nbsp;&nbsp; powerlaw&nbsp;&nbsp;
+PhoIndex&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+1.20019&nbsp;&nbsp;&nbsp;&nbsp; +/-&nbsp; 0.136139<br>
+&nbsp;&nbsp;&nbsp; 8&nbsp;&nbsp;&nbsp; 8&nbsp;&nbsp;&nbsp;
+2&nbsp;&nbsp; powerlaw&nbsp;&nbsp;
+norm&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+2.98890&nbsp;&nbsp;&nbsp;&nbsp; +/-&nbsp;&nbsp; 1.84226<br>
+&nbsp;
+---------------------------------------------------------------------------<br>
+&nbsp;
+---------------------------------------------------------------------------<br>
+&nbsp;C-statistic =&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+16.83177&nbsp;&nbsp;&nbsp;&nbsp; using&nbsp;&nbsp;&nbsp; 13 PHA bins.<br>
+&nbsp;&nbsp;&nbsp;&nbsp; 7&nbsp;&nbsp;&nbsp;
+0.984504&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+1.39300&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; (&nbsp;&nbsp;
+-0.215686&nbsp;&nbsp;&nbsp; ,&nbsp;&nbsp;&nbsp;&nbsp;
+0.192809&nbsp;&nbsp;&nbsp; )<br>
+<br>
+</body>
+</html>

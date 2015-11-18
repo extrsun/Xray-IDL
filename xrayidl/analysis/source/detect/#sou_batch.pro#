@@ -1,0 +1,8 @@
+openr,un,flist,/get
+evtfname=''
+while not eof(un) do begin
+	readf,un,evtfname
+	.run sou_main
+endwhile
+free_lun,un
+end

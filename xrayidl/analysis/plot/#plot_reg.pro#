@@ -1,0 +1,97 @@
+pro plot_reg,cor,hdr,regfile,crval=crval,linestyle=linestyle,thick=thick,color=color,factor=factor,selv=selv,negselv=negselv,fill=fill,noplot=noplot
+;+
+; overplot the outlines of regions defined in a standard region file
+; on an existing plot (as defined by cor and hdr, for example by
+; cont_grey)
+;
+; cor - normalized plot corner from cont_grey
+; hdr - the header of the plot
+; regfile - region file name, created by ds9 or sou_final, for
+;           example.
+; crval - 2-element vector containing the RA and Dec of the
+;         observation aiming point. If not given, crval in hdr is assumed.
+; color - color of the plotting
+; factor - the magnification factor to be applied to the size of the regions
+; linestyle, thick, color - curve style, thickness, and color 
+; selv - selected image pixel index within positive regions
+; negselv - selected image pixel index within negative regions
+; fill - if set, filling of the ellipse will be performed
+; noplot - if set, no plot, only the selection of the sources
+;
+; written by wqd, June 4, 2003
+;-
+if N_params() eq 0 then begin
+  print,'CALLING SEQUENCE - plot_reg,cor,hdr,regfile,crval=crval'
+  print,',linestyle=linestype,thick=thick,color=color,factor=factor'
+  print,',selv=selv,negselv=negselv,fill=fill,noplot=noplot'
+ return
+endif
+if n_elements(color) eq 0 then color=!d.n_colors-1
+if n_elements(crval) eq 0 then crval=sxpar(hdr,'crval*')
+if n_elements(factor) eq 0 then factor=1.
+factor=1./60. ;to convert to the size in units of arcmin
+
+openr,un,regfile,/get
+text=''
+selv=[999L]
+negselv=[999L]
+while eof(un) eq 0 do begin
+    readagain: readf,un,text
+    if strmid(text,0,1) eq '#' then goto,readagain
+    if strmid(text,0,9) eq 'physical;' then textrem=gettok(text,';')
+    shape=gettok(text,'(')
+    if strmid(shape,0,1) eq '-' then begin
+        shape=strmid(shape,1,strlen(shape)-1)
+        nsign=1
+    endif else nsign=0
+    if shape eq 'polygon' then begin
+        sra=crval(0) & sdec=crval(1)
+    endif else begin
+        xp=gettok(text,',')
+        yp=gettok(text,',')
+        trans_loct,xp-!pref,yp-!pref,crval(0),crval(1),sra,sdec $
+          ,/deg,pixsize=!size_pixel
+    endelse 
+    case  shape of
+        'circle': begin
+            nshape=0
+            spara=gettok(text,')')*pixarcmin
+        end
+        'box': begin
+            nshape=1
+            spara=[gettok(text,','),gettok(text,')')]*pixarcmin
+            end
+        'rotbox': begin
+            nshape=1
+            spara=[gettok(text,','),gettok(text,',')]*pixarcmin
+            spara=[spara,gettok(text,')')]
+        end 
+        'ellipse': begin
+            nshape=2
+            scale1=gettok(text,',')*pixarcmin
+            scale2=gettok(text,',')*pixarcmin
+            spara=[scale1,1-scale2/float(scale1),gettok(text,')')-90.]
+        end 
+        'polygon': begin
+            nshape=3
+            spara=[-999.]
+            text=gettok(text,')')
+            while strlen(text) ne 0 do begin
+                spara=[spara,gettok(text,',')]
+            endwhile 
+            spara=[spara(1:*),spara(1:2)]
+            nspara=n_elements(spara)/2
+            spara=(reform(spara,2,nspara)-!pref)*pixarcmin
+        end
+        else: print,'The region shape ',shape,' needs to be implemented!'
+    endcase
+    plot_shape,spara,cor,hdr,[sra,sdec],nshape=nshape,linestyle=linestyle $
+      ,color=color,sel=sel,fill=fill,thick=thick,noplot=noplot
+    if nsign eq 0 then selv=[selv,sel] else negselv=[negselv,sel]
+if !debug eq 2 then stop
+endwhile
+free_lun,un
+if n_elements(selv) gt 1 then selv=selv(1:*)
+if n_elements(negselv) gt 1 then negselv=negselv(1:*)
+return
+end

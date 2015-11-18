@@ -1,0 +1,23 @@
+pro instr_params,hdim
+;-
+; get instrument coodinate information
+;
+; hdim - half dimension of the detector data frame (in units of data pixel)
+;
+; 
+; writen by wqd, June 2, 2001
+;+
+if n_params() eq 0 then begin
+print,'instr_params,hdim'
+return
+endif
+
+case !instr of
+  'p':  	hdim=7680.5 ;FORTRAN Position as in the count list
+  'h': 		hdim=4096.5
+  'acisi': 	hdim=4096.5
+  'aciss': 	hdim=4096.5
+endcase
+
+return
+end

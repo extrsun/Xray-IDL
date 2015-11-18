@@ -1,0 +1,170 @@
+pro sfdist_rsp,expt,bc,sfmin,rsp,minind,lenind,slo=slo,shi=shi,lsdim=lsdim $
+ ,def=def,asfrac=asfrac,outfname=outfname,sv=sv,mslv=mslv,esv=esv,mesv=mesv $
+	,pweight=pweight
+;+ 
+;*Name:
+;     sfdist_rsp - calculate response matrices of a source flux
+;                  distribution 
+;
+;*Inputs:
+; expt, bc, sfmin - the exposure (s), background count (counts),
+;                   detection flux threshold vectors (counts/s)
+; lsdim - number of divided bins within a decade of the source flux,
+;        used for both the expected and output source flux vectors, 
+;        although they may be chosen differently
+; slo, shi - lower and upper boundaries of the detected source flux vector
+;            (similar to PI channels; def=1.e-4 and 0.1), should be
+;            slightly broader than the observed range of source counts.
+; def - if set, esv will be calculated internally
+; asfrac - the PSF energy-encircled radius used in the source
+;          detection (def =0.9)
+; 
+;*Outputs:
+; rsp - the response matrices: 1st dim - detected source flux; 2rd -
+;       intrinsic source flux
+; ecinlo - starting x-axis index values of the non-zero rsp
+; inlenind - index lengths of the non-zero rsp
+; sv - flux bounaries of the observed flux bins (in units of counts/s)
+; mslv - mean fluxes of the bins
+; mesv - mean expected source flux vector
+;
+;*Inputs or outputs:
+; esv - energy boundaries of the expected source flux vector. 
+; If def is set, = a factor 10 fainter and a
+;       factor of 3 brighter than the output vector  
+;
+;*Restrictions:
+; sources are assumed to be uniformly distributed across the
+; field. Otherwise, a weight function may need to be included.
+; 
+;*Notes:
+; For bins with small effective exposure time, the expected number
+; of source counts can be very small, even for a large intrinsic
+; flux. Therefore, the probability of none-zero counts will be < 1.
+;
+; The falling-off of the probability total(rsp,1) at high mesv is
+; artificial, which should have no effect on the subsequent analysis
+; though, as long as it is well above the upper limit to the observed flux.
+;
+; Written by wqd, Oct 19, 2003
+;-
+if n_params() eq 0 then begin
+print,'Calling Seq - sfdist_rsp,expt,bc,sfmin,rsp,minind,lenind'
+print,',slo=slo,shi=shi,lsdim=lsdim,def=def,asfrac=asfrac,outfname=outfname'
+print,',sv=sv,mslv=mslv,esv=esv,mesv=mesv '
+return
+endif 
+
+;check the consistency of the vector dimensions 
+nbin=n_elements(expt)
+if n_elements(bc) ne nbin or n_elements(sfmin) ne nbin then begin
+    print,'dimentions of exposure, background and sensitivity limit are'
+    print,'different!'
+    return
+endif 
+
+;define the ouptut source flux vector
+if n_elements(slo) eq 0 then slo=1.e-4
+if n_elements(shi) eq 0 then shi=1.e-1
+lslo=alog10(slo) & lshi=alog10(shi)
+if n_elements(lsdim) eq 0 then lsdim=30
+if n_elements(slsdim) eq 0 then sldim=fix((lshi-lslo)*lsdim)
+slv=[(lshi-lslo)*findgen(sldim+1)/sldim+lslo]
+sv=10^slv
+svmax=max(sv)
+
+if n_elements(asfrac) eq 0 then asfrac=0.9
+;Define the range of the probability calculation on both sides
+sigmalo=4.
+sigmahi=4.
+
+;define the expected (or intrinsic) source flux vector
+if n_elements(esv) eq 0 or keyword_set(def) ne 0 then begin
+    ledim=lsdim
+    lelo=lslo-1. & lehi=lshi+alog10(3.) 
+;    lelo=lslo-alog10(2.) & lehi=lshi+alog10(2.) 
+    eledim=fix((lehi-lelo)*ledim) 
+    lev=[(lehi-lelo)*findgen(eledim+1)/eledim+lelo]
+    esv=10^lev
+    nes=n_elements(esv)-1
+	mesv=10^(0.5*(lev(1:nes)+lev(0:nes-1)))
+endif else begin
+	 nes=n_elements(esv)-1
+	if nes eq 0 then begin
+		mesv=esv(0)
+		nes=1
+	endif else mesv=sqrt(esv(1:nes)*esv(0:nes-1))
+endelse
+minind=intarr(nes) ;index of the starting bin
+lenind=intarr(nes)  ;number of bins
+if !debug eq 2 then stop
+rsp=fltarr(sldim,nes) ;output metrices
+rspt=fltarr(sldim,nbin) ;temperory metrices for each expected source flux
+
+ttd=expt*asfrac
+for kk=0,nes-1 do begin ;loop over the expected source flux vector
+;for kk=95,116,1 do begin ;loop over the expected source flux vector
+    ec=mesv(kk)*ttd+bc ;expected counts for all bins
+       ;here use only the mean value, not the integration over the bin
+       ;which depends on the weighting of the intrinsic luminosity function.
+    svlo=fix((ec-sigmalo*sqrt(ec)) > (sfmin*ttd+bc))
+            ;lower output flux limit of the metrices 
+    svhi=fix(ec+sigmahi*sqrt(ec > 15.)  < (svmax*ttd+bc));upper limit
+    ss=where(svhi gt svlo,nss)
+    if nss ne 0 then begin
+        for m=0L,nss-1 do begin ;loop over the slected bins
+            k=ss(m)
+           ;get the OUTPUT source flux ranges
+            cv=sv*ttd(k)+bc(k)
+            ;only for cv which are at least partially within the limits
+            if cv(sldim-1) gt svlo(k) and cv(0) lt svhi(k) ne 0 then begin 
+                sel=where((cv gt svlo(k) and cv lt svhi(k)),nsel)
+                ;there are two possibilites: 
+                   ;1)  the limits include at least one
+                   ;of the cv intervals (defined by two cv points)
+                if nsel ge 2 then begin 
+                    if cv(sel(nsel-1)) ge 1. then begin
+                        ;if !debug eq 1 then stop
+                        prob_poi_gau,ec(k),cv(sel),prob
+                        rspt(sel(0):sel(0)+nsel-2,k)=prob
+                    endif ;else < 1 count for all output sources
+                                ;if total(prob) eq 0. then stop
+                endif else begin
+                   ;2)  the limits include one or zero cv points
+                   ;print,'sel < 2',svlo(k),svhi(k),sel
+                    ;the boundaries need to redefined; prob should be small
+                    prob_poi_gau,ec(k),[svlo(k),svhi(k)],prob
+                    if nsel eq 0 then sel=where(cv gt svlo(k))-1
+                    ;the limits are enclosed within the same bin
+                    rspt(sel(0),k)=prob ;assign all the prob into one bin
+                ;stopprint,
+                endelse 
+            endif    ;else print,'out of bound',svlo(k),svhi(k),ttd(k)
+        endfor
+	if n_elements(pweight) ne 0 then begin
+		for k=0L,nbin-1 do rspt(*,k)=rspt(*,k)*pweight(k)
+		temp=total(rspt,2)
+	endif else temp=total(rspt,2)/nbin
+        rsp(*,kk)=temp
+        sel=where(temp ne 0.,nsel)
+        if nsel ne 0 then begin 
+            minind(kk)=sel(0)
+            lenind(kk)=sel(nsel-1)-sel(0)+1
+        endif 
+        if !debug eq 2 then stop
+        rspt(*)=0. ;for next cycle
+        print,'finishing kk = ',kk+1,' out of ',nes $
+          ,' total prob = ',total(temp)
+    endif
+endfor
+
+if n_elements(outfname) ne 0 then $
+  write_rsp,outfname,esv,sv,rsp,minind,lenind
+
+;output the center values of the intrinsic and detected flux vectors
+; (geometric means)
+mslv=0.5*(slv(1:sldim)+slv(0:sldim-1))
+if !debug eq 3 then stop
+return
+end 
+

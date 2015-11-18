@@ -1,0 +1,362 @@
+##########################################################################
+# 	Memo for Post-calibration analysis of X-ray CCD imaging data
+#
+#Specific analyses:
+#	1) source detection 
+#	2) 3-color image construction
+#	3) overlay of X-ray contours on optical image
+#
+#  You can run the IDL cammands, using copy and paste.
+#  It helps to understand the key procedures, at least the headers
+#	(e.g., using doc_library,'procedure name').
+#
+#
+# Requirements:
+# 1) wqd's idl software (xrayidl) has been installed
+# 2) You may need to setup the IDL appropriately, by including the following 
+#    in your .cshrc file
+#    	setenv xidl $PUBDIR/xrayidl
+#   	setenv IDL_DIR /usr/local/rsi/idl
+#   	alias xidl 'source $xidl/xidl_setup
+#    IDL can then be run by typing "xidl"
+The environment variable PUBDIR needs to be defined (ideally in your 
+#   .cshrc); e.g., setenv PUBDIR /net/xray/pub, which is where you have 
+#    installed cal_scripts directory.
+#
+# Key parameters need to be defined (see the following):
+#  1) instrument choice (i.e., aciss, acisi, acisi_low; def = aciss)
+#
+# You really need to know a bit about IDL to be productive. Also it is useful
+# to copy the commands you are actually using.
+#
+# written by wqd, July, 2002
+# updated to accormodate EPIC data, wqd, April 1, 2005
+##########################################################################
+;Source detection:
+;first produce a directory called sou in the main directory 
+;	(i.e., /d1/n3556/sou) and
+cd sou
+; Now in IDL (by typing xidl)
+;
+;copy and paste to run the following:
+instr='aciss' 			;change to the appropriate instrument
+;instr='acisi'
+;instr='epic'
+
+;the following the default:
+loadct_self,18
+evtfname='evt2file_new_clean' 
+;evtfname='pn'
+;---------------------------------
+;options for inputs and outputs
+;evtfdir='../xdata/'
+;mapdir='../xdata/'
+;window,xs=1024,ys=1024
+;greymin=3
+;greymax=100
+;nband=4
+;noplot=0
+;plotout=1
+;---------------------------------
+;options for a large FoV:
+;edim=2048
+;ewbin=1./2^(findgen(4)) ;if large offaxis regions (> 10') is included
+;cdim=512 & cblock=2 ;or cdim=512 & cblock=1 ;for a small FoV to reduce central high-res region
+;cblock=0 ;or even no separate detection in the central region
+;---------------------------------
+;options to fine-tuning the detection
+;probth=-7 ;(def=-6) if too many detetions
+;fdfac =2 ;final source merger factor (def=1.5), if see some detections should be merged 
+;slow=2.5 ;def=2. which may be too small for a deep obs of a crowded field 
+;fac_ssr=2 & cblock=0 ;fraction to be enlarged in source search
+;fac_ssr=0.5 & cdsfrac=0.5 ;for sources that are very close-by
+;esubfac=2. ;source removal radius factor (def=1.5)
+---------------------------------
+;options for output energy bands, depending on absorption
+;dhrch=2 ;for HR2=(H2-H1)/H, HR=(H1-S)/(H1+S); =1 for outputs with all three HRs (def=0 for two HR outputs: HR1=(S2-S1)/S, HR=(H-S2)/(H+S2))
+;---------------------------------
+;options for multi-file detections
+;mfile=1 ; flist should be given
+;flist='../xdata/flist.dat'
+;---------------------------------
+;options to save time:
+;wavesd=0 ;no wavelet source detection and needs to supply soufile 
+;oldbmap=1 ;if =1 using old backg maps; should be reset if new bgd maps need
+		;to be reproduced
+;no_smina=1 ;(def=0) if =1, the sensitivity map will not be calcuated to save time
+;------------------------
+;for subarray with maps of block=1
+subarray=1
+mblock=1 ;change the deflaut block, needed for subarray images with small block exp map
+cblock=0 
+;------------------------
+;for EPIC data only
+cblock=0  ;no central separate detection 
+slow=2.5 ;threshold for initial wavelet detection (def =2)
+;dfac=2 ;def=2
+sradius_min=4. ;arcsec, minimum source radius for merging; def=1
+;------------------------
+;for destreak only (assuming the destreak image already produced)
+sbyes=1
+sb=fltarr(512,512,4) ;assuming the standard dim=512, block=80
+nband=4
+fname='../pn/dstreak/'+evtfname+'_s23.fits' ;change the band?
+ds=readfits(fname)
+sb(*,*,1)=ds*80^2*(223./841) ;normalized by the band ratio, change?
+sb(*,*,2)=ds*80^2*(597.5/841) 
+;--------------------------
+;multiple bands:
+;sband=['B','S','H'] ;def
+
+.run sou_main
+;--------------------------
+; for aciss, using the following spectral parameters for HR model plotting:
+mnv=[1.,10,20,40,100,300] ;column density in units of 10^20 cm^-2
+mrv=[0.2,1,1.5,2] ;thermal model with kt in keV
+
+;mcdim=256 ;final central plot dim; def=512
+;imcoff=[-80,150] ;pixel offset of the central plot, def=[0,0]
+
+;apsyserr=? ;arcsec, for additional position error beyond 0.2+1.4*(oa/8.)^2
+;radec_off=val(0:1) ;after astrometry correction
+;--------------------------
+.run sou_final
+;-----------------------------
+;you might want to redefine the axis ranges of HR plots, e.g.,
+;for acis-s
+h1xr=[-1,0.5] & h1yr=[-0.1,1.]
+h2xr=[-1,1] & h2yr=[-1,0.2]
+h2yr=[-1,0.5]  ;for PN
+
+.run sou_final
+;-----------------------------
+;If you know what you are doing, proceed!
+;remove detections that are certainly artifacts (CCD streak, PSF, etc)
+;or $gv pn_map70BSH_cm.ps & 
+;or ncmb=readfits(soufile+'_cm.fits',hh)
+cont_grey,ncmb,hh,/noc,cor=cor,greymin=greymin,greymax=greymax $
+		,greyl=2,/full,/def,barf=0,f_c=-1,/ps
+plot_reg,cor,hh,soufile+'_hr.reg',crval=crval ;,factor=subfac
+;soufile='pn_map70BSH'
+sou_fits_info,soufile,slist,/all,probth=probth
+source_plot,'',cor,hh,psym=6.,sym=0.5 $
+ ,/sou_no,sra=slist.ra,sdec=slist.dec,sn=slist.sn $
+ ,s_c=!d.n_colors-1,nssh=slist.sn,xsh=(!size_pixel*1.3)*slist.sradius $
+ ,ysh=(!size_pixel*1.3)*slist.sradius
+
+;use ds9 to check the source regions and their regitimacy, remove fake
+;detections (diffuse emission peak, streak, edge, etc) and save the
+;the revised reg file to test.reg
+oregfile='evt2file_new_clean_map70BSH_hr.reg'
+nregfile='test.reg'
+reg_match,oregfile,nregfile,sel=sel,rsel=sexcl
+
+;or directly examine the ps plots to find the source numbers:
+;sexcl=[plotted source numbers]
+
+;if no longer need sexcl, need delvar,sexcl
+.run sou_final
+;=============================================================================
+;some useful plotting commands used in sou_main and sou_final:
+cont_grey,cm,hh,/noc,cor=cor,greymin=greymin,greymax=greymax,greyl=2,/full,/def,barf=0,f_c=-1,/ps
+source_plot,soufile,cor,hh,slow=0,probth=probth,psym=6.,sym=2,/fits,s_c=!d.n_colors-1
+;=============================================================================
+; now source analysis is finished!
+; Here are some additional tools for producing useful plots (for examples):
+; 1) count map in an individual band
+list_image,l,xmin,ymin,c,dim,block=block,emin=bmin(0),emax=bmax(3),sel=sel
+; 2) resizing and smoothing
+hdim=[512,270]
+cc=convolve(image_cut(c,hdim,/pix,/rec),g2)
+get_fitshead,cc,hsh,hh
+;device,bits=8,/land,color=1,xsize=hdim(0)*18/hdim(1),ysiz=18,yoff=22,xoff=4
+cont_grey,cc,hsh,/noc,cor=cor,greymin=0.1,greymax=4,greyl=2,/full,/def,barf=0,f_c=-1,/ps
+source_plot,soufile,cor,hsh,slow=0,probth=probth,psym=6.,sym=2 ,/fits,s_c=!d.n_colors-1
+source_plot,soufile,cor,hsh,slow=0,probth=probth,psym=6.,sym=cs,/fits,/sou_no,sn=slist.sn,s_c=!d.n_colors-1,nssh=[36,41],xsh=[0,-30],ysh=[4,0]
+
+window,xs=dim,ys=dim
+tv,bscale(tb)
+s=defroi(1024,1024) ;selection the ccd7 region
+sou_rsel,hh,a,inf=soufile,outf=soufile+'_ccd7',rpsel=s,image=tb,s_c=0
+.run sou_final
+
+;=====================================================================
+
+Check NED for galaxy parameters (http://nedwww.ipac.caltech.edu/forms/byname.html)
+Record the relevant information:
+
+Galaxy Name	R.A.		Dec.	Type		Diameters	Mag  	E(B-V)
+NGC 2403  	07h36m51.4s +65d36m09s SAB(s)cd		21.9 x  12.3	8.93 	0.040
+		114.214167   65.602583
+
+NGC 3877	176.531595   47.494781 Sc		5.5 x   1.3	11.79	0.023 
+NGC 3556	11h11m31.20s  +55d40m25.0s
+		167.880000   55.673611 
+;===================
+; download optical images from
+; http://skyview.gsfc.nasa.gov/cgi-bin/skvadvanced.pl
+; use the above obtained RA and Dec in degrees (add a sign if +; e.g., 167.880000, +55.673611)
+;select DSS2 Red and Blue
+size (pixel): 512
+size(degree)
+     0.139662 (for acis-s; 0.492*512/3600.*2)
+     0.209920 (for acis-i; 0.492*512/3600.*3)
+;save the fits files into dss2_red.fits and dss2_blue.fits in the directory ../mdata (needs to be created if not exits)
+;===================================================================
+;Now in IDL, extract the images of the galaxy in multiple bands:
+;move the anal directory:
+$mkdir ../anal
+cd,'../anal
+evtroot='evt2file_new_clean' 
+instr='aciss'
+cenvset,instr
+evtroot='evt2file_new_clean' 
+gradec=[189.9976254,-11.6230511] ;change accordingly
+imdim=512  & imblock=2 & ccdid=[6,7,8] ;for aciss
+;imdim=1024 & imblock=1 & ccdid=[6,7,8] ;for aciss
+;bfname='../back/bevt2file_new_clean_ccd'+strtrim(ccdid,2)+'.fits' ;for aciss
+;bfname='../back/bevt2file_new_clean.fits' ;for acissi
+evt_image,evtroot,instr,datadir='../xdata/',hdr=mh,xmin=xmin,ymin=ymin,list=l,c,imdim=imdim,imblock=imblock,gradec=gradec ;,bfname=bfname,expt=expt ;for image background subtraction (see below)
+;=============================================================
+;==============================================================
+;if background subtraction is needed; multiple files are allowed.
+;if the above inclusion failed, consider to do the following:
+datadir='../../back/'
+bfroot='bevt2file_new_clean'
+print,sxpar(headfits(datadir+bfroot+'.fits',ext=1),'livetime')
+;check the output with that expected from
+; http://cxc.harvard.edu/contrib/maxim/acisbg/data/README
+;
+bexpt=380000. ;change this to the correct value 
+evt_image,'bevt2file_new_6_clean',instr,datadir=datadir,/noexp,/nofits,xmin=xmin,ymin=ymin,c,imdim=imdim ;,gradec=
+for k=0,3 do cc(*,*,k)=cc(*,*,k)+c(*,*,k)*expt/bexpt
+for k=0,3 do writefits,'b_'+strtrim(k+1,2)+'.fits',cc(*,*,k),mh
+;=============================================================
+;==============================================================
+Now run the script under ciao in the same directory:
+$PUBDIR/cal_scripts/mcsmooth.e &
+;default s/n=3-4 with no background image smoothing
+;or $PUBDIR/cal_scripts/mcsmooth.e "1 2 3 4" 2.5 3.5 b &
+;using s/n=2.5-3.5 with background image smoothing
+;=============================================================
+;==============================================================
+;back in IDL:
+;target='n3556'		;change to the appropriate name
+soufile='../sou/evt2file_new_clean_map70BSH_hr'
+probth=-7
+edge=6
+filter=readfits('t_4.fits') ;to remove regions outside the exposure map
+read_mimages,4,mh,fs,a,mv,cor=cor,edge=edge,mdim=mdim,filter=filter
+;=============================================================
+;==============================================================
+; only used for rescaling and adjusting the colors
+;for 1+2,3, 4 bands
+a(*,*,0)=bscale(alog10(fs(*,*,0)+fs(*,*,1)),alog10(mv(0)+mv(1)),alog10((mv(0)+mv(1))*10))
+a(*,*,1)=bscale(alog10(fs(*,*,2)),alog10(mv(2)),alog10(mv(2)*10))
+a(*,*,2)=bscale(alog10(fs(*,*,3)),alog10(mv(3)),alog10(mv(3)*10))
+cont_grey,a,mh,cor=cor,true=3,mr=0,/ps,/nocon,/full,f_c=-1,barf=0.
+
+;for 1,2,3+4 bands
+a(*,*,0)=bscale(alog10(fs(*,*,0)),alog10(mv(0)),alog10(mv(0)*10))
+a(*,*,1)=bscale(alog10(fs(*,*,1)),alog10(mv(1)),alog10(mv(1)*10))
+a(*,*,2)=bscale(alog10((fs(*,*,2)+fs(*,*,3))),alog10(mv(2)+mv(3)),alog10((mv(2)+mv(3))*10))
+;-----------------
+;You can use the following for a look of individual channel (e.g.,):
+k=1
+tv,bscale(alog10(fs(*,*,k)),alog10(mv(k)),alog10(mv(k)*10)),chan=k+1
+;-------------------------------
+;output jpeg images:
+s=tvrd(0,0,true=3) & write_jpeg,target+'_rgb.jpg',s,true=3
+;or ps file:
+set_plot,'ps'
+device,bits=8,/land,color=1,xsize=18.,ysiz=18,yoff=26,xoff=2
+loadct,0 ;for the 3-color image
+;-------------------------------
+window,1,xs=mdim(0),ys=mdim(1)
+cont_grey,a,mh,cor=cor,true=3,mr=0,/ps,/nocon,/full,f_c=-1,barf=0.
+scale='1''
+scale_plot,cor,mh,0.08,0.93,1,scale,thick=2,char=2,color=!d.n_colors-1
+source_plot,soufile,cor,mh,/fits,probth=probth,psym=6,sym=2
+source_plot,soufile,cor,mh,/fits,probth=probth,psym=6,sym=1,/sou
+
+s=tvrd(0,0,true=3) & write_jpeg,target+'_rgb_s.jpg',s,true=3
+;-----------------
+;get a broad band X-ray image:
+loadct_self,18
+f=total(fs,3)
+cont_grey,f,mh,cor=cor,/ps,barf=0.,/def,/noc,greymin=total(mv),greymax=30,greylo=1
+;-------------------------------------
+;comparison with optical image:
+o=image_cut(readfits('../mdata/dss2_blue.fits'),mdim(0)/2,/rec,/pix)
+o=o-min(o)*0.99
+lev=[0.5,1,2,4,7,11,16,22,29,37]*0.2+total(mv)
+cont_grey,f,mh,o,cor=cor,/ps,barf=0.,/def,lev=lev,greymin=median(o),mr=0
+s=tvrd(0,0,true=3) & write_jpeg,target+'_f_b.jpg',s,true=3
+;======================================================
+;for optical,1+2,3+4 bands
+cor=[0,1,0,1]
+;a(*,*,0)=bscale(alog10(o),alog10(median(o)),alog10(max(o)))
+a(*,*,0)=bscale(o,median(o),max(o))
+a(*,*,1)=bscale(alog10(fs(*,*,0)+fs(*,*,1)),alog10((mv(0)+mv(1))),alog10((mv(0)+mv(1))*10))
+a(*,*,2)=bscale(alog10(fs(*,*,2)+fs(*,*,3)),alog10(mv(2)+mv(3)),alog10((mv(2)+mv(3))*10))
+cont_grey,a,mh,cor=cor,true=3,mr=0,/ps,/nocon,/full,f_c=-1,barf=0.
+scale='1''
+scale_plot,cor,mh,0.08,0.93,1,scale,thick=2,char=2,color=!d.n_colors-1
+s=tvrd(0,0,true=3) & write_jpeg,target+'_rgb_osh.jpg',s,true=3
+;======================================================
+; Radio image:
+cast,'../mdata/N3556C20NW.FITS',mh,outa=r
+cont_grey,r,mh,a,cor=cor,true=3,mr=0,/ps,/full,f_c=-1,barf=0.,lev=[0.5,1,2,3,4,6,10,15,30,50,100,200]*0.0002,c_c=255
+cor=[0,1,0,1]
+a(*,*,0)=bscale(alog10(r > 1.e-5),alog10(1.e-4),alog10(max(r)))
+a(*,*,1)=bscale(alog10(o),alog10(median(o)),alog10(max(o)))
+a(*,*,2)=bscale(alog10(fs(*,*,0)+fs(*,*,1)),alog10((mv(0)+mv(1))),alog10((mv(0)+mv(1))*5))
+cont_grey,a,mh,cor=cor,true=3,mr=0,/ps,/nocon,/full,f_c=-1,barf=0.
+;--------
+lev=[1,2,4,7,11,16,22,29,37]*0.3+total(mv(0:1))
+cont_grey,total(fs(*,*,0:1),3),mh,a,cor=cor,true=3,mr=0,/ps,/full,f_c=-1,barf=0.,lev=lev
+scale='1''
+scale_plot,cor,mh,0.08,0.93,1,scale,thick=2,char=2,color=!d.n_colors-1
+s=tvrd(0,0,true=3) & write_jpeg,target+'_rgb_ros_c.jpg',s,true=3
+
+;======================================================
+save,file='idlsave_n3556.dat'
+
+;=========================================================
+;for reading the evt list only
+evtroot='evt2file_new_clean' 
+evt_image,evtroot,'acisi',/noexp,/nofits,list=l,xmin=xmin,ymin=ymin,hdr=hh,datadir='../xdata/'
+
+block=6
+list_image,l,xmin,ymin,c1,512,block=block,detagname='det',emin=1000,emax=3000
+list_image,l,xmin,ymin,c,512,block=block,emin=1000,emax=3000
+ list_image,l,xmin,ymin,c,512,block=block
+
+g2=psf_gaussian(fwhm=2,npix=121,/norm)
+cm=convolve(c,g2)
+get_fitshead,cm,mh,hh,del=block*!size_pixel/3600.
+cont_grey,cm,mh,/noc,cor=cor,greymin=0.1,greymax=10,greyl=2,/full,/def,barf=0,f_c=-1,/ps
+source_plot,soufile,cor,mh,/fits,probth=probth,psym=6,sym=2
+
+
+window,xs=1024,ys=1024
+
+s=defroi(1024,1024)
+ss=defroi(1024,1024)
+sb=defroi(1024,1024)
+help,s,ss,sb
+print,total(c(s)),total(c(ss))-avg(c(sb))*n_elements(ss)
+      29696.0      231.602
+print,(total(c(ss))-avg(c(sb))*n_elements(ss))/total(c(s))
+  0.00779910
+
+Very much comparable to the expected readout strip 1.3% for
+the entire 1024 column.
+;=========================================================
+;creating a source regional file (as an example):
+cenvset,'acisi'
+soufile='evt2file_new_clean_map70BSH_hr'
+file_params,'../xdata/evt2file_new_clean.fits',h ;get the fits header
+sou_fits_reg,h,soufile+'.reg',inf=soufile,flow=0.001 
+	;sources with cntr > 0.001 are selected
+

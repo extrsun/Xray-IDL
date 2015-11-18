@@ -1,0 +1,113 @@
+
+Many changes since Oct 1991!
+
+28-Jun-92  Procedure make_list modified to read FITS files directly, using
+           newest version of READFITS - this allows sections of arbitrarily
+           large files to be read
+
+25-Jun-92  Newest response matrices added to options for MAKE_PHA
+
+22-Jun-92  Bug fixed in procedure RSGETHKB
+
+09-Jun-92  Procedures PARSE_TIME, and WRITESTR, and functions TIMESTR, and
+           UT2SCT added
+
+08-Jun-92  Procedure RSGETVG added
+
+05-Jun-92: Procedures rschecktsi, rsgethkb, and rsgethksta changed
+           to use new IDL FITS routines readfits and fits_info, to use new 
+           version of match_files, and to return OPARMS as a keyword
+           Various outputs from rschecktsi also combined into data structure
+           Procedure tsilist changed to work with new version of GETTOK
+           Procedures ct2lst2 and fits_to_struct added
+           Bug in procedure create_struct fixed
+
+04-Jun-92: Procedures rsgetasp, rsgetaspqu, rsgetevr, rsorb_pos changed
+           to use new IDL FITS routines readfits and fits_info, to use new 
+           version of match_files, and to return OPARMS as a keyword
+           Procedures rsaspect, rsevrates, and rsorbit changed to match
+           Procedure match_files simplified to look for files matching
+           description dir+rootname+ext; previous version will be renamed
+           to match_sdas_files
+           Procedure timeseq and function ut2sct added 
+
+30-May-92: Procedure rsgetvg added
+
+15-Apr-92: Error in procedure fillbox fixed
+
+13-Apr-92: Procedures rsgetdefpar and rsgetpar changed to return NMAX 
+           (= maximum number of parameters allowed)
+
+01-Mar-92: Various outputs from procedures rsgethkb, rsgethksta, rsorb_pos
+           combined into data structures; rsorbit changed to match
+           Procedures rsgetseqinfo and rsobitimes changed to use input
+           keyword CHATTER
+
+29-Feb-92: Outputs from procedure rsgetevr combined into data structures;
+           procedure rsevrates changed to match
+
+26-Feb-92: Procedures create_struct, rs_sources, tab_to_struc added
+           Function ftget modified to work with Rosat SASS source list FITS
+           ASCII table files (_src_fits_1), added to experimental library
+           Help files zdoc:*.lst, zdoc:contents.txt updated
+
+21-Feb-92: Procedure doc_list updated to reflect changes
+
+20-Feb-92: Procedures write_aspc, read_aspc, timebin added
+
+19-Feb-92: Procedure make_list revised to return TBEG, TEND
+
+18-Feb-92: Keywords OBIBEG, OBIEND, IBEG combined into OBINFO data structure
+           in rsgetasp, rsgetaspqu, rsgetevr, rsgethkb, rsgethksta, rsorb_pos, 
+           rschecktsi; rsaspect, rsorbit, rsorb_plot, rsorbit changed to be 
+           compatible
+           Procedure rschecktsi changed to allow keyword TEXTOUT < 0
+
+14-Feb-92: Procedures gethistval, rsgethkb, rsgethksta added
+           Procedures rsgetseqinfo, rsobitimes modified to use gethistval
+
+10-Feb-92: Procedures make_list, make_pha added
+
+08-Feb-92: Procedure make_pha revised to use parameter defaults file
+
+04-Feb-92: PSPRINT changed to PRINTPS (due to conflict with system definition 
+           of PSPRINT)
+           Procedure fits_read and function fits_get added (will eventually 
+           be superceded by new Astronomical Users' Library routines)
+
+02-Feb-92: Routine findstr added
+
+24-Jan-92: Procedure make_spec, functions imdiv, padder added
+
+13-Jan-92: Procedure make_continent added
+
+27-Nov-91: Procedure tsi_bitcodes revised to return values for failed flags
+           Procedures bitc2asc, tsilist added, rschecktsi revised to call
+           these
+
+25-Nov-91: Procedure to_hex_large revised to handle large string arrays,
+           to_bin revised to allow string arrays with more than 128 
+           elements
+           Procedure tsi_bitcodes added
+
+22-Nov-91: Procedure rschecktsi added
+
+18-Nov-91: Procedures rsaspect, rsevrates, rsorbit changed to use system 
+           symbol/environmental variable PSPRINT
+
+05-Nov-91: Procedures revised for compatibility with Unix
+
+28-Oct-91: Procedures revised to use function match_files
+
+10-Oct-91: Procedures rsaspect, rsevrates changed to print s/c & UT times 
+           on plots
+
+07-Oct-91: Procedure rsgetseqinfo added to library
+
+06-Oct-91: Function match_files changed to allow correction of directory as
+           well as file name
+
+05-Oct-91: GHRS derived parameter setting routines rsgetpar, rssetdefpar,
+           rssetparval added
+           Procedures generally revised to use HRS style parameter defaults
+           files (.def)

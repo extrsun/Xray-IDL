@@ -1,0 +1,187 @@
+
+**************************************************************************
+
+26 August 1993:
+
+
+     There have been substantial changes to the library. A number of new
+procedures have been added; see contents.txt in the doc subdirectory, or
+use DOC_LIST. A specific history of changes/additions can be found in
+changes.txt. The most important changes are discussed below:
+
+1. MAKE_PSF now calculates off-axis position angles. The normalization of
+   the scattering term has been reduced by 30%, to better match the 
+   calibration data.
+
+2. MAKE_LIST now reads photon events data from MPE files. Selection by 
+   arrival time, pi energy, and event number are now allowed. A number of
+   accepted time intervals can be used to select by arrival time. 
+   Procedure TIMEFILTER can be used to time filter an existing photon list 
+   over a number of accepted time intervals. Procedure RDACTFIL can be
+   used to read in the accepted time intervals from an ASCII file.
+
+3. A procedure MAKE_IMAGE has been added, to accumulate images from a
+   photon list structure variable. The photon list can be defined, or
+   MAKE_IMAGE can be used to create a photon list according to the 
+   specified selection criteria.
+
+4. Procedures RSGETASP, RSGETEVR, RSORB_POS, RSGETHKB, and RSGETHKSTA
+   and RSGET_EMAP_DATA read data from MPE format files as well as from US
+   format files. Procedures RSASPECT, RSEVRATES, and RSORBIT are being
+   modified.
+
+5. Procedures RSGETNOMASP and RSGETSEQINFO will be replaced by RS_NOMASP 
+   and RS_SEQINFO, which read information from MPE format headers as
+   well as from US format headers.
+
+6. MAKE_SPEC has been fixed to allow spectral binning at full resolution.
+   A photon list information structure variable (created by MAKE_LIST) is
+   now used to pass the information about the exposure time and number of
+   pixels. 
+
+7. Procedure DEFGROUP has been added to define channel groupings for 
+   MAKE_SPEC. Procedure SET_RESPFILES has been added to define default
+   response matrices for MAKE_SPEC; users should change this procedure in 
+   accordance with the default file names at their own institutions.
+
+---------------------------------------------------------------------------
+   
+   Under development:
+
+   A procedure to calculate exposure maps over selected energy bands,
+   using instrument maps created by S. Snowden. The procedure is based
+   largely on code contributed by S. Snowden and J. Mendenhall. A very
+   preliminary version was released to a few individuals for testing. The
+   procedure runs well, but there still appear to be centering problems
+   which can lead to a residual "stripes" and images of the support
+   structure, especially at the lowest energies. Possible causes and ways
+   to fix this problem are being investigated.
+
+   (Please note: This is why you will not yet find the procedure MAKE_EMAP
+   in the file rosatlib.tar. We hope to have it ready soon.)
+
+   A procedure to create XSPEC FITS format spectral files
+
+   A procedure to accumulate images directly from photon events FITS files,
+   without first creating a photon list structure variable. The procedure
+   is meant to use less memory and run faster when dealing with very large 
+   files.
+
+   Procedures to calculate background maps, based on maps created by 
+   S. Snowden and code developed by S. Snowden and J. Mendenhall
+
+---------------------------------------------------------------------------
+
+   The following specific procedures have been added to the library:
+
+    DEFGROUP      : Defines channel groupings for make_spec and make_pha
+    GET_POSI      : Finds number of elements for each unique value in a
+                    vector (contributed by Q. D. Wang)
+    MPE_GTIMES    : Reads the _events.tfits header (MPE format data) and 
+                    returns the selected times 
+    MPE_SEQINFO   : Reads sequence information from the sequence header for
+                    a ROSAT (MPE format) FITS file
+    RDACTFIL      : Reads ASCII file of accepted time intervals, with one
+                    interval (start and stop times) per line
+    RSGTIMES      : Reads either the MPE format selected times or the US 
+                    format good time intervals 
+    RSOBSDATE     : Reads the observation date from the Rosat photon list FITS
+                    file headers (e.g., rp123456.fits or wp123456_events.tfits)
+    RS_NOMASP     : Reads nominal aspect information from the sequence header 
+                    for a ROSAT FITS file (will replace RSGETNOMASP)
+    RS_SEQINFO    : Reads sequence information from the sequence header for
+                    a ROSAT FITS file (will replace RSGETSEQINFO)
+    SET_RESPFILES : Defines a system variable containing the default response
+                    matrices to be used in make_pha
+    TIMEFILTER    : Allows user to select data from a photon list structure 
+                    for times within a specified interval or intervals
+    TIMEINTSECT   : Finds the time intervals which are the intersections
+                    between one interval and a set of intervals
+    TINTSECT2     : Finds the time intervals which are the intersections
+                    between two sets of time intervals
+    US_GTIMES     : Reads the _events.tfits header (US format data) and 
+                    returns the good time intervals
+    US_SEQINFO    : Reads sequence information from the sequence header for
+                    a ROSAT (US format) FITS file
+    VSORT         : Finds the unique values in a vector, when the entries will
+                    be quantized more coarsely
+    VSORT_LARGE   : Same as VSORT, except for large vectors (>10,000 elements)
+
+**************************************************************************
+
+15 July 1992
+
+
+     A new routine, MAKE_PSF, has been added. Given an input PSPC spectrum,
+the routine uses Gunther Hasinger's algorithm to calculate the expected
+on-axis PSPC point spread function, as both a 2 dimensional image and as a
+radially averaged profile. The image and/or profile may be written to disk
+(as simple FITS and ST SDAS binary table files, respectively) if desired.
+The input spectrum may be read from several different types of files. 
+
+For local users of IDL:
+
+     A new way to define the IDL_PATH variable (on the HEASRC cluster only)
+is being tested. If you are currently using (on HEASRC) any of the new
+routines that use the new FITS readers, then you should try this out! To do
+so, just type (*before* getting into IDL): 
+
+$ define idl_path xanadu:[idl_lib.rosat.experimental], -
+  "+xanadu:[idl_lib.idlaul]", -
+  "@idl_dir:[lib]userlib.tlb"
+
+This supersedes the previous definition of IDL_PATH in zcom:idldef.com.
+(If you are using zcom:idldef.com, then obviously you want to redefine
+IDL_PATH *after* typing @zcom:idldef.)
+
+     If you are typing @newfits.setup once you get into IDL, then it is
+important that you use the new definition for IDL_PATH. Otherwise, IDL may
+not compile the newest versions of all of the routines.
+
+     These remarks are of interest only to IDL users on the HEASRC cluster.
+If you only use IDL on the Suns, then you can safely ignore them.
+
+     Please report any problems to Gail Reichert.
+
+
+**************************************************************************
+
+5 June 1992
+
+     New general FITS readers are now available in the IDL Astronomical
+Users' Library. These allow ASCII and Binary table extensions to be read
+directly from the FITS file. Rosat library procedures which used the old
+FITS readers (i.e., those which read the files created by DFITSRD) have 
+been modified to use these new readers (and are *much* faster as a result). 
+These procedures are:
+
+     rsaspect, rschecktsi, rsevrates, rsgetasp, rsgetevr, rsgethkb, 
+     rsgethksta, rsorbit, and rsorb_pos
+
+The procedures have not (yet) been added to the experimental library.
+Local users who wish to try them out may do so by getting into IDL,
+and then typing 
+
+IDL> @explib:newfits.setup      (VMS)     or 
+IDL> @$EXPLIB/newfits.setup     (Unix)
+
+which will compile new versions of these procedures. To return to using the
+old procedure (e.g., rsaspect), type
+
+IDL> .run explib:rsaspect       (VMS)     or
+IDL> .run $EXPLIB/rsaspect      (Unix)
+
+NOTE: The new procedures read data from the FITS files directly. IT IS NO
+LONGER NECESSARY TO CONVERT THESE FILES USING DFITSRD. The new versions
+will not work with files created using DFITSRD.
+
+     We plan to add these routines to the experimental library soon.
+
+     There have been substantial changes to the library! A number of new
+procedures have been added; see Contents.txt in the doc subdirectory, or
+use DOC_LIST. A specific history of changes/additions can be found in
+Changes.txt. These help files can also be found in the IDL subdirectory in
+the GOF anonymous ftp account (/home/heasfs/ftp/pub/IDL) under the obvious
+corresponding file names. 
+**************************************************************************
+

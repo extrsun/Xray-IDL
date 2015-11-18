@@ -1,0 +1,57 @@
+Memo on ACIS-I data calibration (WQD, May 21, 2002)
+
+#On your computer, create a directory cal on the same level as 
+# the directory primary: (for example), 
+cd /net/xray/data1/a2125/cal
+
+#CTI correction (assuming csh shell)
+
+gunzip ../primary/*.gz
+ls ../primary/*
+set obsid5 = 02207
+set fn_evt2 = acisf$obsid5'N002_evt2'
+set fn_evt1 = acisf$obsid5'_000N002_evt1'
+
+# move the event 1 and 2 files into the processing directory
+cp ../primary/$fn_evt2.fits .
+cp ../primary/$fn_evt1.fits .
+
+#correctit_idl cannot be run on sgr, because it uses a IDL version that has
+#a too high version.
+# first setup idl in the session:
+xidl 
+exit
+
+/net/xray/software/correctit/correctit_idl $fn_evt1.fits
+
+# a file called correctit.temp1 and the original events 1 file need to be 
+# copied to mingus.phys.columbia.edu
+tar czvf test.tar.gz correctit.temp1 $fn_evt1.fits 
+#gzip test.tar
+scp test.tar.gz clang@mingus.phys.columbia.edu:/d8/gcdata/clang_cti/
+
+#log on to mingus.phys.columbia.edu
+ssh -l clang mingus.phys.columbia.edu
+#Ask Daniel for the password
+
+#Now on mingus.phys.colu
+mbia.edu (replace events1file.fits with a real name!!!)
+cd /d8/gcdata/clang_cti/
+gunzip < test.tar.gz |tar xvf -
+ciao
+/home/mingus/filip/scripts/correctit_post.e events1file.fits correctit.temp1
+
+#give no input at the prompt:Edit list file name (): 
+#It takes about 5 minutes to finish with the statement "DONE with post IDL routine"
+
+# the script will generate the file acis*evt1.no_cti.fits which
+# is the one the next script is run on
+#Now back to your working directory on your computer:
+
+scp clang@mingus.phys.columbia.edu:/d8/gcdata/clang_cti/acis*evt1.no_cti.fits ./
+#if several files files need to be transfered, it is better to use tar, e.g.,
+#tar cvf acis*evt1.no_cti.fits |gzip > test.tar.gz
+;Then, scp clang@mingus.phys.columbia.edu:/d8/gcdata/clang_cti/test.tar.gz ./
+
+Now you can proceed with the regular evt1-evt2 reprocessing (see memo_cal).
+Of course, you need to use the new cti-corrected file name.

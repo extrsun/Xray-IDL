@@ -1,0 +1,15 @@
+pro writecommands
+commandsname='D:/study/testidl/commands/extractspectra.xcm'
+files='D:/study/testidl/regionfile/*.reg'
+thesefiles=findfile(files,count=numfiles)
+
+openw,lun1,commandsname,/get_lun
+for i=0,numfiles-1 do begin
+printf,lun1,'punlearn acisspec'
+printf,lun1,'acisspec soufile1="merged_cali.fits[sky=region('+strmid(thesefiles[i],28,31)+')]" root='+strmid(thesefiles[i],28,27)
+printf,lun1,''
+endfor
+
+close,lun1
+free_lun,lun1
+end

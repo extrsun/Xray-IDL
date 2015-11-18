@@ -1,0 +1,82 @@
+; Memo for timing analysis of sources detected in ACIS images
+; 
+; Procedure:
+; KS test for all sources with slow > 5 (def)
+; Chi^2 tests for individual sources
+;
+; wqd, Sept. 18, 2002; updated on 5/5/03 by fixing a couple of bugs
+; and a thourough test   on N4565 and N891 data
+;=====================================================================
+; Timing analysis of sources for variability (KS test):
+; setting the parameters of the observations:
+xidl
+instr='aciss'
+;instr='acisi'
+cenvset,instr
+
+; basic parameters for the exposure map:
+sou_det_params,instr,dim,block,ccd,bmin,bmax,dsfrac,asfrac,psffile,bpsffile,ftail,aimoff,subfac
+;=======================================================================
+;modify the following file name for a new observation:
+;file_root='acisf02025N001_evt2_new_clean'
+file_root='evt2file_new_clean'
+rfac=1. ;source radius extraction factor; larger value can result significant
+	;source-to-source contamination
+probth=-2 ; minimum log(probability) for source variability classification
+slow=4
+nooutput=1
+maindir='..'
+.run acis_var_main_0
+;=======================================================================
+;For targets with multiple observations that are not exactly overlapped
+;sources may not be covered by all the observation. At this point, the
+; timing analysis can only be done for the sources that are fully covered.
+; Select only the fully-covered region (with more-or-less equal exposure)
+; for the analysis.
+; Be conservative to make sure that the region is indeed fully covered by
+; all the observations. 
+sz=size(ts)
+window,xs=sz(1),ys=sz(2)
+tv,bscale(ts)
+sarea=defroi(sz(1),sz(2))
+.run acis_var_main_filter
+ tv,bscale(ts) ;this is the selected region for the background counts
+ tv,bscale(a,0,2) ;check background counts; sources should have been removed.
+.run acis_var_main_loop
+;=======================================================================
+;Chi^2 analysis for individual sources
+sou_no=13 ;source number (an entry from the first column of the KS output)
+nb=0 		;band selection: 0=B, 1=S, 2=H
+;nstep=8	;auto=0 needs to be set to use nstep
+auto=1 		;=1 for automatic determination of nstep, otherwise set auto=0
+.run var_chi
+
+;the chi^2 variability test does depend on the binning. Examine the lightcuver,
+; If counting statistics is allowed, reduced nstep to see how the results
+; vary. 
+;check the stamp image of the source
+nr=sqrt(srr(sou_no))
+list_image,list(ss),nxp(sou_no)-nr,nyp(sou_no)-nr,c,nr*2+1,block=1
+tv,bscale(c,0,2),0 ;at the upper left corner of the window
+;If source is not centered on the image or there are multiple peaks
+;there may be astrometry problem of the data
+;----------------------------------------------------------
+;for multiple observations separated by large time gaps, use the following:
+set_plot,'ps'
+sh_plot,findgen(n_elements(crn))+1,crn,crne,t*0+mcrn,xtit='Time Bin Number',ytit='!6 X-ray Count Rate (10!U-3!N ct s!U-1!N!N)!6' ;,xra=[0,90]
+;plot lines that separate individual observations (> 1 day)
+plot_gap,t1,t2,[-100,1000],thi=2,gap=3600.*24*30,line=2
+xyouts,3,0,sl(sou_no).iauid,charsize=1.5 ;adjust the coordinates accordingly
+device,/close
+$gv idl.ps
+set_plot,'x'
+print,sl(sou_no).iauid
+;rename the ps file to the above printed name + .ps
+
+;If an observation lasts less than the step (print,step), the data will get 
+; lost completely
+;=======================================
+;include the flag "; v" in the final comment column of the source LaTeX list 
+;(e.g., evt2file_new_clean_map70BSH_hr.tex), which may be renamed   (e.g.,
+; evt2file_new_clean_map70BSH_hr_v.tex.
+;A note to the Table may also be included (under footnote "b"), "The flag v indicates a positive variability test."

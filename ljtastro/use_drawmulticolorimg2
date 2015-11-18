@@ -1,0 +1,47 @@
+fitsheadfile='/home/ljt/ljt/data/AboutAGN/NGC5775/Chandra/2940/image/smoothimg3/as_fton5_s_subback.fits'
+imagefile=strarr(6)
+imagefile[0]='/home/ljt/ljt/data/AboutAGN/NGC5775/Chandra/2940/mdata/fromIrwin/N5775HI(UN).FITS'
+imagefile[1]='/home/ljt/ljt/data/AboutAGN/NGC5775/Chandra/2940/mdata/fromIrwin/N5775_20CM_CONT_HIGH_ROT.FITS'
+imagefile[2]='/home/ljt/ljt/data/AboutAGN/NGC5775/Chandra/2940/mdata/r10994176/ch4/pbcd/SPITZER_I4_10994176_0000_4_E2022344_maic.fits'
+imagefile[3]='/home/ljt/ljt/data/AboutAGN/NGC5775/Chandra/2940/mdata/fromIrwin/N5775_HA_COLLINS.FITS'
+imagefile[4]='/home/ljt/ljt/data/AboutAGN/NGC5775/Chandra/2940/image/smoothimg3/as_fton5_s_subback.fits'
+imagefile[5]='/home/ljt/ljt/data/AboutAGN/NGC5775/Chandra/2940/image/smoothimg3/as_fton5_h_subback.fits'
+description=['H I','20 cm','8!7l!3m','H!7a!3','0.3-1.5 keV','1.5-7 keV']
+psfile='/home/ljt/ljt/data/AboutAGN/NGC5775/Chandra/NGC5775.ps'
+jpegfile='/home/ljt/ljt/data/AboutAGN/NGC5775/Chandra/NGC5775.jpeg'
+title='!7NGC 5775'
+rbrightness=[1.0,1.5,1.0,1.0,1.5,0.6]
+fscale=['abs','abs','abs','abs','alog10','alog10']
+;scalezoom=[1000.0,1000.0,1000.0,1000.0,1000.0,1000.0]
+meanfactor=[1.0,1.0,1.0,1.0,0.7,1.0]
+coefficient=fltarr(3,6)
+coefficient[*,0]=[1.0,0.0,0.0]
+coefficient[*,1]=[0.65,0.35,0.0]
+coefficient[*,2]=[0.2,0.8,0.0]
+coefficient[*,3]=[0.0,0.6,0.4]
+coefficient[*,4]=[0.0,0.474680,0.525320]
+coefficient[*,5]=[0.0,0.0,1.0]
+drawmulticolorimg,imagefile,fitsheadfile=fitsheadfile,description=description,psfile=psfile,figtitle=title,fscale=fscale, colortype=1, rbrightness=rbrightness, meanfactor=meanfactor, coefficient=coefficient
+;,jpegfile=jpegfile
+;, otherwords='(a)', otherposix=0.85, otherposiy=0.8, othersize=2, otherthick=3
+;drawmulticolorimg,imagefile,fitsheadfile=fitsheadfile,description=description,psfile=psfile,figtitle=title,fscale=fscale, colortype=1, rbrightness=rbrightness, meanfactor=meanfactor,/noframe,xcor=0.001,ycor=0.001,yframeratio=1.0
+
+
+
+
+
+imagefile=strarr(4)
+imagefile[0]='/home/ljt/ljt/data/AboutAGN/NGC5775/Chandra/2940/image/multicolorimg/HST_Ha.fits'
+imagefile[1]='/home/ljt/ljt/data/AboutAGN/NGC5775/Chandra/2940/image/multicolorimg/HST_R.fits'
+imagefile[2]='/home/ljt/ljt/data/AboutAGN/NGC5775/Chandra/2940/image/multicolorimg/Soft_X.fits'
+imagefile[3]='/home/ljt/ljt/data/AboutAGN/NGC5775/Chandra/2940/image/multicolorimg/src_X.fits'
+
+psfile='/home/ljt/ljt/data/AboutAGN/NGC5775/Chandra/2940/image/multicolorimg/N5775_4c.ps'
+jpegfile='/home/ljt/ljt/data/AboutAGN/NGC5775/Chandra/2940/image/multicolorimg/N5775_4c.jpeg'
+rbrightness=[1.0,1.0,1.0,1.0]
+fscale=['alog10','alog10','alog10','alog10']
+scalezoom=[8.0,10.0,5.0,1e2]
+bscalerange=[0.0,0.0,0.0,0.0]
+logmean=[0.015,0.1,0.15,0.05]
+
+drawmulticolorimg, imagefile, psfile=psfile, jpegfile=jpegfile, colortype=1, /nocolorbar, /noframe, scalezoom=scalezoom, fscale=fscale, bscalerange=bscalerange, logmean=logmean, /windowplot, coeffindex=0.1

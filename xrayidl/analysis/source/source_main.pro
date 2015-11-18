@@ -1,0 +1,13 @@
+env,500100
+actime
+exptail='all'
+make_emap_main,expmap,exptail=exptail,tfile=!seq_no+'_actime.dat'
+write_im,[1,4,6],[2,5,7],exptail=exptail
+scan_batch,tbs,exp=exptail,/ratio,/anal
+env,500131
+actime
+exptail='all'
+make_emap_main,expmap,exptail=exptail,tfile=!seq_no+'_actime.dat'
+write_im,[1,4,6],[2,5,7],exptail=exptail
+scan_batch,tbs,exp=exptail,/ratio,/anal
+end

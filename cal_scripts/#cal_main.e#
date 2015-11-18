@@ -1,0 +1,61 @@
+#!/bin/sh
+#============================================================================
+# cal_main.e 
+version=0.0
+echo "cal_main.e version: " $version 
+#============================================================================
+# Main calibration script for an ACIS observation, combining three 
+# separate scripts:
+# 1. evt1to2.e  (will not run if proc=evt2)
+# 2. post_evt2.e
+# 3. make_expmap.e
+#
+#*Requirements:
+# 1) a source regional file (source.reg) has been saved in the ciao format and
+#	 in the current directory
+#
+#*Inputs:
+#  $1 == ROOT name of the evt2 events file (e.g., acisf02025N001_evt2)
+#  $2 == processing choice:
+#	evt1 - from evt1 to evt2 (def)
+#	evt2: just modify evt2
+# 
+#*Example: 
+# cal_main.e acisf02025N001_evt2 > cal_main.log &
+# tail cal_main.log
+#
+# wqd, July 4, 2002
+#============================================================================
+if [ "$1" = "" ] ; then
+	echo "A file root name (e.g., evt2file) is needed!"
+	echo "other optional inputs:  proc"
+	exit -1
+else
+	events_root=$1
+fi
+
+if [ "$2" = "" ]
+then
+	proc=evt1
+	echo "default evt1 is assumed!"
+else 
+	proc=$2
+fi
+
+if [ "$proc" = "evt1" ] ; then
+    echo "running evt1to2.e!"
+    $PUBDIR/cal_scripts/evt1to2.e ${events_root}
+    echo "evt1to2.e ends!"
+fi
+
+echo "running post_evt2.e!"
+$PUBDIR/cal_scripts/post_evt2.e ${events_root}_new 
+echo "post_evt2.e ends!"
+
+echo "creating expmap"
+#$PUBDIR/cal_scripts/make_expmap.e ${events_root}_new_clean pcad_asol1.lis
+$PUBDIR/cal_scripts/make_expmap.e  ${events_root}_new_clean asol_file
+echo "cal_main is done!"
+
+rm _* 
+echo done

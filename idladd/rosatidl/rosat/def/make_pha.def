@@ -1,0 +1,6 @@
+Rosat standard default parameters for making XSPEC format pha file
+5
+0,FNAME=,name of output PHA file (w/o extension)
+1,BKFIL=,name of assoc bkgd file (def = NONE)
+2,RSPFIL=LIST,name of assoc response file (DEF for default, or LIST)
+3,CORFIL=NONE,name of assoc correction file (def = NONE)

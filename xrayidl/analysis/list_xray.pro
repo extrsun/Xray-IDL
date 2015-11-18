@@ -1,0 +1,72 @@
+pro list_xray,infile,listout,emin=emin,emax=emax,ccd=ccd,ext=ext $
+	,row=row,tagin=tagin,n_tag=n_tag,hdr=hdr,nct=nct
+;+
+; construct an event structure from an event file
+;
+;*INPUTS:
+; infile - event file name
+;;
+;*OUTPUTS:
+; listout - event list (structure)
+;
+;*Selected Inputs:
+; emin, emax - lower and upper limits of event energy (eV)
+; ccd - selected ccd ID numbers
+; ext - extension of the event list in the file
+; row - definition of the structure 
+;	(def: row = {time:0.0D0,x:0L,y:0L,energy:0,ccd_id:0})
+; tagin - needed if the tag names in the event file are different 
+;	from those defined in row.
+; n_tag - the first number of tags that are used in row
+; hdr - header of the event file
+; nct - total number counts included in listout
+;
+; re-written by wqd 12/18/2001
+;-
+if n_params() eq 0 then begin
+print,'CALLING SEQUENCE --- list_xray,infile,listout,emin=emin,emax=emax'
+print,',ccd=ccd,ext=ext,row=row,tagin=tagin,n_tag=n_tag,hdr=hdr,nct=nct'
+return
+endif
+if N_elements(ext) eq 0 then ext=1
+if n_elements(row) eq 0 then begin
+	list=mrdfits(infile,ext,hdr)
+	nct=sxpar(hdr,'NAXIS2')
+	if nct eq 0 then return ;no entry
+	;	row = {time:0.0D0,x:0L,y:0L,energy:0,ccd_id:0} 
+	;	tag names used for chandra data
+endif else begin
+	if n_elements(tagin) eq 0 then tagin=tag_names(row)
+	if n_elements(n_tag) eq 0 then n_tag=n_elements(tagin)
+	;maybe the last several tags are not used here (see list_merge.pro)
+
+	tab=readfits(infile,hdr,ext=ext,/sil)
+	nct=sxpar(hdr,'NAXIS2')
+	if nct eq 0 then return ;no entry
+	list = replicate(row,nct)
+	for k=0,n_tag-1 do list.(k)=fits_get(hdr,tab,tagin(k))
+endelse
+
+if (n_elements(emin)+n_elements(emax)) ne 0 then begin
+;        if tag_exist(list,'energy') eq 0 then begin
+;            match,tag_names(list),['pi','PI'],sn,count=n
+;            if n ne 0 then print,'PI channels are used!!!' $
+;            else stop,'No PI channel!'
+;        endif 
+        piev=list.energy
+	if n_elements(emin) eq 0 then emin = min(piev)
+	if n_elements(emax) eq 0 then emax = max(piev)
+	inde = where( (piev ge emin) and (piev lt emax),nct )
+	if nct eq 0 then return
+	list=list(inde)
+endif
+
+ccdno=n_elements(ccd)
+if ccdno ne 0 then begin
+	inde=where_tag(list,tag_name='ccd_id',values=ccd,nct)
+	if nct eq 0 then return
+	list=list(inde)
+endif
+listout=list
+return
+end

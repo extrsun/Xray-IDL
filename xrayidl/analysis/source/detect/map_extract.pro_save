@@ -1,0 +1,98 @@
+pro map_extract, array_1,array_2,array_3,bin_sel=bin_sel,core_size=core_size $
+,radius=radius,mask=mask,core_1=core_1,core_2=core_2,core_3=core_3 $
+,core_bin=core_bin,nbin=nbin,block=block,asfrac=asfrac,crpix=crpix
+;+
+; extract sums around a selected pixels in maps.
+;
+;*Inputs:
+; array_1,array_2,array_3 - arrays, which could have
+;   multiple bands, Up to three such maps may be supplied. array_1
+;   should be an exposure map or equivalent for masking the pixel # in
+;   the sum
+; bin_sel - selected pixels in the 2-D map
+; core_size - the radius of the region around each pixel for the sum,
+;             units (pixel)
+; radius - out radius of the selected region in the 2-D map if bin_sel
+;          is not provided
+; mask - mask with none zero values for the region selection, ifbin_sel
+;          is not provided
+;
+;*Outputs:
+; nbin - total selected number of bins of the region
+; core_1, core_2, and core_3 - the summed values of the corresponding
+;                              arrays
+; core_bin - number of bins in each sum
+;
+; written by wqd, April, 29, 2005
+;-
+np=n_params()
+if np eq 0 then begin
+print,'CALLLING SEQUENCE - map_extract, array_1,array_2,array_3'
+print,',bin_sel=bin_sel,core_size=core_size,radius=radius,mask=mask'
+print,',core_1=core_1,core_2=core_2,core_3=core_3'
+print,',core_bin=core_bin,nbin=nbin'
+endif
+
+sz=size(array_1)
+if n_elements(crpix) eq 0 then crpix=[(sz(1)+1.)/2.,(sz(2)+1.)/2.]
+dist_circle,dis,sz(1),(crpix(0)-1.),(crpix(1)-1.)
+if n_elements(bin_sel) eq 0 then begin 
+	if N_elements(radius) eq 0 then $
+          if n_elements(mask) ne 0 then bin_sel=where(mask gt 0.,nbin) $
+        else begin
+            bin_sel=where(dis lt radius,nbin)
+        endelse 
+endif else nbin=n_elements(bin_sel)
+;
+; find the i,j positions of the selected bins in the image
+j=bin_sel/sz(1) & i=bin_sel MOD sz(1) 
+;
+
+;calculate the min and max of the i,j for each box
+if n_elements(asfrac) ne 0 then begin
+    if n_elements(block) eq 0 then block=!block
+    dd=dis*(block*!size_pixel/60.) ; in units of arcmin
+    psf_params,dd(bin_sel),core_size,perclimit=asfrac
+    core_size=core_size/block
+endif
+
+icore_size=nint(core_size)
+sel=where(j ge icore_size and j lt (sz(2)-icore_size) and $
+	i ge icore_size and i lt (sz(1)-icore_size),nbin)
+if nbin eq 0 then stop,'no bin is suitable for the search' $
+	else msel,sel,j,i,bin_sel,icore_size,core_size ;This changes the size!
+jmin=(j-icore_size) 
+jmax=(j+icore_size) 
+imin=(i-icore_size) 
+imax=(i+icore_size) 
+boxdim=2*icore_size+1            ;dimension of the boxes
+
+; the above four parameters have to be within the boundaries of the arrays
+; but have to keep to form square boxes because dis_circle.pro is used later
+;
+if sz(0) eq 3 then nband=sz(4) else nband=1
+core_1=fltarr(nbin,nband) 
+if np gt 1 then core_2=fltarr(nbin,nband)
+if np gt 2 then core_3=fltarr(nbin,nband)
+core_bin=intarr(nbin)
+icore_size=float(icore_size)
+;
+for k=0L,(nbin-1) do begin
+      dist_circle,dis,boxdim(k),icore_size(k),icore_size(k)
+      tmask=array_1(imin(k):imax(k),jmin(k):jmax(k))
+      bin_core=where (dis le core_size(k) and (tmask GT 0.),count) 
+      if count ne 0 then begin
+        core_bin(k)=count
+        for n=0,nband-1 do begin
+          cbox=array_1(imin(k):imax(k),jmin(k):jmax(k),n)
+          core_1(k,n)=total(cbox(bin_core))
+          if np gt 1 then bbox=array_2(imin(k):imax(k),jmin(k):jmax(k),n)
+          if np gt 2 then tbox=array_3(imin(k):imax(k),jmin(k):jmax(k),n)
+          if np gt 1 then core_2(k,n)=total(bbox(bin_core))
+          if np gt 2 then core_3(k,n)=total(tbox(bin_core))
+        endfor 
+      endif
+  endfor
+stop
+return
+end

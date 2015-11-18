@@ -1,0 +1,145 @@
+;++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+pro map_ratio,slist,lc,cra,cdec,bmin,bmax,image_t,image_b,tblock, $
+nra=nra,ndec=ndec,radius=radius,outfile=outfile,sfrac=sfrac,rc=rc $
+,infile=infile,probth=probth,slow=slow,fac_ssr=fac_ssr,offaxis=offaxis $
+,rfac=rfac,sel=sel,count=count,back=back,exptv=exptv,rs=rs,noadd=noadd,cntrat=cntrat,cntreat=cntreat
+;+
+; Calaculate count rates in individual bands with 
+; background and exposure maps and a photon list
+;
+; slist - source structure (if infile is provided, slist is the output)
+; lc - photon list containing counts of all on-source and background regions
+; cra, cdec - the center of the observation
+; bmin, bmax - vectors containing lower and upper limits of the energy bands
+;		in units of eV for Chandra data
+; image_t, image_b - stacked exposure and background COUNT images in
+; 		individual bands.
+;		The two images must have the SAME size.
+; tblock - the block size of the images
+; nra, ndec - Ra nd Dec of the image center (which may be different from 
+;		the axis center)
+; radius - within which sources are to be analyzed (arcmin, def = infinite)
+; outfile - output file name (def = infile+'ratio')
+; sfrac - fraction of counts in the on-source aperture 
+;		(def = 0.9) used in get_snr.pro
+; rc - the size of the aperture for collecting the counts used in the fit.
+; 	if set, overruling the 90% radius and dfac.
+;
+; infile - input file name. If given, the source list will be read from the
+;		file, overriding the input one.
+; probth -  upper limit of the probability threshold for the source selection
+; slow - the Signal-to-noise threshold for selecting sources (def = 0).
+; rfac - factor of the source PSF radius to be used for source count
+;       and background count calculation; useful for extented sources,
+;       together with fac_ssr=1.
+; count, back, exptv,cntrat, cntreat - count, background count,
+;                                      exposure, total count rate and
+;                                      its error
+; rs - source radius used
+; noadd - if set, the resultant count rates are not added to the list
+;
+; writen by wqd, april 24, 1996
+;-
+if n_params() eq 0 then begin
+print,'Calling procedure - map_ratio,slist,lc,cra,cdec,bmin,bmax'
+print,',image_t,image_b,tblock,nra=nra,ndec=ndec,radius=radius'
+print,',outfile=outfile,sfrac=sfrac,rc=rc,infile=infile,probth=probth,slow=slow ,fac_ssr=fac_ssr,offaxis=offaxis,rfac=rfac,sel=sel,count=count,back=back,exptv=exptv,rs=rs,noadd=noadd,cntrat=cntrat,cntreat=cntreat'
+return
+endif
+;
+if n_elements(tblock) eq 0 then tblock=!block
+if n_elements(radius) eq 0 then radius=1.e22 ;arcmin
+if n_elements(sfrac) eq 0 then sfrac=0.9
+if n_elements(nra) eq 0 then begin
+	nra=cra & ndec=cdec
+endif
+;
+;------------------------------------------------------------
+if n_elements(infile) ne 0 then begin
+	if n_elements(slow) eq 0 then slow=0.
+	; read the sources from the input source file
+	sou_fits_info,infile,slist,slow=slow,flow=flow,probth=probth,/all
+	; otherwise use the input source list
+    endif 
+
+trans_dist,nra,ndec,slist.ra,slist.dec,xp,yp,/deg,pixsize=!size_pixel
+
+if N_elements(offaxis) eq 0 then offaxis=slist.offaxis
+;if n_elements(radius) eq 0 then radius=1.e22 ;infinite
+image_t2=image_t(*,*,0)
+sz=size(image_t2)
+; get source pixel locations in the image:
+loc=long(yp/tblock+sz(2)*0.5)*sz(1)+long(xp/tblock+sz(1)*0.5)
+
+;sel=where(offaxis le radius and abs(xp) lt (sz(1)*0.5*tblock) $
+;	and abs(yp) lt (sz(2)*0.5*tblock) and image_t2(loc) gt 0., ns)
+sel=where(offaxis le radius and abs(xp) lt (sz(1)*0.5*tblock) $
+	and abs(yp) lt (sz(2)*0.5*tblock), ns)
+if ns eq 0 then stop,'no source within the radius!' else $
+msel,sel,slist,xp,yp,offaxis,loc	
+
+;pixel positions of sources:
+trans_dist,cra,cdec,slist.ra,slist.dec,xp,yp,/deg,pixsize=!size_pixel
+xo=!pref+xp
+yo=!pref+yp
+
+nb=n_elements(bmin)
+cntra=fltarr(ns,nb)
+cntrea=cntra
+csv=fltarr(ns)
+count=lonarr(ns,nb)
+back=fltarr(ns,nb)
+exptv=fltarr(ns,nb)
+if n_elements(rfac) eq 0 then srfac=1. else srfac=rfac^2 
+for n=0,nb-1 do begin
+	if n_elements(rc) ne 0 then rs=csv*0.+rc else $
+	psf_params,offaxis,rs,perclimit=sfrac $
+	 	,blow=bmin(n),bhigh=bmax(n)
+	image_t2=image_t(*,*,n)
+	expt=image_t2(loc) 
+	srs=rs^2*srfac
+	nbin_s=srs*!pi
+	image_b2=image_b(*,*,n)
+	bc=image_b2(loc)*(nbin_s/float(tblock)^2)
+        ss=where(expt eq 0,nss)
+        if nss ne 0 then begin 
+          ;for sources with centroids right on removed gaps, using the
+            ;old values in nearby pixels; just an approximate fix
+            expt(ss)=slist(ss).expt
+            bc(ss)=slist(ss).bcount*(nbin_s(ss)/(slist(ss).sradius^2*!pi))
+            ;print,'test bc == ',bc(ss),slist(ss).bcount
+        endif 
+	ls=lc(where(lc.energy ge bmin(n) and lc.energy lt bmax(n)))
+	for k=0L,(ns-1) do $
+		csv(k)=total(float(((ls.x-xo(k))^2+(ls.y-yo(k))^2) le srs(k)))
+	get_snr,csv,nbin_s,bc,nbin_s,csn,snr,sfrac=sfrac,/bmap,fac_ssr=fac_ssr
+		;nbin_s is not used
+	cntra(*,n)=csn/expt
+	cntrea(*,n)=snr
+        count(*,n)=csv
+        back(*,n)=bc
+        exptv(*,n)=expt
+    endfor
+stop
+cntrea=cntra/cntrea
+if nb eq 1 then cntrat=cntra else cntrat=total(cntra,2)
+if nb eq 1 then cntreat=cntrea else cntreat=sqrt(total(cntrea^2,2))
+sr=sqrt(srs)
+if keyword_set(noadd) ne 0 then return
+;output the results:
+if !debug eq 2 then stop
+slist.sradius=sr
+struct_col_add,slist,reform([cntrat,cntreat],ns,2),['CNTRB','CNTRBE'],0.0*[1,1],slistn
+;struct_col_add,slist,reform([cntrat,cntreat,sr],ns,3),['CNTRB','CNTRBE','SRADIUS'],0.0*[1,1,1],slistn
+;struct_col_add,slistn,cntra,['CNTRB1','CNTRB2','CNTRB3'],0.0*[1,1,1],slist
+;struct_col_add,slist,cntrea,['CNTRB1E','CNTRB2E','CNTRB3E'],0.0*[1,1,1],slistn
+struct_col_add,slistn,cntra,replicate('CNTRB',nb)+strtrim(indgen(nb)+1,2),replicate(0.0,nb),slist
+struct_col_add,slist,cntrea,replicate('CNTRBE',nb)+strtrim(indgen(nb)+1,2),replicate(0.0,nb),slistn
+sou_struct_out,slistn,text
+print,tag_names(slistn)
+for k=0,(ns-1) do print,text(k)
+slist=slistn
+if n_elements(outfile) eq 0 then return
+sou_struct_fits,slist,outfile
+return
+end

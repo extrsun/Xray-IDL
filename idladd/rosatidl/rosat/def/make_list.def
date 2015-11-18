@@ -1,0 +1,23 @@
+Rosat standard default parameters for making Rosat photon lists
+25
+0,OBSEQ=,Root name of input file
+1,DIR=,Directory containing data file
+2,EXTYP=FITS,Extension type of input file (e.g., FITS, MDS)
+3,INSTR=P,Instrument (default is P for PSPC)
+4,PROC=US,Format of processed files (def=US, or MPE)
+8,TRIM=Y,Trim data to Good Time Intervals? Y(es) or N(o)
+9,CHATTER=1,Controls chattiness of program
+10,NMIN=0,Minimum event number for field (default=first)
+11,NMAX=0,Maximum event number for field (default=last)
+12,XMIN=0,Minimum X value for field (0=minimum of data)
+13,XMAX=0,Maximum X value for field (0=maximum of data)
+14,YMIN=0,Minimum Y value for field (0=minimum of data)
+15,YMAX=0,Maximum Y value for field (0=maximum of data)
+16,PIXEL=UNBL,Pixel convention (def=UNBL=unblocked, BL=blocked)
+17,BLOCK=1,Blocking factor (def = 1)
+18,CTYP=SKY,Coordinate type for filtering (SKY=def, or DET)
+20,ACTFIL=NONE,Name of file with accepted time intervals(or NONE)
+21,TMIN=0,Min time for photon selection. (0 for none)
+22,TMAX=0,Max time for photon selection. (0 for none)
+23,PIMIN=0,Minimum PHI channel (0=list min)
+24,PIMAX=0,Maximum PHI channel (0=list max)

@@ -1,0 +1,15 @@
+
+  Plot Manipulation Procedures from Astronomical Users' Library (Nov 1993)
+
+    CLEANPLOT   :   Reset all system variables (!P,!X,!Y,!Z) set by the user 
+                    which affect plotting to their default values
+    LEGEND      :   Make a legend for a plot
+    LEGENDTEST  :   Test the legend procedure
+    OPLOTERR    :   Over-plot data points with accompanying X or Y error bars
+    PLOTERR     :   Plot data points with accompanying X or Y error bars
+    PLOTHIST    :   Plot the histogram of an array with the corresponding 
+                    abcissa
+    PLOTSYM     :   Define useful plotting symbols not in the standard !PSYM 
+                    definitions
+    PLOT_KEYWORDS : Return default value(s) of plotting keywords
+

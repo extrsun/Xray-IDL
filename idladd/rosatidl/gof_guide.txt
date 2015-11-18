@@ -1,0 +1,171 @@
+
+03 October 1993
+
+    IDL can be run under both VMS on the HEASRC Vax workstation (LHEA Vax
+cluster), under Unix on the GOF Sun workstations ROSSERV, ROS9, ROS16,
+XTELAB, AND HEASFS, and under Ultrix on the Decstation LEGACY. The
+instructions given below will probably change in future, as we are still
+setting things up, software is being developed, etc. 
+
+
+A. Accessing IDL under VMS from HEASRC
+
+     To access IDL from HEASRC, logon normally and then type 
+
+     @idl:[lib.rosat.com]idldef         
+
+This command will set up the directory paths, logical assignments, etc. for
+you so that IDL can be run in a way that is transparent for you, the user.
+
+(note: You may find it convenient to add this command to your login.com file.)
+
+Then type 
+
+     idl                                  (gets you into idl)
+
+The system should respond with the following prompt: IDL>
+
+
+B. Accessing IDL from a Sun workstation at the GSFC GOF
+
+     To access IDL from a Sun workstation, follow these steps: First type
+
+     xinit                                (to start xwindows)
+
+     If you are logged directly onto rosserv, then set up your environmental
+variables by typing
+
+     source /usr1/source/idl/lib/com/.idlrc
+
+(note: You may find it convenient to add this command to your .login file.)
+
+Then type
+
+     idl                                  (gets you into idl)
+
+The system should respond with the following prompt: IDL>
+
+     If you are not logged directly onto rosserv, then you will need to add 
+rosserv to your xhost list. From the console window, type 
+
+     xhost +rosserv                       (tells the Sun that the xwindows
+                                           plots will be generated from rosserv)
+
+(note: if you are in one of the guest accounts, you can also use the mouse
+cursor to do the same thing. First activate the console window. Then use
+the left cursor button to pull down a menu from anywhere in the blank area
+outside the windows, go into the xhosts submenu, and click on the 
+"xhost +rosserv" command line.) 
+
+     Now Rlogon to rosserv, and set your environmental variables (unless
+you cleverly added the appropriate command to your login file). You will
+also need to set the environmental variable DISPLAY to your particular
+node. For example, if you are logged onto ros11, then type 
+
+     setenv DISPLAY ros11:0.0  
+
+(note: this command should not be added to your login file, as there is as
+yet no way to tell rosserv which node you are using.) 
+
+     In future, we hope to make things more transparent for Unix users, as 
+for VMS users.
+
+NOTE:
+
+     You can also run IDL remotely from HEASRC, while logged onto a Sun.
+Follow these steps:
+
+     xinit                                (to start xwindows)
+
+Then, in the heasfs window
+
+     xhost heasrc                         (tells the Sun that the xwindows
+                                           plots will be generated from heasrc)
+     telnet heasrc                        (to connect to heagip)
+
+Logon normally (you will need an account, of course!), then
+
+     @idl:[lib.com]idldef                 (sets up session for IDL with 
+                                           XWINDOWS)
+     set display/create/node=ros11/transport=tcpip
+                                          (tells heagip that you want to send
+                                           the XWINDOWS plots to ros11 for
+                                           plotting)
+
+(If you are logged onto a different workstation than ros11, then substitute
+that workstation name for ros11.) 
+
+Then type
+
+     idl                                  (gets you into idl)
+
+The system should respond with the following prompt: IDL>
+
+CAUTION: Try to use this only during times when HEASRC is not being used,
+because it can slow HEASRC down *a lot*. 
+
+
+C. Getting started in IDL
+
+To get a list of what procedures are available, type
+
+     doc_list,proj='rosat'    
+
+or  
+
+     doc_list,proj='idlaul'
+
+You will then get a list of topics for either Rosat specific procedures, or
+for more general procedures in the IDL Astronomical Users' Library (put
+together by Wayne Landsman, Bill Thompson, and others in Code 681 at GSFC).
+To get a list of procedures useful for a particular topic, type, e.g.,
+
+     doc_list,proj='rosat',topic
+
+where topic is the name of one of the topics, enclosed by single quotes.
+For example, typing 
+
+     doc_list,proj='rosat','fits_3d'
+
+will give a list of procedures useful for reading Rosat 3D FITS files.
+
+To get more information on a particular procedure, type
+
+     doc_library,procedure
+
+where procedure is the name of the procedure, enclosed by single quotes.
+For example, typing 
+
+     doc_library,'tbread'
+
+will give you details about the procedure tbread.
+
+If you have only forgotten the format of the command line for an IDL procedure,
+simply type the name of the procedure with no arguments. The procedure will
+respond by typing the command line, using the following convention
+
+     input variables in lower case (in the order expected)
+     output variables in upper case
+     keywords typed with the = sign (e.g., project=project) at the end
+     optional variables enclosed in square brackets
+
+You can also type 
+
+     help,/routines
+
+to see the command syntax for all procedures and functions which have already
+been compiled.
+
+To exit IDL, simply type
+
+     exit
+
+or
+
+     ctrl Z
+
+Note that when you exit IDL, all of the dynamic memory associated with your
+session will be released. You will lose all variables that you have not
+saved (using the IDL SAVE procedure) or otherwise written out to disk. Of
+course, any disk files that you have created will not be affected.
+

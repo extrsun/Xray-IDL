@@ -1,0 +1,52 @@
+From jam@astro.psu.edu Thu Aug 26 19:53:01 1993
+Date: Thu, 26 Aug 93 21:52:44 EDT
+From: "jeffrey a. mendenhall" <jam@astro.psu.edu>
+To: wqd@vela.Colorado.EDU
+Subject: Re:  exposure maps
+Content-Length: 1283
+
+hi,
+
+here is Steve's scales file.
+
+jeff
+
+
+Hi Jeff,
+    I've seen in the paper how hot it is back east.  It's not nearly so 
+nasty here, as long as you don't mind swimming.  It's my great luck to be
+going out to GSFC next week to start settling in and to house hunt.
+    There is only one more scale factor to go, but here are the rest:
+
+     DET_8_19_C.DAT      13.7951E-5
+     DET_20_41_C.DAT      4.5975E-5
+     DET_42_51_C.DAT      5.9797E-5
+     DET_52_69_C.DAT      4.9065E-5
+     DET_70_90_C.DAT      5.5607E-5
+     DET_91_131_C.DAT     5.3753E-5
+     DET_132_201_C.DAT    5.8466E-5
+     DET_11_19_C.DAT     
+     DET_8_41_C.DAT       7.6664E-5
+     DET_52_90_C.DAT      4.5958E-5
+     DET_91_201_C.DAT     4.7877E-5
+     DET_42_131_C.DAT     4.6530E-5
+     DET_42_201_C.DAT     4.6415E-5
+
+
+     DET_8_19_B.DAT      16.8681E-5
+     DET_20_41_B.DAT      6.8581E-5
+     DET_42_51_B.DAT      6.3094E-5
+     DET_52_69_B.DAT      5.1019E-5
+     DET_70_90_B.DAT      5.1628E-5
+     DET_91_131_B.DAT     5.0908E-5
+     DET_132_201_B.DAT    5.5935E-5
+     DET_11_19_B.DAT     17.7733E-5
+     DET_8_41_B.DAT       9.1572E-5
+     DET_52_90_B.DAT      4.7012E-5
+     DET_91_201_B.DAT     4.8574E-
+     DET_42_131_B.DAT     4.6476E-5
+     DET_42_201_B.DAT     4.4918E-5
+
+Cheers,
+    Steve
+

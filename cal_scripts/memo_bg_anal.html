@@ -1,0 +1,347 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+  <meta content="text/html; charset=ISO-8859-1"
+ http-equiv="content-type">
+  <title>memo_bg_anal</title>
+</head>
+<body>
+<div style="text-align: center;"><span style="font-weight: bold;">Memon
+on the extraction and analysis of the diffuse X-ray background</span><br>
+</div>
+<br>
+;example is shown for the Baades's window observation bw/3780/spec<br>
+<br>
+Following memo_spec_d to define the variables and then do the following:<br>
+<br>
+;select the overall background regions (excluding edges and ccd gap
+regions)<br>
+;and save the regions to total.reg <br>
+<br>
+;first select the diffuse events in the obs<br>
+dmcopy "${eventfile}[grade=0,2,3,4,6][ccd_id=$ccd_id][sky
+=region(total.reg)]" ${event_root}_s.fits clobber=yes<br>
+set reg_s=../sou/${event_root}_map70BSH_hr.reg<br>
+<br>
+;then select the events in the corresponding partcile or blank-sky
+background file<br>
+dmcopy
+"../xdata/b${event_root}.fits[grade=0,2,3,4,6][ccd_id=$ccd_id][sky
+=region(total.reg)]" b${event_root}_s.fits clobber=yes<br>
+<br>
+;get the accumulated source spectrum:<br>
+punlearn acisspec<br>
+pset acisspec soufile1="${eventfile}[sky=region($reg_s)]"<br>
+pset acisspec root=$spec_root<br>
+pset acisspec mode=h<br>
+pset acisspec clobber = yes<br>
+acisspec verbose=2 <br>
+<br>
+#on-source blank-sky background spectrum <br>
+punlearn dmextract<br>
+pset dmextract infile="b${event_root}_s.fits[sky =region($reg_s)][bin
+pi=1:1024:1]"<br>
+pset dmextract outfile=b${spec_root}_s.pi<br>
+pset dmextract opt=pha1<br>
+pset dmextract clobber=yes<br>
+pset dmextract mode=h<br>
+dmextract<br>
+;---------------------------<br>
+; get diffuse X-ray events and spectrum excluding sources<br>
+; if rmf and arf are not required <br>
+<br>
+#get the background spectrum with arf and rmf <br>
+punlearn dmextract<br>
+pset dmextract infile="${eventfile}[exclude sky =region($reg_s)]"<br>
+pset dmextract outfile=${spec_root}_b.pi<br>
+pset dmextract opt=pha1<br>
+pset dmextract clobber=yes<br>
+pset dmextract mode=h<br>
+dmextract<br>
+<br>
+;otherwise:<br>
+;acisspec does not allow for exclude<br>
+set eventfile=${event_root}_s.fits<br>
+dmcopy "${eventfile}[exclude sky =region($source_reg)]"
+${event_root}_sd.fits clobber=yes<br>
+set eventfile=${event_root}_sd.fits<br>
+<br>
+punlearn acisspec<br>
+pset acisspec soufile1="${eventfile}"<br>
+pset acisspec root=${spec_root}_b<br>
+pset acisspec mode=h<br>
+pset acisspec clobber = yes<br>
+acisspec verbose=2 <br>
+;--------------------------<br>
+#get th blank-skye background spectrum with arf and rmf<br>
+punlearn dmextract<br>
+pset dmextract infile="b${eventfile}[exclude sky =region($reg_s)]"<br>
+pset dmextract outfile=b${spec_root}_b.pi<br>
+pset dmextract opt=pha1<br>
+pset dmextract clobber=yes<br>
+pset dmextract mode=h<br>
+dmextract<br>
+<br>
+;normalize the blank-sky backgorund spectrum:<br>
+spec_root='cluster'<br>
+bs_norm,spec_root+'_b_sou.pi','b'+spec_root+'_b_sou.pi',spec_root+'_b_sou.wrmf',bexpt,cbg,bbg,glo,ghi,eflo=[10.],efhi=[12.],psfile='spec_comp.ps',fnorm=fnorm<br>
+before norm:&nbsp; chi2,dof, and sigma
+=&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+227.91940&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+137&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 5.4926418<br>
+after norm: chi2,dof, and sigma
+=&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+164.69873&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+137&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 1.6733415<br>
+bexpt and fnorm =&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+550000.00&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 1.0587380<br>
+The normalized exposure for the background
+is&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 519486.41<br>
+<br>
+;get the group file for the diffuse background:<br>
+sp_group,spec_root+'_b_sou.pi','b'+spec_root+'_b_sou.pi',ctonth=2,fout=spec_root+'_b_sou_g.grp'<br>
+<br>
+;group the diffuse background spectrum:<br>
+phapha cluster_b_sou.pi cluster_b_sou_g.pi<br>
+group cluster_b_sou_g.grp<br>
+chkey backfile bcluster_b_sou.pi<br>
+chkey resp cluster_b_sou.wrmf<br>
+chkey anc cluster_b_sou.warf<br>
+;===========================================================================<br>
+;example in XSPEC:<br>
+<br>
+&nbsp;Current data file : cluster_b_sou_g.pi<br>
+&nbsp;&nbsp; with integration time&nbsp;&nbsp;&nbsp; 9.6409E+04<br>
+&nbsp; Background file : bcluster_b_sou.pi<br>
+&nbsp;&nbsp; with integration time&nbsp;&nbsp;&nbsp; 5.1949E+05<br>
+&nbsp; No current correction<br>
+&nbsp; Response (RMF) file&nbsp;&nbsp;&nbsp; : cluster_b_sou.wrmf<br>
+&nbsp; Auxiliary (ARF) file&nbsp;&nbsp;&nbsp; : cluster_b_sou.warf<br>
+&nbsp;Weighting method is standard<br>
+&nbsp; Noticed channels&nbsp;&nbsp;&nbsp; 72 to&nbsp;&nbsp; 171<br>
+&nbsp; File observed count rate&nbsp;&nbsp;&nbsp;
+8.1531E-02+/-3.77894E-03 cts/s(&nbsp; 8.1% total<br>
+&nbsp; Source file counts :&nbsp;&nbsp; 9.6770E+04<br>
+&nbsp; Model predicted rate :&nbsp;&nbsp; 0.7678E-01<br>
+<br>
+&nbsp; Model:&nbsp; ( mekal&lt;1&gt; + mekal&lt;2&gt; )wabs&lt;3&gt;<br>
+&nbsp;
+---------------------------------------------------------------------------<br>
+&nbsp;
+---------------------------------------------------------------------------<br>
+&nbsp; Model:&nbsp; ( mekal&lt;1&gt; + mekal&lt;2&gt; )wabs&lt;3&gt;<br>
+&nbsp; Model Fit Model Component&nbsp; Parameter&nbsp;
+Unit&nbsp;&nbsp;&nbsp;&nbsp; Value<br>
+&nbsp; par&nbsp;&nbsp; par comp<br>
+&nbsp;&nbsp;&nbsp; 1&nbsp;&nbsp;&nbsp; 1&nbsp;&nbsp;&nbsp;
+1&nbsp;&nbsp; mekal&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+kT&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+keV&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+0.490456&nbsp;&nbsp;&nbsp;&nbsp; +/-&nbsp; 0.880169E-01<br>
+&nbsp;&nbsp;&nbsp; 2&nbsp;&nbsp;&nbsp; 2&nbsp;&nbsp;&nbsp;
+1&nbsp;&nbsp; mekal&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+nH&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+cm-3&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+1.00000&nbsp;&nbsp;&nbsp;&nbsp; frozen<br>
+&nbsp;&nbsp;&nbsp; 3&nbsp;&nbsp;&nbsp; 3&nbsp;&nbsp;&nbsp;
+1&nbsp;&nbsp; mekal&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+Abundanc&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+1.00000&nbsp;&nbsp;&nbsp;&nbsp; frozen<br>
+&nbsp;&nbsp;&nbsp; 4&nbsp;&nbsp;&nbsp; 4&nbsp;&nbsp;&nbsp;
+1&nbsp;&nbsp; mekal&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+Redshift&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+0.00000&nbsp;&nbsp;&nbsp;&nbsp; frozen<br>
+&nbsp;&nbsp;&nbsp; 5&nbsp;&nbsp;&nbsp; 5&nbsp;&nbsp;&nbsp;
+1&nbsp;&nbsp; mekal&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+Switch&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+1.00000&nbsp;&nbsp;&nbsp;&nbsp; frozen<br>
+&nbsp;&nbsp;&nbsp; 6&nbsp;&nbsp;&nbsp; 6&nbsp;&nbsp;&nbsp;
+1&nbsp;&nbsp; mekal&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+norm&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+2.467358E-03 +/-&nbsp; 0.260465E-02<br>
+&nbsp;&nbsp;&nbsp; 7&nbsp;&nbsp;&nbsp; 8&nbsp;&nbsp;&nbsp;
+2&nbsp;&nbsp; mekal&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+kT&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+keV&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+3.43976&nbsp;&nbsp;&nbsp;&nbsp; +/-&nbsp; 0.846693<br>
+&nbsp;&nbsp;&nbsp; 8&nbsp;&nbsp;&nbsp; 9&nbsp;&nbsp;&nbsp;
+2&nbsp;&nbsp; mekal&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+nH&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+cm-3&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+1.00000&nbsp;&nbsp;&nbsp;&nbsp; frozen<br>
+&nbsp;&nbsp;&nbsp; 9&nbsp;&nbsp; 10&nbsp;&nbsp;&nbsp; 2&nbsp;&nbsp;
+mekal&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+Abundanc&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+1.00000&nbsp;&nbsp;&nbsp;&nbsp; frozen<br>
+&nbsp;&nbsp; 10&nbsp;&nbsp; 11&nbsp;&nbsp;&nbsp; 2&nbsp;&nbsp;
+mekal&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+Redshift&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+0.00000&nbsp;&nbsp;&nbsp;&nbsp; frozen<br>
+&nbsp;&nbsp; 11&nbsp;&nbsp; 12&nbsp;&nbsp;&nbsp; 2&nbsp;&nbsp;
+mekal&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+Switch&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+1.00000&nbsp;&nbsp;&nbsp;&nbsp; frozen<br>
+&nbsp;&nbsp; 12&nbsp;&nbsp; 13&nbsp;&nbsp;&nbsp; 2&nbsp;&nbsp;
+mekal&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+norm&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+8.763039E-04 +/-&nbsp; 0.274462E-03<br>
+&nbsp;&nbsp; 13&nbsp;&nbsp;&nbsp; 7&nbsp;&nbsp;&nbsp; 3&nbsp;&nbsp;
+wabs&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+nH&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 10^22&nbsp;&nbsp;&nbsp;&nbsp;
+0.244280&nbsp;&nbsp;&nbsp;&nbsp; +/-&nbsp; 0.344160<br>
+&nbsp;
+---------------------------------------------------------------------------<br>
+&nbsp;
+---------------------------------------------------------------------------<br>
+&nbsp;Chi-Squared =&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+75.53545&nbsp;&nbsp;&nbsp;&nbsp; using&nbsp;&nbsp; 100 PHA bins.<br>
+&nbsp;Reduced chi-squared =&nbsp;&nbsp;&nbsp;&nbsp;
+0.7951100&nbsp;&nbsp;&nbsp;&nbsp; for&nbsp;&nbsp;&nbsp;&nbsp; 95
+degrees of freedom<br>
+&nbsp;Null hypothesis probability = 0.930<br>
+&nbsp; 7&nbsp;&nbsp;&nbsp;&nbsp;
+2.47230&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+6.06020&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; (&nbsp;&nbsp;
+-0.967459&nbsp;&nbsp;&nbsp; ,&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+2.62045&nbsp;&nbsp;&nbsp; )<br>
+&nbsp;&nbsp;&nbsp;&nbsp; 1&nbsp;&nbsp;&nbsp;
+0.369091&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+0.701406&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; (&nbsp;&nbsp;
+-0.121365&nbsp;&nbsp;&nbsp; ,&nbsp;&nbsp;&nbsp;&nbsp;
+0.210950&nbsp;&nbsp;&nbsp; )<br>
+---------------------------------------------------------------------------<br>
+&nbsp; Model:&nbsp; ( cemekl&lt;1&gt; + mekal&lt;2&gt; )wabs&lt;3&gt;<br>
+&nbsp; Model Fit Model Component&nbsp; Parameter&nbsp;
+Unit&nbsp;&nbsp;&nbsp;&nbsp; Value<br>
+&nbsp; par&nbsp;&nbsp; par comp<br>
+&nbsp;&nbsp;&nbsp; 1&nbsp;&nbsp;&nbsp; 8&nbsp;&nbsp;&nbsp;
+1&nbsp;&nbsp; cemekl&nbsp;&nbsp;&nbsp;&nbsp;
+alpha&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+1.023250E-02 +/-&nbsp;&nbsp; 2.03285<br>
+&nbsp;&nbsp;&nbsp; 2&nbsp;&nbsp;&nbsp; 9&nbsp;&nbsp;&nbsp;
+1&nbsp;&nbsp; cemekl&nbsp;&nbsp;&nbsp;&nbsp;
+Tmax&nbsp;&nbsp;&nbsp;&nbsp; keV&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+0.894231&nbsp;&nbsp;&nbsp;&nbsp; +/-&nbsp; 0.165223<br>
+&nbsp;&nbsp;&nbsp; 3&nbsp;&nbsp; 10&nbsp;&nbsp;&nbsp; 1&nbsp;&nbsp;
+cemekl&nbsp;&nbsp;&nbsp;&nbsp; nH&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+cm^-3&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 1.00000&nbsp;&nbsp;&nbsp;&nbsp;
+frozen<br>
+&nbsp;&nbsp;&nbsp; 4&nbsp;&nbsp; 11&nbsp;&nbsp;&nbsp; 1&nbsp;&nbsp;
+cemekl&nbsp;&nbsp;&nbsp;&nbsp;
+abundanc&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+0.257813&nbsp;&nbsp;&nbsp;&nbsp; +/-&nbsp; 0.463858E-01<br>
+&nbsp;&nbsp;&nbsp; 5&nbsp;&nbsp; 12&nbsp;&nbsp;&nbsp; 1&nbsp;&nbsp;
+cemekl&nbsp;&nbsp;&nbsp;&nbsp;
+redshift&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+0.00000&nbsp;&nbsp;&nbsp;&nbsp; frozen<br>
+&nbsp;&nbsp;&nbsp; 6&nbsp;&nbsp; 13&nbsp;&nbsp;&nbsp; 1&nbsp;&nbsp;
+cemekl&nbsp;&nbsp;&nbsp;&nbsp;
+switch&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+1.00000&nbsp;&nbsp;&nbsp;&nbsp; frozen<br>
+&nbsp;&nbsp;&nbsp; 7&nbsp;&nbsp; 14&nbsp;&nbsp;&nbsp; 1&nbsp;&nbsp;
+cemekl&nbsp;&nbsp;&nbsp;&nbsp;
+norm&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+1.482045E-02 +/-&nbsp; 0.858700E-02<br>
+&nbsp;&nbsp;&nbsp; 8&nbsp;&nbsp;&nbsp; 2&nbsp;&nbsp;&nbsp;
+2&nbsp;&nbsp; mekal&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+kT&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+keV&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+79.9000&nbsp;&nbsp;&nbsp;&nbsp; +/-&nbsp;&nbsp; 770.984<br>
+&nbsp;&nbsp;&nbsp; 9&nbsp;&nbsp;&nbsp; 3&nbsp;&nbsp;&nbsp;
+2&nbsp;&nbsp; mekal&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+nH&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+cm-3&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+1.00000&nbsp;&nbsp;&nbsp;&nbsp; frozen<br>
+&nbsp;&nbsp; 10&nbsp;&nbsp;&nbsp; 4&nbsp;&nbsp;&nbsp; 2&nbsp;&nbsp;
+mekal&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+Abundanc&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+1.00000&nbsp;&nbsp;&nbsp;&nbsp; frozen<br>
+&nbsp;&nbsp; 11&nbsp;&nbsp;&nbsp; 5&nbsp;&nbsp;&nbsp; 2&nbsp;&nbsp;
+mekal&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+Redshift&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+0.00000&nbsp;&nbsp;&nbsp;&nbsp; frozen<br>
+&nbsp;&nbsp; 12&nbsp;&nbsp;&nbsp; 6&nbsp;&nbsp;&nbsp; 2&nbsp;&nbsp;
+mekal&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+Switch&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+1.00000&nbsp;&nbsp;&nbsp;&nbsp; frozen<br>
+&nbsp;&nbsp; 13&nbsp;&nbsp;&nbsp; 7&nbsp;&nbsp;&nbsp; 2&nbsp;&nbsp;
+mekal&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+norm&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+5.629600E-04 +/-&nbsp; 0.983459E-03<br>
+&nbsp;&nbsp; 14&nbsp;&nbsp;&nbsp; 1&nbsp;&nbsp;&nbsp; 3&nbsp;&nbsp;
+wabs&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+nH&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 10^22&nbsp;&nbsp;&nbsp;&nbsp;
+0.357095&nbsp;&nbsp;&nbsp;&nbsp; +/-&nbsp; 0.570084E-01<br>
+&nbsp;
+---------------------------------------------------------------------------<br>
+&nbsp;
+---------------------------------------------------------------------------<br>
+&nbsp;Chi-Squared =&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+108.2812&nbsp;&nbsp;&nbsp;&nbsp; using&nbsp;&nbsp; 135 PHA bins.<br>
+&nbsp;Reduced chi-squared =&nbsp;&nbsp;&nbsp;&nbsp;
+0.8459468&nbsp;&nbsp;&nbsp;&nbsp; for&nbsp;&nbsp;&nbsp; 128 degrees of
+freedom<br>
+&nbsp;Null hypothesis probability = 0.896<br>
+&nbsp;&nbsp;&nbsp;&nbsp; 2&nbsp;&nbsp;&nbsp;
+0.724665&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+0.974408&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; (&nbsp;&nbsp;
+-0.169566&nbsp;&nbsp;&nbsp; ,&nbsp;&nbsp;&nbsp;&nbsp; 8.017695E-02)<br>
+&nbsp;---------------------------------------------------------------------------<br>
+&nbsp; Model:&nbsp; ( cemekl&lt;1&gt; + powerlaw&lt;2&gt; )wabs&lt;3&gt;<br>
+&nbsp; Model Fit Model Component&nbsp; Parameter&nbsp;
+Unit&nbsp;&nbsp;&nbsp;&nbsp; Value<br>
+&nbsp; par&nbsp;&nbsp; par comp<br>
+&nbsp;&nbsp;&nbsp; 1&nbsp;&nbsp;&nbsp; 2&nbsp;&nbsp;&nbsp;
+1&nbsp;&nbsp; cemekl&nbsp;&nbsp;&nbsp;&nbsp;
+alpha&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+0.559979&nbsp;&nbsp;&nbsp;&nbsp; +/-&nbsp; 0.949358<br>
+&nbsp;&nbsp;&nbsp; 2&nbsp;&nbsp;&nbsp; 3&nbsp;&nbsp;&nbsp;
+1&nbsp;&nbsp; cemekl&nbsp;&nbsp;&nbsp;&nbsp;
+Tmax&nbsp;&nbsp;&nbsp;&nbsp; keV&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+0.845785&nbsp;&nbsp;&nbsp;&nbsp; +/-&nbsp; 0.102666<br>
+&nbsp;&nbsp;&nbsp; 3&nbsp;&nbsp;&nbsp; 4&nbsp;&nbsp;&nbsp;
+1&nbsp;&nbsp; cemekl&nbsp;&nbsp;&nbsp;&nbsp;
+nH&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+cm^-3&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 1.00000&nbsp;&nbsp;&nbsp;&nbsp;
+frozen<br>
+&nbsp;&nbsp;&nbsp; 4&nbsp;&nbsp;&nbsp; 5&nbsp;&nbsp;&nbsp;
+1&nbsp;&nbsp; cemekl&nbsp;&nbsp;&nbsp;&nbsp;
+abundanc&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+0.525656&nbsp;&nbsp;&nbsp;&nbsp; +/-&nbsp; 0.146645<br>
+&nbsp;&nbsp;&nbsp; 5&nbsp;&nbsp;&nbsp; 6&nbsp;&nbsp;&nbsp;
+1&nbsp;&nbsp; cemekl&nbsp;&nbsp;&nbsp;&nbsp;
+redshift&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+0.00000&nbsp;&nbsp;&nbsp;&nbsp; frozen<br>
+&nbsp;&nbsp;&nbsp; 6&nbsp;&nbsp;&nbsp; 7&nbsp;&nbsp;&nbsp;
+1&nbsp;&nbsp; cemekl&nbsp;&nbsp;&nbsp;&nbsp;
+switch&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+1.00000&nbsp;&nbsp;&nbsp;&nbsp; frozen<br>
+&nbsp;&nbsp;&nbsp; 7&nbsp;&nbsp;&nbsp; 8&nbsp;&nbsp;&nbsp;
+1&nbsp;&nbsp; cemekl&nbsp;&nbsp;&nbsp;&nbsp;
+norm&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+1.069190E-02 +/-&nbsp; 0.392984E-02<br>
+&nbsp;&nbsp;&nbsp; 8&nbsp;&nbsp;&nbsp; 9&nbsp;&nbsp;&nbsp;
+2&nbsp;&nbsp; powerlaw&nbsp;&nbsp;
+PhoIndex&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+2.00000&nbsp;&nbsp;&nbsp;&nbsp; frozen<br>
+&nbsp;&nbsp;&nbsp; 9&nbsp;&nbsp; 10&nbsp;&nbsp;&nbsp; 2&nbsp;&nbsp;
+powerlaw&nbsp;&nbsp;
+norm&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+2.408319E-04 +/-&nbsp; 0.537052E-04<br>
+&nbsp;&nbsp; 10&nbsp;&nbsp;&nbsp; 1&nbsp;&nbsp;&nbsp; 3&nbsp;&nbsp;
+wabs&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+nH&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 10^22&nbsp;&nbsp;&nbsp;&nbsp;
+0.367512&nbsp;&nbsp;&nbsp;&nbsp; +/-&nbsp; 0.503155E-01<br>
+&nbsp;
+---------------------------------------------------------------------------<br>
+&nbsp;
+---------------------------------------------------------------------------<br>
+&nbsp;Chi-Squared =&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+117.0241&nbsp;&nbsp;&nbsp;&nbsp; using&nbsp;&nbsp; 134 PHA bins.<br>
+&nbsp;Reduced chi-squared =&nbsp;&nbsp;&nbsp;&nbsp;
+0.9142510&nbsp;&nbsp;&nbsp;&nbsp; for&nbsp;&nbsp;&nbsp; 128 degrees of
+freedom<br>
+&nbsp;Null hypothesis probability = 0.747<br>
+<br>
+</body>
+</html>

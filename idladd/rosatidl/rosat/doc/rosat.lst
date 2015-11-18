@@ -1,0 +1,22 @@
+
+  "CAL"  (for ROSAT calibration and info in other auxiliary FITS files)
+
+  "DATA" (procedures related to dealing with data - eg, input, filtering)
+
+  "EMAP"  (for procedures related to exposure maps)
+
+  "FITS_3D" (for ROSAT FITS file I/O)
+
+  "FITS_AUL" (for additional useful FITS file I/O procedures from the Astronomy
+              Users' Library)
+
+  "MISC"  (for miscellaneous useful procedures)
+
+  "ORB"  (for ROSAT orbital data)
+
+  "SPAT" (for spatial analysis)
+
+  "SPEC" (for spectral analysis)  
+
+  "TIM"  (for timing analysis)
+

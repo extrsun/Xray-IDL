@@ -1,0 +1,51 @@
+pro merge_s,cra,cdec,sra,sdec,text,psffile=psfile,radius=radius $
+,sfrac=sfrac,sradius=sradius,dis=dis,ston=ston,dfac=dfac,rfix=rfix
+
+; get a rough estimate of error circle for each source
+trans_dist,cra,cdec,sra,sdec,xp,yp,/deg
+dis=sqrt(xp*xp+yp*yp)*(!size_pixel/60.)
+if n_elements(radius) ne 0 then begin ;any vectors passed on later need to be
+	sel=where(dis le radius)	; included here!!!!
+	text=text(sel)
+	sra=sra(sel)
+	sdec=sdec(sel)
+	ston=ston(sel)
+	dis=dis(sel)
+endif
+if n_elements(rfix) ne 0 then begin
+	rs=dis*0.+rfix 
+endif else begin
+	psf_params,dis,rs,perclimit=sfrac,psffile=psffile
+	if n_elements(dfac) ne 0 then rs=dfac*rs
+endelse
+srs=rs^2
+if n_elements(sradius) ne 0 then sr=sradius^2
+; exclude duplicate sources
+ns=n_elements(sra)
+rsel=intarr(ns)
+kk=0
+for k=ns-1,1,-1 do begin 
+	;assuming that data quality decreases with k
+	trans_dist,sra(k),sdec(k),sra(0:k-1),sdec(0:k-1),px,py,/deg
+	sep=(px^2+py^2)
+	seperr=srs(0:k-1)+srs(k)
+	if n_elements(sradius) ne 0 then seperr=seperr > sr
+;	sel= where((sep lt seperr) and (ston(0:k-1) ge ston(k)), nsel) 
+	sel= where((sep lt seperr), nsel) 
+	if nsel ne 0 then begin
+		kk=kk+1
+		str=text(k)
+		aa=gettok(str,'|')
+		text(k)=strtrim(kk,2)+' | '+str
+		printf,un1,text(k)
+		print,text(k)
+		print,sqrt(sep(sel)),sqrt(seperr(sel))
+		printf,text(sel)
+		rsel(k)=1
+		;sra,text, and dis are to be used in source_merge
+	endif
+endfor
+sel=where(rsel eq 1,nsel)
+if nsel ne 0 then remove,sel,text,sra,sdec,dis,ston 
+return
+end

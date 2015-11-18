@@ -1,0 +1,44 @@
+03 October 1993
+
+ Setting up your system to run IDL using the ROSAT library routines:
+
+ I. Unix
+   1. Set the following environmental variables in your .login file (The
+      text following the capital letters are examples for the GSFC system
+      only.  You the user must supply directory pointers appropriate for
+      your system.).
+
+      source /usr1/source/idl/lib/com/.idlrc
+
+   2. Start IDL.
+
+ II. VMS
+   1. Define system logicals IDL_PATH, ZDOC, ZDEF, and ZAUX for your
+      system's appropriate directories.
+      
+      @idl:[lib.com]idldef
+
+   2. Start IDL
+
+III. Don't forget the IDL Astronomical Users' Library:
+
+          The procedures in the Rosat IDL library rely heavily on the IDL
+     Astronomical Users' Library developed by Wayne Landsman, Frank Varosi, 
+     and others in Code 681 at NASA/GSFC. GOs wishing to use the Rosat IDL 
+     library at their home institution should first obtain the Astronomical 
+     Users' Library. Please be sure that you have the latest versions of the 
+     procedures which handle Rosat binary FITS extensions. For instructions 
+     on how to obtain the Users' Library, contact Wayne Landsman 
+     (STARS::LANDSMAN, LANDSMAN@STARS.GSFC.NASA.GOV).
+
+          Be sure that the definition of your IDL_PATH variable also includes
+     the directories in which you store the procedure files (*.pro) for the 
+     IDL Users' Library. 
+
+
+ For help:  
+   Gail Reichert, NASA-GSFC
+     Phone:  301.286.5307
+     E-mail:  heasrc::reichert (DECnet)
+              reichert@heasrc.gsfc.nasa.gov
+

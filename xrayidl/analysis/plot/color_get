@@ -1,0 +1,6 @@
+pro color_old,or_curr,og_curr,ob_curr,r_curr,g_curr,b_curr
+common colors,r_orig,g_orig,b_orig,r_curr,g_curr,b_curr
+r_curro=r_curr
+g_curr=og_curr
+b_curr=ob_curr
+end

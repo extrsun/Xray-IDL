@@ -1,0 +1,78 @@
+#!/bin/sh
+#============================================================================
+# cal_main.e 
+version=0.0
+echo "cal_main.e $version: " $version 
+#============================================================================
+# Main calibration script for an ACIS observation, combining three 
+# separate scripts:
+# 1. evt1to2.e  (will not run if proc=evt2)
+# 2. post_evt2.e
+# 3. make_expmap.e
+#
+#*Requirements:
+# 1) a source regional file (source.reg) has been saved in the ciao format and
+#	 in the current directory
+#
+#*Inputs:
+#  $1 == ROOT name of the evt2 events file (e.g., acisf02025N001_evt2)
+#  $2 == instrument choice (i.e., aciss, acisi, acisi_low; def = aciss)
+#  $3 == processing choice:
+#	evt1 - from evt1 to evt2 (def)
+#	evt2: just modify evt2
+#	cti - use the cti-corrected (*evt1.no_cti.fits) event file (existing in
+#	current directory)
+# 
+#*Example: 
+# cal_main.e acisf02025N001_evt2 > cal_test.log &
+# tail cal_test.log
+#
+# wqd, July 4, 2002
+#============================================================================
+#basic check for the existence of the directory:
+if [ -d $MAINDIR/primary ] ; then 
+	 echo $MAINDIR/primary "is found"
+else
+	 echo $MAINDIR/primary "does not exist!"
+	 exit -1
+fi
+
+if [ "$1" = "" ] ; then
+	echo "A file root name (e.g., acisf01972N001_evt2) is needed!"
+	echo "other optional inputs: instr and proc"
+	exit -1
+else
+	events_root=$1
+fi
+
+if [ "$2" = "" ]
+then
+	instr=aciss
+	echo "Assuming $instr data!"
+else 
+	instr=$2
+fi
+
+if [ "$3" = "" ]
+then
+	proc=evt1
+	echo "default evt1 is assumed!"
+else 
+	proc=$2
+fi
+if [ "$proc" != "evt2" ] ; then
+	$PUBDIR/cal_scripts/evt1to2.e $events_root
+	echo "evt1to2.e ends!"
+else
+	echo "Use the offset-corrected existing evt2 file!"
+	mv aspcorr_evt2.fits ${events_root}_new.fits
+fi
+ 
+post_evt2.e ${events_root}_new $instr
+echo "post_evt2.e ends!"
+
+echo "creating expmap"
+make_expmap.e $instr ${events_root}_new_clean pcad_asol1.lis
+echo "cal_main is done!"
+
+rm _*

@@ -1,0 +1,166 @@
+cd 2292 | mkdir cal | cd cal
+cd 2293 | mkdir cal | cd cal
+cd 2294 | mkdir cal | cd cal
+cd 2295	 | mkdir cal | cd cal
+cd 2296 | mkdir cal | cd cal
+set events_root=evt2file
+setenv MAINDIR ..
+set proc=evt1
+set instr=acisi
+set chvf=no
+
+find $MAINDIR -name '*bpix1.fits.gz' -exec gunzip {} \;
+find $MAINDIR -name 'pcadf*_asol1.fits.gz' -exec gunzip {} \;
+find $MAINDIR -name '*evt2.fits.gz' -exec gunzip {} \;
+
+find $MAINDIR -name '*bpix1.fits' -exec ln -s {} bpixfile.fits \;
+find $MAINDIR -name 'pcadf*_asol1.fits' -exec sh -c 'ls {} > asol_file' \;
+find $MAINDIR -name '*evt2.fits' -exec ln -s {} ${events_root}.fits \;
+ls -ltr bpixfile.fits evt2file.fits
+more asol_file
+find $MAINDIR -name '*flt*.fits.gz' -exec gunzip {} \;
+find $MAINDIR -name '*flt*' -exec ln -s {} fltfile.fits \;
+find $MAINDIR -name '*evt1*.fits.gz' -exec gunzip {} \;
+find $MAINDIR -name '*evt1*' -exec ln -s {} evt1file.fits \;
+ls -ltr fltfile.fits evt1file.fits
+cp evt1file.fits aspcorr_evt2.fits
+$PUBDIR/cal_scripts/pre_cal.e $proc
+$PUBDIR/cal_scripts/cal_main.e $events_root $instr $proc $chvf > cal_main.log &
+
+;=============
+setenv MAINDIR ..
+set events_root=evt2file
+set proc=evt1
+set instr=acisi_low
+set chvf=no
+
+#at the level of the directory gcs, unpack all the observations:
+find $MAINDIR -name '*bpix1.fits.gz' -exec gunzip {} \;
+find $MAINDIR -name 'pcadf*_asol1.fits.gz' -exec gunzip {} \;
+find $MAINDIR -name '*flt*.fits.gz' -exec gunzip {} \;
+find $MAINDIR -name '*evt2.fits.gz' -exec gunzip {} \;
+find $MAINDIR -name '*evt1*.fits.gz' -exec gunzip {} \;
+
+
+mkdir cal 
+cd cal
+
+find $MAINDIR -name '*bpix1.fits' -exec ln -s {} bpixfile.fits \;
+find $MAINDIR -name 'pcadf*_asol1.fits' -exec sh -c 'ls {} > asol_file' \;
+more asol_file
+find $MAINDIR -name '*flt*' -exec ln -s {} fltfile.fits \;
+find $MAINDIR -name '*evt2.fits' -exec ln -s {} ${events_root}.fits \;
+#directly corrrect the evt1 file astrometry (pre_cal.e is not used)
+find $MAINDIR -name '*evt1*' -exec ln -s {}  aspcorr_evt2.fits \;
+ls -ltr fltfile.fits aspcorr_evt2.fits
+ln -s ../source.reg source.reg
+
+chmod +w aspcorr_evt2.fits
+echo "Copy the output into the website: http://asc.harvard.edu/cal/ASPECT/fix_offset/fix_offset.cgi and follow the execution of the instructions on the website."
+echo "After that you are ready for evt1to2.e or post_evt2.e."
+dmlist aspcorr_evt2.fits header,raw,clean | egrep 'TCTYP|TCRVL|ASCDSVER|DATE|OBS_ID'
+
+$PUBDIR/cal_scripts/cal_main.e $events_root $instr $proc $chvf > cal_main.log
+cd ../../
+
+cd 2267
+cd 2268
+cd 2269
+cd 2270
+cd 2271
+cd 2272
+
+cd 2273
+cd 2274
+cd 2275
+cd 2276
+cd 2277
+
+cd 2278
+cd 2279
+cd 2280
+cd 2281
+cd 2282
+
+cd 2283
+cd 2284
+cd 2285
+cd 2286
+cd 2287
+
+cd 2288
+cd 2289
+cd 2290
+cd 2291
+cd 2292
+
+cd 2293
+cd 2294
+cd 2295
+cd 2296
+
+;============================= 
+ "2296 2294 2268 2269 2267 2270 2271 2272 2273 2274 2275 2276 2277 2278 2279 2280 2281 2282 2283 2284 2285 2286 2287 2288 2289 2290 2291 2292 2293 2295"
+
+
+
+
+/d4/gcs/cal_mob.e  "2271 2272 2273 2274 2275 2276 2277 2278 2279 2280 2281 2282 2283 2284 2285 2286 2287 2288 2289 2290 2291 2292 2293 2295"
+
+
+if [info exists env(PATH)] {
+    do something
+} else { do something else
+}
+
+
+mkdir ${MAINDIR}/${band}/xdata
+cd $MAINDIR/${band}/xdata/
+pwd
+#for acisi_low (4-bands)
+
+ln -s ${evtdir}${evtfname}.fits  ${evtfname}.fits
+ln -s ${evtdir}${evtfname}_i1000:2500.fits   ${evtfname}_i1.fits
+ln -s ${evtdir}${evtfname}_i2500:4000.fits   ${evtfname}_i2.fits
+ln -s ${evtdir}${evtfname}_i4000:6000.fits  ${evtfname}_i3.fits
+ln -s ${evtdir}${evtfname}_i6000:9000.fits ${evtfname}_i4.fits
+;=========================================================
+instr='acisi'
+cenvset,instr
+evtroot='evt2file_new_clean'
+evtfname='../xdata/'+evtroot+'.fits'
+file_params,evtfname,imhdr,fra,fdec,expt,nra,ndec,xoff,yoff,roll,hdr=hdr
+evt_image,'../xdata/'+evtroot,'acisi',/noexp,/nofits,list=list,xmin=xmin,ymin=ymin
+loadct_self,18
+;---------------
+soufname='../sou/'+evtroot+'_map70BSH'
+sou_fits_info,soufname,slist,/all,flow=flow
+
+expfname='../xdata/'+evtroot+'_i2.fits'
+outfname=evtroot+'_bdg.fits'
+expfname='../xdata/'+evtroot+'_i2.fits'
+ccdid=3
+roll=roll+90
+bnorm=1.
+fcton=5
+xrange=[100,380] ;streak is in a predefined range
+;xrange=0 ; select only the pixels with fluxes > stonth defined 
+		;in streak_removeal_main
+g3=psf_gaussian(fwhm=3,/norm,npix=121)
+
+x1=0 & x2=1023/block & y1=0 & y2=1023/block
+;x1=178 & x2=298 & y1=0 & y2=511
+emin=1000
+emax=9000
+list_image,list,xmin,ymin,im,512,block=6,emin=emin,emax=emax
+tv,bscale(im,0,3)
+s=where(list.energy gt emin and list.energy le emax and list.ccd_id eq ccdid)
+ls=list(s)
+outfname=evtroot+'_b'+strtrim(emin,2)+':'+strtrim(emax,2)+'.fits'
+.run streak_removal_main
+
+tv,bscale(ccdbim)
+a=convolve(imdiv(ccdim-ccdbim,tbo),g3)
+tv,bscale(a*1.e7,0,2)
+tv,bscale(convolve(im-image_comp(bmap,0.5)*4,g3),0,3)
+;------------------

@@ -1,0 +1,362 @@
+update the arf and rmf files from ftp://legacy.gsfc.nasa.gov/xmm/data/responses/qd/:
+mos1-thin.arf.gz  mos1-thin.rmf.gz  mos2-thin.arf.gz  mos2-thin.rmf.gz  pn-thin.arf.gz  pn-thin.rmf.gz
+
+ ---------------------------------------------------------------------------
+  Model:  ( powerlaw<1> )wabs<2>
+  Model Fit Model Component  Parameter  Unit     Value
+  par   par comp
+    1    1    1   powerlaw   PhoIndex            1.70000     +/-   0.00000
+    2    2    1   powerlaw   norm                1.00000     +/-   0.00000
+    3    3    2   wabs       nH       10^22      1.00000     +/-   0.00000
+  ---------------------------------------------------------------------------
+fake none
+exposure 10000
+
+ig **-0.5 1.0-**
+show
+no 0.5-7.5
+ig **-1.0 2.0-**
+show
+no 0.5-7.5
+ig **-2.0 4.5-**
+show
+no 0.5-7.5
+ig **-4.5 7.5-**
+show
+no 0.5-7.5
+show
+
+0.5_1.0    14.99
+1.0_2.0    184.7
+2.0_4.5    204.0
+4.5_7.5    86.89
+pn=[14.99,184.7,204.0,86.89]
+mos1=[4.036,62.95,76.03,23.87]
+mos2=[3.983,62.67,77.06,25.39]
+IDL> print,mos1/pn
+     0.269246     0.340823     0.372696     0.274715
+IDL> print,mos2/pn
+     0.265710     0.339307     0.377745     0.292209
+==================
+; Model count rate and flux as function of alpha and NH
+; for Chandra ACIS-I
+!instr='epic' ;for IDL
+set instr = 'aciss'
+;set instr = 'epic_pn_medium'
+set instr = 'epic'
+;set instr = 'acisi'
+set fname = $instr'.fak'
+;set fluxlo=1
+;set fluxhi=2.
+set file = 'temp'
+set abund = 1.
+set blow = 0.5
+set bhigh = 2.
+set outfname=$instr'_vp_a1.0e'$blow'_'$bhigh
+
+set tt = 1.00
+./rosat_vpo.sh $blow $bhigh $tt temp$tt $abund  $blow $bhigh $fname
+foreach tt (1.20 1.40 1.60 1.80 2.00 2.20 2.40 2.60 2.80 3.00)
+	./rosat_vp.sh $blow $bhigh $tt temp$tt  $abund  $blow $bhigh $fname
+end
+
+paste temp1.00   temp1.20   temp1.40   temp1.60   temp1.80 temp2.00   temp2.20   temp2.40   temp2.60   temp2.80 temp3.00 > t1
+
+echo 11 96 $blow $bhigh > $outfname
+paste t1 >> $outfname
+;==============================================================================
+----------------------------------
+; R&S plasma with both X-ray-emtting and absorbing gas abundance 
+; of 100% solar 
+;-------------------------------------------------
+set file = 'temp'
+set abund = 1.
+set blow = 0.2
+set bhigh = 0.5
+set outfname=$instr'_vr_a1.0e'$blow'_'$bhigh
+
+set tt = 0.05
+./rosat_vro.sh $blow $bhigh $tt temp$tt $abund $blow $bhigh $fname
+foreach tt (0.06 0.07 0.09 0.11 0.14 0.16 0.20 0.25 0.30 0.37 0.45 0.54 0.66 0.81 0.99 1.20 1.47 1.79 2.19 2.67 3.25 3.97 4.84 5.91 7.21 8.80 10.73 13.09 15.9)
+ ./rosat_vr.sh $blow $bhigh $tt temp$tt  $abund $blow $bhigh $fname
+end
+
+paste temp0.05   temp0.06   temp0.07   temp0.09   temp0.11 temp0.14   temp0.16   temp0.20   temp0.25   temp0.30 > t1
+paste temp0.37   temp0.45   temp0.54   temp0.66   temp0.81 temp0.99   temp1.20   temp1.47   temp1.79   temp2.19 > t2
+paste  temp2.67 temp3.25    temp3.97    temp4.84    temp5.91 temp7.21 temp8.80 temp10.73 temp13.09   temp15.9 > t3
+
+echo 30 96 $blow $bhigh > $outfname
+paste t1 t2 t3 >> $outfname
+
+==========================
+thick=2
+!x.thick=thick
+!y.thick=thick
+!p.thick=thick
+!p.charthick=thick
+!p.charsize=1.5
+;--------------
+Hardness ratio: power law
+read_mcntr,tv,nv,c1,fname=!instr+'_vp_a1.0e_12_1_2',flux=f1
+read_mcntr,tv,nv,c2,fname=!instr+'_vp_a1.0e_24_2_4',flux=f2
+read_mcntr,tv,nv,c3,fname=!instr+'_vp_a1.0e_47_4_7',flux=f3
+;-----------------
+;aciss
+read_mcntr,tv,nv,c1,fname=!instr+'_vr_a1.0e_0.5_1.5',flux=f1
+read_mcntr,tv,nv,c2,fname=!instr+'_vr_a1.0e_1.5_3',flux=f2
+read_mcntr,tv,nv,c3,fname=!instr+'_vr_a1.0e_3_7',flux=f3
+;-------------
+nv=100.*nv
+;---------
+ind=80
+ind=95
+binterp,tv,nv,imdiv(c3-c2,c2+c3),nv*0.+1,nv,hrm2
+plot_oi,nv(0:ind),hrm2(0:ind),yrange=[-1,1],xrange=[1,max(nv(0:ind))],xtitl='!6Column Density (10!e20!n cm!e-2!n)',ytitl='Hardness Ratio'     
+binterp,tv,nv,imdiv(c3-c2,c2+c3),nv*0.+2,nv,hrm2
+oplot,nv(0:ind),hrm2(0:ind)     
+binterp,tv,nv,imdiv(c3-c2,c2+c3),nv*0.+3,nv,hrm2
+oplot,nv(0:ind),hrm2(0:ind)  
+
+binterp,tv,nv,imdiv(c3+c2-c1,c1+c2+c3),nv*0.+1,nv,hrm
+oplot,nv(0:ind),hrm(0:ind),line=2 
+binterp,tv,nv,imdiv(c3+c2-c1,c1+c2+c3),nv*0.+2,nv,hrm
+oplot,nv(0:ind),hrm(0:ind),line=2      
+binterp,tv,nv,imdiv(c3+c2-c1,c1+c2+c3),nv*0.+3,nv,hrm
+oplot,nv(0:ind),hrm(0:ind),line=2   
+xyouts,2,0.8,'(A)',charsize=2
+device,/close
+$gs idl.ps
+;-----------------
+;HR2-HR1:
+binterp,tv,nv,imdiv(c3-c2,c2+c3),nv*0.+1,nv,hrm2
+binterp,tv,nv,imdiv(c3+c2-c1,c1+c2+c3),nv*0.+1,nv,hrm
+plot,hrm,hrm2,yrange=[-1,1],xrange=[-1,1.2],xtitl='!6rdness Ratio 1',ytitl='Hardness Ratio 2'   
+binterp,tv,nv,imdiv(c3-c2,c2+c3),nv*0.+2,nv,hrm2
+binterp,tv,nv,imdiv(c3+c2-c1,c1+c2+c3),nv*0.+2,nv,hrm
+oplot,hrm,hrm2
+binterp,tv,nv,imdiv(c3-c2,c2+c3),nv*0.+3,nv,hrm2
+binterp,tv,nv,imdiv(c3+c2-c1,c1+c2+c3),nv*0.+3,nv,hrm
+oplot,hrm,hrm2
+
+binterp,tv,nv,imdiv(c3-c2,c2+c3),tv,tv*0.+1,hrm2
+binterp,tv,nv,imdiv(c3+c2-c1,c1+c2+c3),tv,tv*0.+1,hrm
+oplot,hrm,hrm2,line=2
+binterp,tv,nv,imdiv(c3-c2,c2+c3),tv,tv*0.+100,hrm2
+binterp,tv,nv,imdiv(c3+c2-c1,c1+c2+c3),tv,tv*0.+100,hrm
+oplot,hrm,hrm2,line=2
+binterp,tv,nv,imdiv(c3-c2,c2+c3),tv,tv*0.+300,hrm2
+binterp,tv,nv,imdiv(c3+c2-c1,c1+c2+c3),tv,tv*0.+300,hrm
+oplot,hrm,hrm2,line=2
+binterp,tv,nv,imdiv(c3-c2,c2+c3),tv,tv*0.+1000,hrm2
+binterp,tv,nv,imdiv(c3+c2-c1,c1+c2+c3),tv,tv*0.+1000,hrm
+oplot,hrm,hrm2,line=2
+device,/close
+$gs idl.ps
+$mv idl.ps hr2_p.ps
+;=============================================================
+; reading the files:
+read_mcntr,tv,nv,c1,fname=!instr+'_vp_a1.0e_12_1_2',flux=f1
+read_mcntr,tv,nv,c2,fname=!instr+'_vp_a1.0e_24_2_4',flux=f2
+read_mcntr,tv,nv,c3,fname=!instr+'_vp_a1.0e_47_4_7',flux=f3
+;-----------------
+;aciss
+read_mcntr,tv,nv,c1,fname=!instr+'_vp_a1.0e_0.5_1.5',flux=f1
+read_mcntr,tv,nv,c2,fname=!instr+'_vp_a1.0e_1.5_3',flux=f2
+read_mcntr,tv,nv,c3,fname=!instr+'_vp_a1.0e_3_7',flux=f3
+;-------------
+nv=100.*nv
+cntr=c1+c2+c3
+f=f1+f2+f3
+;cntr=c3
+;f=f3
+for k=0,n_elements(tv)-1 do cntr(k,*)=f(k)/cntr(k,*)*1.e11
+ind=n_elements(nv)-1
+!p.thick=3
+binterp,tv,nv,cntr,nv*0.+1,nv,conv
+plot_oo,nv(0:ind),conv(0:ind),yrange=[0.1,1000],xrange=[1,10000],xtitl='!6Column Density (10!e20!n cm!e-2!n)',ytitl='Count rate to flux conversion factor' ,sym=1.3,charsize=1.3    
+binterp,tv,nv,cntr,nv*0.+2,nv,conv
+oplot,nv(0:ind),conv(0:ind),lin=1     
+binterp,tv,nv,cntr,nv*0.+3,nv,conv
+oplot,nv(0:ind),conv(0:ind),lin=2 
+;--------------------------
+;acisi
+read_mcntr,tv,nv,c1,fname=!instr+'_vr_a1.0e_12_1_2',flux=f1
+read_mcntr,tv,nv,c2,fname=!instr+'_vr_a1.0e_24_2_4',flux=f2
+read_mcntr,tv,nv,c3,fname=!instr+'_vr_a1.0e_47_4_7',flux=f3
+;-----------------
+;aciss
+read_mcntr,tv,nv,c1,fname=!instr+'_vp_a1.0e_0.5_1.5',flux=f1
+read_mcntr,tv,nv,c2,fname=!instr+'_vp_a1.0e_1.5_3',flux=f2
+read_mcntr,tv,nv,c3,fname=!instr+'_vp_a1.0e_3_7',flux=f3
+;-----------------
+;epic-pn
+read_mcntr,tv,nv,c1,fname=!instr+'_vp_a1.0e_0.5_1.',flux=f1
+read_mcntr,tv,nv,c2,fname=!instr+'_vp_a1.0e_1._2.',flux=f2
+read_mcntr,tv,nv,c3,fname=!instr+'_vp_a1.0e_2._4.5',flux=f3
+;-------------
+nv=nv*100.  
+!p.thick=1
+cntr=c1+c2+c3
+f=f1+f2+f3
+;cntr=c3
+;f=f3
+for k=0,n_elements(tv)-1 do cntr(k,*)=f(k)/cntr(k,*)*1.e11
+ binterp,tv,nv,cntr,nv*0.+0.5,nv,conv
+oplot,nv(0:ind),conv(0:ind),lin=0,thick=1    
+ binterp,tv,nv,cntr,nv*0.+1,nv,conv
+oplot,nv(0:ind),conv(0:ind),lin=1,thick=1  
+ binterp,tv,nv,cntr,nv*0.+2,nv,conv
+oplot,nv(0:ind),conv(0:ind),lin=2,thick=1  
+ binterp,tv,nv,cntr,nv*0.+4,nv,conv
+oplot,nv(0:ind),conv(0:ind),lin=3,thick=1  
+ binterp,tv,nv,cntr,nv*0.+5,nv,conv
+oplot,nv(0:ind),conv(0:ind),lin=4,thick=1  
+device,/close
+$gs idl.ps
+$mv idl.ps cntr_f_4-7.ps
+-------------------------------------------------
+fname='/export/home/wqd/rosatshell/rhri/rhri_vrf_a1.0e_2_10_0.1_2.4'
+fname='/export/home/wqd/rosatshell/rhri/rhri_vrf_a1.0e_2_10_0.5_2'
+read_mcntr,tv,nv,cntr,fname=fname,flux=f
+for k=0,n_elements(tv)-1 do cntr(k,*)=f(k)/cntr(k,*)*1.e11
+vvv
+binterp,tv,nv,cntr,nv*0.+0.1,nv,conv
+plot_oo,nv(0:ind),conv(0:ind),yrange=[2,200],xrange=[0.1,100],xtitl='!6Column Density (10!e20!n cm!e-2!n)',ytitl='RHRI Conversion Ratio',ystyle=1     
+binterp,tv,nv,cntr,nv*0.+0.2,nv,conv
+oplot,nv(0:ind),conv(0:ind),lin=1    
+ binterp,tv,nv,cntr,nv*0.+0.4,nv,conv
+oplot,nv(0:ind),conv(0:ind),lin=2    
+binterp,tv,nv,cntr,nv*0.+1,nv,conv
+oplot,nv(0:ind),conv(0:ind),lin=3
+binterp,tv,nv,cntr,nv*0.+1,nv,conv
+oplot,nv(0:ind),conv(0:ind),lin=4
+xyouts,0.2,100,'Power Law Model',size=1.5
+
+device,/close
+$gs idl.ps
+--------------------------
+Hardness ratio: (raymond model)
+read_mcntr,tv,nv,c1,fname=!instr+'_vr_a1.0e_12_1_2'
+read_mcntr,tv,nv,c2,fname=!instr+'_vr_a1.0e_24_2_4'
+read_mcntr,tv,nv,c3,fname=!instr+'_vr_a1.0e_47_4_7'
+;-----------------
+;aciss
+read_mcntr,tv,nv,c1,fname=!instr+'_vr_a1.0e_0.5_1.5',flux=f1
+read_mcntr,tv,nv,c2,fname=!instr+'_vr_a1.0e_1.5_3',flux=f2
+read_mcntr,tv,nv,c3,fname=!instr+'_vr_a1.0e_3_7',flux=f3
+;-----------------
+;EPIC-PN (hardness plot for thermal plasma)
+read_mcntr,tv,nv,c1,fname=!instr+'_vr_a1.0e0.5_1.',flux=f1
+read_mcntr,tv,nv,c2,fname=!instr+'_vr_a1.0e1._2.',flux=f2
+read_mcntr,tv,nv,c3,fname=!instr+'_vr_a1.0e3_7',flux=f3
+;-------------
+nv=nv*100.  
+;---------
+cdel=c2-c1
+csum=c2+c1
+ind=n_elements(tv)-1
+binterp,tv,nv,imdiv(cdel,csum),tv,tv*0.+0.4,hrm2
+plot_oi,tv(0:ind),hrm2(0:ind),yrange=[-1,1],xrange=[0.05,1.],xtitl='!6Thermal Plasma Temperature (keV)',ytitl='Hardness Ratio' ,xsty=1,thick=2,line=0,charsize=1.5
+binterp,tv,nv,imdiv(cdel,csum),tv,tv*0.+0.2,hrm2
+oplot,tv(0:ind),hrm2(0:ind),thick=2,line=2
+binterp,tv,nv,imdiv(cdel,csum),tv,tv*0.+0.8,hrm2
+oplot,tv(0:ind),hrm2(0:ind),thick=2,line=3 
+binterp,tv,nv,imdiv(cdel,csum),tv,tv*0.+1.6,hrm2
+oplot,tv(0:ind),hrm2(0:ind),thick=2,line=1
+device,/close
+$gv idl.ps &
+;---------
+binterp,tv,nv,imdiv(c3-c2,c2+c3),nv*0.+0.5,nv,hrm2
+plot_oi,nv(0:ind),hrm2(0:ind),yrange=[-1,1],xrange=[1,10000],xtitl='!6Column Density (10!e20!n cm!e-2!n)',ytitl='Hardness Ratio'     
+binterp,tv,nv,imdiv(c3-c2,c2+c3),nv*0.+1,nv,hrm2
+oplot,nv(0:ind),hrm2(0:ind) 
+binterp,tv,nv,imdiv(c3-c2,c2+c3),nv*0.+2.,nv,hrm2
+oplot,nv(0:ind),hrm2(0:ind) 
+binterp,tv,nv,imdiv(c3-c2,c2+c3),nv*0.+4.,nv,hrm2
+oplot,nv(0:ind),hrm2(0:ind)  
+binterp,tv,nv,imdiv(c3-c2,c2+c3),nv*0.+8.,nv,hrm2
+oplot,nv(0:ind),hrm2(0:ind)  
+
+binterp,tv,nv,imdiv(c3+c2-c1,c1+c2+c3),nv*0.+0.5,nv,hrm
+oplot,nv(0:ind),hrm(0:ind),line=2 
+binterp,tv,nv,imdiv(c3+c2-c1,c1+c2+c3),nv*0.+1,nv,hrm
+oplot,nv(0:ind),hrm(0:ind),line=2      
+binterp,tv,nv,imdiv(c3+c2-c1,c1+c2+c3),nv*0.+2,nv,hrm
+oplot,nv(0:ind),hrm(0:ind),line=2  
+binterp,tv,nv,imdiv(c3+c2-c1,c1+c2+c3),nv*0.+4.,nv,hrm
+oplot,nv(0:ind),hrm(0:ind),line=2   
+binterp,tv,nv,imdiv(c3+c2-c1,c1+c2+c3),nv*0.+8.,nv,hrm
+oplot,nv(0:ind),hrm(0:ind),line=2  
+ xyouts,2,0.8,'(B)',charsize=2
+device,/close
+$gs idl.ps
+;-------------
+;Hr1-Hr2:
+binterp,tv,nv,imdiv(c3-c2,c2+c3),nv*0.+1,nv,hrm2
+binterp,tv,nv,imdiv(c3+c2-c1,c1+c2+c3),nv*0.+1,nv,hrm
+plot,hrm,hrm2,yrange=[-1,1],xrange=[-1,1.2],xtitl='!6rdness Ratio 1',ytitl='Hardness Ratio 2'   
+binterp,tv,nv,imdiv(c3-c2,c2+c3),nv*0.+2,nv,hrm2
+binterp,tv,nv,imdiv(c3+c2-c1,c1+c2+c3),nv*0.+2,nv,hrm
+oplot,hrm,hrm2
+binterp,tv,nv,imdiv(c3-c2,c2+c3),nv*0.+4,nv,hrm2
+binterp,tv,nv,imdiv(c3+c2-c1,c1+c2+c3),nv*0.+4,nv,hrm
+oplot,hrm,hrm2
+binterp,tv,nv,imdiv(c3-c2,c2+c3),nv*0.+8,nv,hrm2
+binterp,tv,nv,imdiv(c3+c2-c1,c1+c2+c3),nv*0.+8,nv,hrm
+oplot,hrm,hrm2
+binterp,tv,nv,imdiv(c3-c2,c2+c3),nv*0.+0.5,nv,hrm2
+binterp,tv,nv,imdiv(c3+c2-c1,c1+c2+c3),nv*0.+0.5,nv,hrm
+oplot,hrm,hrm2
+
+binterp,tv,nv,imdiv(c3-c2,c2+c3),tv,tv*0.+1,hrm2
+binterp,tv,nv,imdiv(c3+c2-c1,c1+c2+c3),tv,tv*0.+1,hrm
+oplot,hrm,hrm2,line=2
+binterp,tv,nv,imdiv(c3-c2,c2+c3),tv,tv*0.+100,hrm2
+binterp,tv,nv,imdiv(c3+c2-c1,c1+c2+c3),tv,tv*0.+100,hrm
+oplot,hrm,hrm2,line=2
+binterp,tv,nv,imdiv(c3-c2,c2+c3),tv,tv*0.+300,hrm2
+binterp,tv,nv,imdiv(c3+c2-c1,c1+c2+c3),tv,tv*0.+300,hrm
+oplot,hrm,hrm2,line=2
+binterp,tv,nv,imdiv(c3-c2,c2+c3),tv,tv*0.+1000,hrm2
+binterp,tv,nv,imdiv(c3+c2-c1,c1+c2+c3),tv,tv*0.+1000,hrm
+oplot,hrm,hrm2,line=2
+device,/close
+$gs idl.ps
+
+----------------------------
+ploterr,hr,hr2,hre,hr2e,psym=4,xrang=[-0.5,1.3],yrange=[-0.5,1],xtit='HR',ytit='HR2',xstyle=1
+ xyouts,hr-0.15,hr2+0.03,sn
+
+binterp,tv,nv,imdiv(c3-c2,c2+c3),nv*0.+2,nv,hrm2
+binterp,tv,nv,imdiv(c3+c2-c1,c1+c2+c3),nv*0.+2,nv,hrm
+oplot,hrm(0:ind),hrm2(0:ind) 
+
+binterp,tv,nv,imdiv(c3-c2,c2+c3),nv*0.+1,nv,hrm2
+binterp,tv,nv,imdiv(c3+c2-c1,c1+c2+c3),nv*0.+1,nv,hrm
+oplot,hrm(0:ind),hrm2(0:ind) 
+
+binterp,tv,nv,imdiv(c3-c2,c2+c3),nv*0.+3,nv,hrm2
+binterp,tv,nv,imdiv(c3+c2-c1,c1+c2+c3),nv*0.+3,nv,hrm
+oplot,hrm(0:ind),hrm2(0:ind) 
+
+ind2=19
+tvv=1.+2.*findgen(ind2+1)/(ind2)
+binterp,tv,nv,imdiv(c3-c2,c2+c3),tvv,tvv*0.+0.01,hrm2
+binterp,tv,nv,imdiv(c3+c2-c1,c1+c2+c3),tvv,tvv*0.+0.01,hrm
+oplot,hrm(0:ind2),hrm2(0:ind2) 
+
+binterp,tv,nv,imdiv(c3-c2,c2+c3),tvv,tvv*0.+0.03,hrm2
+binterp,tv,nv,imdiv(c3+c2-c1,c1+c2+c3),tvv,tvv*0.+0.03,hrm
+oplot,hrm(0:ind2),hrm2(0:ind2) 
+
+binterp,tv,nv,imdiv(c3-c2,c2+c3),tvv,tvv*0.+0.05,hrm2
+binterp,tv,nv,imdiv(c3+c2-c1,c1+c2+c3),tvv,tvv*0.+0.05,hrm
+oplot,hrm(0:ind2),hrm2(0:ind2) 
+
+binterp,tv,nv,imdiv(c3-c2,c2+c3),tvv,tvv*0.+0.1,hrm2
+binterp,tv,nv,imdiv(c3+c2-c1,c1+c2+c3),tvv,tvv*0.+0.1,hrm
+oplot,hrm(0:ind2),hrm2(0:ind2) 
+
+oplot,nv(0:ind),hrm(0:ind),line=2 
+oplot,nv(0:ind),hrm(0:ind),line=2      
+binterp,tv,nv,imdiv(c3+c2-c1,c1+c2+c3),nv*0.+3,nv,hrm

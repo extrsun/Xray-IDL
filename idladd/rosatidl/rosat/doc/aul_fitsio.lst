@@ -1,0 +1,55 @@
+
+  FITS IO Procedures from Astronomical Users' Library  (November, 1993)
+    (see [.idlaul.text]fitstape.tex or idlaul/text/fitstape.tex for more 
+     documentation)
+
+    CHECK_FITS  :   Check FITS array IM, and a associated FITS or SDAS header 
+                    HDR, for writing to a FITS file
+    DFITSRD     :   Interactive driver to convert from disk FITS to STSDAS 
+                    format
+    DFITSRD_LARGE : Like DFITSRD but works on large arrays, slower than
+                    DFITSRD but less demanding on virtual memory.  
+    DFITSREAD   :   Convert from disk FITS to STSDAS format.  Called by DFITSRD.
+    DFITSREAD_LARGE : Analogue of DFITSREAD, called by DFITSRD_LARGE.
+    DFITSWRITE  :   Convert from STSDAS format to disk FITS.  Called by 
+                    DFITSWRT.
+    DFITSWRT    :   Interactive driver to convert from STSDAS format to disk 
+                    FITS.
+    FITS2X      :   Read a FITS tape directly into IDL image and header 
+                    variables  (VMS only)
+    FITSBYTE    :   To convert an image array from FITS byte ordering to the 
+                    ordering used by the computer
+    FITSDIR     :   Provide a brief description of the FITS  files on a disk
+    FITSLIST    :   Read FITS files from a tape and display headers (VMS only)
+    FITSRD      :   Interactive driver to read a FITS tape into STSDAS 
+                    (modified FITS) disk format.  (VMS only)
+    FITSRD_LARGE :  Like DFITSRD but works on large arrays, slower than
+                    DFITSRD but less demanding on virtual memory.  
+    FITSREAD    :   Read a FITS tape to STSDAS format.  Called by FITSRD 
+                    (VMS only)
+    FITSREAD_LARGE: Analogue of FITSREAD, called by FITSRD_LARGE.
+    FITSLIST    :   List the headers on a FITS tape. (VMS only)
+    FITSTAPE    :   Function to perform FITS tape I/O.  Called by FITSWRITE, 
+                    FITSREAD, FITS2X, X2FITS.  (VMS only)
+    FITSWRITE   :   Write an SDAS file to a FITS tape.  Called by FITSWRT  
+                    (VMS only)
+    FITSWRT     :   Interactive driver to write from SDAS format to FITS tape 
+                    (VMS only)
+    FITS_INFO   :   Provide information about the contents of a FITS file, 
+                    (primary header and data if any + extensions)
+    FXTAPEIO_READ : Procedure to copy a FITS file from a tape on the specified 
+                    tape unit to the FITS format disk file <name>.FITS 
+                    (VMS only)
+    FXTAPEIO_WRITE: Copy a disk FITS file to the specified tape unit
+                    (called by FXTAPEWRITE)
+    FXTAPEREAD  :   Interactive procedure to copy FITS files from tape onto disk
+                    (VMS only)
+    FXTAPEWRITE :   Interactive procedure to copy disk FITS files to tape
+    HEADFITS    :   Read a FITS header from a disk FITS file.
+    MKHDR       :   Make a minimal FITS header for an image array.
+    RDFITS_STRUCT : Read an entire FITS file into an IDL structure
+    READFITS    :   Read a disk FITS file into an IDL data and header array
+    WRITEFITS   :   Write IDL data and header array to a disk FITS file
+    X2FITS      :   Write IDL image, header variables directly to a FITS tape 
+                    (VMS only)
+

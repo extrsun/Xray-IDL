@@ -1,0 +1,46 @@
+pro shift_xya,x,y,xshift=xshift,yshift=yshift,ashift=ashift,block=block,noit=noit,center=center
+;+
+; making X, Y, and angular shifts of individual counts. Small angle (<< 1) is
+; assumed to make the program faster
+; xshift, yshift, ashift - X, Y ( blocked pixels) and angle 
+; noit - if set, the output x and y will not be rounded to become integers
+; (anti-clockwise, degree) 
+;			shifts 
+; writen by wqd, June 8, 1994
+; a small bug fixxed (replacing x and y with xx and yy in the middle of
+;	of the calculation. wqd, June 23, 1994
+;-
+if n_params () eq 0 then begin
+print,'CALLING SEQUENCE -- shift_xya,x,y,xshift=xshift,yshift=yshift,ashift=ashift,block=block'
+return
+endif
+if n_elements(xshift)+n_elements(yshift)+n_elements(ashift) eq 0 then return
+if n_elements(block) eq 0 then block=1.
+if n_elements(ashift) ne 0 then begin
+   if keyword_set(center) eq 0 then begin
+    if strupcase(!instr) eq 'H' then begin
+	yc=y-4095.5/block
+	xc=x-4095.5/block
+    endif else begin
+	yc=y-7679.5/block
+	xc=x-7679.5/block
+    endelse
+     xx=x-yc*(ashift*!pi/180.)
+     yy=y+xc*(ashift*!pi/180.)
+   endif else begin
+     xx=x-y*(ashift*!pi/180.)
+     yy=y+x*(ashift*!pi/180.)
+   endelse
+endif else begin
+	xx=x
+	yy=y
+endelse
+if n_elements(xshift) ne 0 then xx=xx+xshift
+if n_elements(yshift) ne 0 then yy=yy+yshift ;assuming in units of pixels
+if keyword_set(noit) eq 0 then begin
+	x=nint(xx) & y=nint(yy)
+endif else begin
+	x=xx & y=yy
+endelse
+end
+

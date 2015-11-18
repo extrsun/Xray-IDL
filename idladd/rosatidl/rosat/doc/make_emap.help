@@ -1,0 +1,190 @@
+
+The following is reproduced from the new version of the Rosat IDL Recipes
+Cookbook (under development):
+
+The procedure MAKE_MAP will allow you to construct mean exposure maps for
+PSPC pointed mode observations. If desired, exposure maps for more than one
+channel band can be constructed for the same aspect data and over the same
+time intervals, and/or the output maps written to simple FITS files. The
+exposure map FITS files can be read using tasks in PROS/IRAF. 
+
+MAKE_EMAP works for both US and MPE format data files.
+
+The command syntax for MAKE_EMAP is
+
+MAKE_EMAP, inputs, EXPMAP, TOTEXP, EMAPHDR, actime=actime, bands=bands,$
+           imapdir=imapdir, OPARMS=OPARMS
+
+MAKE_EMAP uses the parameter interface (see Chapter 4 in the Rosat IDL
+Recipes Cookbook). Inputs controls the values of 
+
+OBSEQ	the observation sequence, or root name, of the file, e.g. rp123456
+DIR	the directory of the file, e.g., $disk15:[rsgof.mydata]
+INSTR   the instrument, P for PSPC and H for HRI
+PROC    the format of the processed files (US or MPE, default is US)
+ACTFIL  The (full) name of the input file containing the time intervals
+        to be included (or NONE, if defined by the keyword ACTIME)
+BAND    The number of the channel band of instrument map to be read (if
+        not defined by the keyword BANDS)
+MAPFIL  The name of the output FITS file for the exposure map (or NONE)
+CHATTER	procedure feedback to user. Set to 0 for nofeedback, or 1.
+
+Default values of the parameters controlled by inputs are stored in the
+file zdef:make_emap.def. The default values are P (INSTR), US (PROC), NONE
+(ACTFIL), 1 (CHATTER). If input ACTFIL is set to NONE, then the time
+intervals are controlled using the keyword ACTIME in the command line. If
+ACTIME is not defined (and ACTFIL is set to NONE), then the good time
+intervals defined in the first table of the photon events ("qp") file are
+used. If input BAND is not defined, then the channel band of the instrument
+map must be defined using the keyword BANDS in the command line. If more
+than one band is specified, then the exposure map for each band is summed
+in turn. 
+
+If a time intervals ACTFIL is specified, then it must be written in the
+format:
+
+start time 1	stop time 1
+start time 2 	stop time 2
+...
+start time N	stop time N
+0		0
+
+Note that the last line must contain two zeroes.
+
+The bands for the instrument maps are as follows: channels 8 to 19 (1), 20
+to 41 (2), 42 to 51 (3), 52 to 69 (4), 70 to 90 (5), 91 to 131 (6), 132 to
+201 (7), 11 to 19 (8), 8 to 41 (9), 52 to 90 (10), 91 to 201 (11), 42 to
+131 (12), and 42 to 201 (13). Two sets of instrument maps are available:
+one for PSPC detector B (in use after Jan 25, 1991) and one for PSPC
+detector C (in use before Jan 25, 1991). MAKE_EMAP reads the observation
+date from the photon list FITS header and chooses the appropriate set of
+instrument maps. 
+
+The input keyword IMAPDIR is included to allow users to run MAKE_EMAP at 
+their home institutions in a transparent way. IMAPDIR should be set to the
+name of the directory which contains the PSPC instrument maps. This may be 
+done in several ways:
+
+ * Within IDL, by using the keyword imapdir in the command line (use this
+also to switch between instrument maps stored in different directories) 
+
+ * Within IDL, by defining the system variable !imapdir (use this also to
+switch between instrument maps stored in different directories)
+
+ * Before entering IDL, by defining the system logical (setting the 
+environmental variable) ZIMAP
+
+The files containing the PSPC instrument maps are named according to the
+following convention:
+
+det_lower PI channel bound_upper PI channel bound_B or C.fits
+
+e.g., det_8_19_B.fits contains the instrument map for PSPC detector B, for
+PI channels 8 to 19. If the names used for the instrument maps at your home
+institution are the same, then nothing else needs to be done to run
+MAKE_EMAP at your home institution. If the names of the files have been
+changed, then the procedure file defimap.pro must be edited to match. 
+
+The outputs from MAKE_EMAP are as follows: EXPMAP is the mean exposure map
+(for the last channel band calculated), TOTEXP is the total livetime
+weighted integrated exposure time (in seconds), and EMAPHDR is the FITS
+header of the (last) output map file. The default extension for MAPFIL is
+_emap_m_n_p.fits, where m and n are the lower and upper channel bounds of
+the instrument map used, and p is B or C depending on PSPC detector. If
+MAPFIL is set to NONE, then an output file will not be written. MAPFIL may
+not be set to NONE if exposure maps for more than one channel band are to
+be computed. 
+
+The following useful quantities are also included as keywords in the output
+exposure map FITS header EMAPHDR: 
+
+DATAMIN and DATAMAX	the minimum and maximum values in the exposure map
+RA_NOM and DEC_NOM	the nominal pointing RA and Dec
+RA_PNT and DEC_PNT	the livetime weighted pointing Ra and Dec of the
+			PSPC optical axis
+PA_PNT			the livetime weighted roll angle
+TSTART and TSTOP	the start and stop times for summing the exposure map
+ONTIME			the total time over which the exposure map was summed
+LIVETIME                the livetime weighted summation time (same as TOTEXP)
+LIVETMIN and LIVETMAX	the maximum and minimum livetime factors
+
+
+MAKE_EMAP works by reading the energy dependent instrument maps, which were
+constructed by S. Snowden (MPE) and written to FITS format by J. Mendenhall
+(Penn State Univ.). Aspect and event rate measurements are read from the
+history files, and livetime fractions are calculated. The roll angles are
+binned in steps of 74.7366 arcsec, and the X and Y aspect offsets are
+binned in steps of 14.94733 arcsec. The unique values of binned roll angle
+are then found. For each unique value of (binned) roll angle, a rotated
+instrument map is calculated. The corresponding values of binned X and Y
+aspect offset are found, and the numbers of each unique value of vector
+offset (X offset, Y offset). For each unique vector offset, the rotated
+instrument map is multiplied by the total number of seconds at that offset,
+weighted by the livetime fractions, and added to the cumulative exposure
+map for that band. 
+
+Following the suggestions of Snowden et al. (1992, ApJ, 393 819) and
+Plucinsky et al. (1993, ApJ, in press) the instrument map is zeroed over
+the edge ("bright line") regions which are strongly affected by the
+particle background before the exposure map is summed. The exact "bright
+line" regions depend on the gain at the date of observation. High gain
+regions are used before Oct 11, 1991; low gain regions are used after. 
+
+Note: The pixels of the exposure map are blocked detector pixels. Original
+detector pixels are 0.934208", the blocking factor used in creating the
+instrument maps is 16, and so the exposure map pixels are 14.94733" in
+size, NOT 15.0". This is also true of the exposure maps produced by SASS
+(irrespective of what the FITS headers say). Hence, the pixel size for the
+exposure map does not exactly match the pixel size of the images produced by
+SASS. However, the difference is small, leading to only a 13.5" difference
+from the center of the field to the edge (smaller than one exposure map pixel). 
+
+MAKE_EMAP calls the routine RSGET_EMAP_DATA to read the aspect and events
+rates data and compute the livetime factors. The livetime factors are
+calculated according to the recipe in the TN-ROS-ME-ZA00-025 (G. Hasinger,
+MPE), assuming a value of 234. for the dead time constant. The livetime
+factors also include the additional 0.0001 sec deadtime per acepted event
+which compensates for the removal of the after pulse (AP) background (i.e.,
+removal of all events less than 0.35 ms after a previous event).
+
+MAKE_EMAP is based on code contributed by J. Mendenhall (Penn State Univ.).
+
+Examples:
+
+1) Calculate the mean exposure map over channels 70 to 90 (band 5), over
+the good time intervals in the "qp" file. Write the output map to a FITS
+file: 
+
+IDL> make_emap,1,expmap,totexp,emaphdr,ac=actime,imapdir='$disk2:[rsgof.mymaps]'
+? obseq=rp123456
+? dir=$disk15:[rsgof.mydata]
+? actfil=none
+? band=5
+? mapfil=mysource
+
+In this example, the instrument map will be read from the file
+det_70_90_C.fits in directory $disk2:[rsgof.mymaps]. The computed exposure
+map will be written to the file mysource_emap_70_90_C.fits. ACTIME was not
+defined before the program was run. Since ACTFIL was set to NONE, the map
+is computed over the good time intervals in the photon events file. After
+the program is run, the variable ACTIME contains the good time intervals:
+actime(*,0) contains the start times and actime(*,1) contains the end
+times. 
+
+2) Calculate the mean exposure map over channels 20 to 41, 42 to 51, 52 to
+69, 70 to 90, and 132 to 201 (bands 2, 3, 4, 5, and 7). Read the time
+intervals from the input file ontimes.dat in directory
+$disk15:[rsgof.mydata]. Write the output maps to FITS files: 
+
+IDL> make_emap,1,expmap,totexp,emaphdr,bands=[2,3,4,5,7],op=oparms
+? obseq=rp123456
+? dir=$disk15:[rsgof.mydata]
+? actfil=$disk15:[rsgof.mydata]ontimes.dat
+? mapfil=srcon
+
+The instrument maps will be read from the default directory !imapdir. The
+computed exposure maps will be written to the files
+srcon_emap_20_41_B.fits, srcon_emap_42_51_B.fits, etc. EXPMAP and EMAPHDR
+will contain the exposure map and FITS header for the last map computed
+(band 7). TOTEXP is the total time over the intervals read from
+ontimes.dat. 

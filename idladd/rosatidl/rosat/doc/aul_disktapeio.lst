@@ -1,0 +1,48 @@
+
+  Disk and Tape I/O Procedures from Astronomical Users' Library  (Nov 1993)
+
+  Disk I/O (AIPS, MIDAS, IRAF, disk FITS files)  
+
+    AIPSDIR     :   Give a listing of AIPS disk files on a directory (VMS only)
+    AIPSNAME    :   Create a VAX directory name from an AIPS user number, and
+                    image slot number.  (VMS only)
+    AIPSRD      :   Read an AIPS disk file into IDL image and header arrays 
+                    (VMS only)
+    DST_INFO    :   Obtain header info from a .DST file.  Called by READ_DST
+    IRAFDIR     :   Provide a brief description of the IRAF images on a 
+                    directory
+    IRAFRD      :   Read a disk IRAF image file into IDL variables.  
+    IRAFWRT     :   Write IDL data in IRAF (OIF) format (.imh and .pix files)
+    MID_RD_DIRDSC : Lower level procedure to read MIDAS directory descriptor 
+    MID_RD_IMAGE :  Read a MIDAS image (.BDF) file into IDL variables
+    MID_RD_TABLE :  Read a MIDAS table (.TBL) file into IDL variables
+    MID_UP_IMAGE :  Update the contents of a MIDAS image file
+    MID_UP_TABLE :  Update the contents of a MIDAS table file.
+    READ_DST    :   Function to read a DAOPHOT (.DST) image file (CalTech data
+                    structure)
+
+  Tape IO Procedures   (VMS only)                  
+                   
+    FBTAPE      :   Read a fixed block tape to disk 
+    FITS2X      :   Read FITS file from tape directly into an IDL image array 
+                    and FITS header array
+    FITSLIST    :   Read FITS files from a tape on the specified tape unit
+    FITSRD      :   Interactive procedure to read FITS tape files into
+                    SDAS/FITS disk files
+    FITSREAD    :   Read a FITS file from a tape on the specified tape unit
+    FITSREAD_LARGE: Same as FITSREAD for large files (saves memory)
+    FITSTAPE    :   Function to perform FITS tape I/O (called by FITSREAD)
+    FITSWRITE   :   Write an internal SDAS file to a FITS tape on the
+                    specified tape unit (called by FITSWRT)
+    FITSWRT     :   Write internal SDAS file(s) to a FITS tape
+    FXTAPEREAD  :   Copy FITS files from tape onto disk
+    FXTAPEWRITE :   Copy disk FITS files to tape
+    FXTPIO_READ :   Copies FITS files from tape to disk (internal routine)
+    FXTPIO_WRITE :  Copy FITS files from disk to tape (internal routine)
+    PDSHEAD     :   Read info from header on a PDS tape (Called by PDSRD)
+    PDSRD       :   Read an image on a PDS tape into an IDL variable.
+    TINIT       :   To position a tape for append a new file by placing it 
+                    between the final double EOF marks
+    X2FITS      :   Create  basic FITS files on tape from IDL Arrays 
+                    (any dimensions)
+

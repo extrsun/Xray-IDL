@@ -1,0 +1,145 @@
+pro evt_image,evtroot,instr,carr,ta,ba=ba,list=list,hdr=hdr $
+,cra=cra,cdec=cdec,lhdr=lhdr,gradec=gradec,imblock=imblock,imdim=imdim $
+,imccd=imccd,datadir=datadir,bv=bv,nofits=nofits,noexp=noexp,nomap=nomap $
+,xmin=xmin,ymin=ymin,bmin=bmin,bmax=bmax $
+,bfname=bfname,bmaponly=bmaponly,bimfroot=bimfroot
+;+
+; Construct images with the  option to output an event structure that can be used 
+; to reconstruct different images
+;
+; evtroot - event file name
+; instr - instrument name (e.g., 'aciss' or 'aciss')
+; carr - output count images
+; ta - output exposure images
+; list - event structure
+; hdr - image fits header
+; cra, cdec - RA and Dec of the image center
+; lhdr - the header of the list file
+; gradec - Two element vector contains the RA and Dec of the output image center (deg)
+;		def=the axis center
+; imblock, imdim - the image pixel block and dimension 
+;		(def = the output from sou_det_params)
+; imccd - chosen ccd of the output image (def = the output from sou_det_params)
+; datadir - the directory in which the event file and exposure maps are located
+;		(def='./')
+; bv - bands (def = [1,2,3,4])
+; nofits - if set, no fits file output 
+; noexp - no exposure map ouput
+; nomap - no map (count and exposure) output
+; xmin, ymin - the lower left corner pixel value of the image to be used by
+;	list_image
+; bmin,bmax - lower and upper energy boundaries of the bands
+; bfname - vector contains the background event file names (including the path)
+; ba - output background images
+; bmaponly - if set, only the background maps are produced.
+; bimfroot - the root name of the output background image 
+;           files (def = evtroot+'_b')
+; writen by WQD 1/17/2002
+; background image construction included by wqd, 5/9/03
+;-
+if n_params() eq 0 then begin
+print,'evt_image,evtroot,instr,carr,ta,ba=ba,list=list,hdr=hdr '
+print,',cra=cra,cdec=cdec,lhdr=lhdr,gradec=gradec,imblock=imblock,imdim=imdim '
+print,',imccd=imccd,datadir=datadir,bv=bv,nofits=nofits,noexp=noexp,nomap=nomap'
+print,',xmin=xmin,ymin=ymin,bmin=bmin,bmax=bmax,bfname=bfname'
+print,',bmaponly=bmaponly,bimfroot=bimfroot'
+return
+endif
+;set the instrument environment:
+cenvset,instr
+
+;setup the source detection parameters:
+sou_det_params,instr,dim,block,ccd,bmin,bmax,dsfrac,asfrac,psffile,bpsffile,ftail,aimoff,subfac
+
+;get the data file parameters
+if n_elements(datadir) eq 0 then datadir=''
+fname=datadir+evtroot+'.fits'
+file_params,fname,lhdr,cra,cdec,expt,nra,ndec,xoff,yoff,roll,aimoff=aimoff
+
+; define image parameters
+if n_elements(imblock) eq 0 then imblock=block
+del=!size_pixel*imblock/3600. ;pixel size in units of deg
+if n_elements(imdim) eq 0 then imdim=dim
+if n_elements(imccd) eq 0 then imccd=ccd
+if n_elements(gradec) ne 0 then $
+ trans_dist,cra,cdec,gradec(0),gradec(1),xoff,yoff,/deg,pixsize=!size_pixel
+ 
+xmin=!pref+xoff-imdim*imblock/2. ;low left pixel of the subimage
+ymin=!pref+yoff-imdim*imblock/2.
+
+cpx=(imdim+1.)*0.5-xoff/imblock
+cpy=(imdim+1.)*0.5-yoff/imblock
+
+nb=n_elements(bv)
+if nb eq 0 then begin
+    nb=n_elements(bmin)
+    bv=indgen(nb)+1
+endif
+get_fitshead,'',hdr,del=del,crval=[cra,cdec],equi=2000,cpx=cpx,cpy=cpy $
+      ,dim=imdim,type=4 
+;====================================================
+if keyword_set(bmaponly) eq 0 then begin
+;the reference center remains the same even if gradec is given
+    if n_elements(noexp) eq 0 then $
+      map_exp,expt,tb,ta,fhead=evtroot+'_i',mapdir=datadir,bv=bv,tbw=0,hdr=hdr
+;get the count list
+    row={x:0L,y:0L,energy:0,ccd_id:0,detx:0L,dety:0L}
+    list_xray,fname,list,emin=emin,emax=emax,ccd=imccd,row=row
+endif
+;==================================================
+;generate a subimage in the source detection field
+if n_elements(nomap) ne 0 then return
+;background list and exposure normalization
+nbfname=n_elements(bfname)
+if nbfname ne 0 then begin
+ if n_elements(bimfroot) eq 0 then bimfroot=evtroot+'_b'
+ brow={x:0L,y:0L,energy:0,ccd_id:0}
+ ncol=lonarr(nbfname)
+ bnorm=fltarr(nbfname)
+ tblist=brow
+ for kk=0,nbfname-1 do begin
+     list_xray,bfname(kk),blist,emin=emin,emax=emax,ccd=imccd,row=brow,nct=nct
+     bexpt=sxpar(headfits(bfname(kk),ext=1),'livetime')
+     if nct ne 0 then begin
+     	if bexpt eq 0 then stop,'the background file exposure = 0! need a fix.'
+     	tblist=[tblist,blist]
+     endif
+     ncol(kk)=nct
+     bnorm(kk)=expt/bexpt
+ endfor
+ tblist=tblist(1:*)
+endif
+
+carr=intarr(imdim,imdim,nb)
+ba=fltarr(imdim,imdim,nb)
+for k=0,nb-1 do begin
+ if n_elements(bfname) ne 0 then begin
+	nc=0
+        bb=0
+	for kk=0,nbfname-1 do begin
+	  if ncol(kk) ne 0 then begin
+	 	list_image,tblist(nc:nc+ncol(kk)-1),xmin,ymin,imarr $
+		,imdim,block=imblock,emin=bmin(k),emax=bmax(k),nsel=nsel
+		if nsel ne 0 then bb=bb+bnorm(kk)*imarr
+            endif else nc=nc+ncol(kk)
+        endfor
+        if n_elements(nofits) eq 0 and nc ne 0 then $
+		writefits,bimfroot+strtrim(k+1,2)+'.fits',bb,hdr
+        ba(*,*,k)=bb
+ endif
+
+ if keyword_set(bmaponly) eq 0 then begin
+     list_image,list,xmin,ymin,imarr,imdim,block=imblock $
+       ,emin=bmin(k),emax=bmax(k)
+     if n_elements(nofits) eq 0 then begin
+          writefits,'c_'+strtrim(k+1,2)+'.fits',imarr,hdr
+          if n_elements(noexp) eq 0 then $
+            writefits,'t_'+strtrim(k+1,2)+'.fits',ta(*,*,k),hdr 
+    endif 
+    carr(*,*,k)=imarr
+ endif
+endfor 
+if keyword_set(bmaponly) eq 0 and n_elements(nofits) eq 0 then $
+  writefits,'c_b.fits',total(carr,3),hdr
+return
+end

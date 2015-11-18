@@ -1,0 +1,218 @@
+pro multi_spec,list,wmapfile,pifile,outroot,evtroot=evtroot,exposure=exposure,backscal=backscal,wemin=wemin,wemax=wemax,fname=fname,filter=filter,ccd=ccd,row=row,rebin=rebin,rmfdir=rmfdir,instr=instr
+;+
+; create a single spectrum from the merged events file
+;*CAUTIONS
+; 1) We can only use the above 2 keV part. Below 2 keV, I haven't
+; solve the ICE effect yet
+; 2) before running the routine, please running
+; instr='acisi_low' 
+; cenvset,instr 
+;
+; 3) runing the ciao
+;    linux> ciao
+;
+; 4) using a single file to create the spectrum with wmap (wmapfile)
+; and whitout wmap (pifile).The header of pifile includes the
+; "backscal" information. If you are creating the diffuse spectrum,
+; make sure that you are using the source free event file to do the
+; steps listed below.
+;
+; spawn,'punlearn specextract'
+; spawn,'pset specextract infile="3392_exclude.fits[sky=region(source_radec.reg)]"'
+; spawn,'pset specextract outroot=3392_region'
+; spawn,'pset specextract grouptype=NUM_CTS'
+; spawn,'pset specextract binspec=15'
+; spawn,'specextract clobber=yes'
+
+; spawn,'punlearn dmextract'
+; spawn,'pset dmextract infile="3392_exclude.fits[sky=region(source_radec.reg)][bin pi]"'   
+; spawn,'pset dmextract outfile=region_nowmap.pi'
+; spawn,'dmextract clobber=yes'
+;
+; then 
+; wmapfile='3392_src1.pi'
+; pifile='region_nowmap.pi'
+;
+;*INPUTS:
+; list - merged event list, each event include the "ccd_id, detx, dety,
+;        energy, pi" information.
+; wmapfile - the ext=0 header will be used for creating the wmap file
+; pifile   - the ext=0,1 header will be used for creating the final spctrum
+;
+;*OUTPUTS:
+; outroot - the root name for the final output spectrum and rsp file
+;
+;
+;
+;
+;*OPTIONAL Inputs:
+; evtroot - the merged event file, used to obtain the exposure
+;           information
+; exposure - if you haven't provide the evtroot, you need to provide
+;            the exposure of the merged event file
+; backscal - the backscal in the head of the spectrum file, if you
+;            haven't provided it,  the "backcsal" in pifile will be used
+; wemin,wemax - lower and upper limits of event energy (eV) used to
+;               create the WMAP image (creating arf and rmf file) 
+;               (def: wemin=300 and wemax=8000)
+; fname  - the event file, it could only contain the event list of the
+;         region from which you want to extract the spectrum or you
+;         could provide the "filter" keyword. 
+; filter - an image for excluding counts in regions with filter values
+;          <=0
+; ccd    - selected ccd ID numbers
+; row    - definition of the structure
+;          (def: row={ccd_id:0,detx:0D,dety:0D,energy:0,pi:0,fid:''})
+; rebin  - the pixel block for the WMAP image
+;          (def: rebin=8)
+; rmfdir - the directory saving the rmf files for individual positions
+;          in CCD
+;          (def: '/home/dongh/work/Chandra/gc_new/dongh/adapative/experiment/calcarf/rmfmy/') 
+;
+; writen by Hui Dong, June 18th, 2007
+; 
+;-
+
+if n_params() eq 0 then begin
+print,'CALLING SEQUENCE -  multi_spec,list,wmapfile,pifile,outroot,evtroot=evtroot,exposure=exposure,backscal=backscal,wemin=wemin,wemax=wemax,fname=fname,filter=filter,ccd=ccd,row=row,rebin=rebin,rmfdir=rmfdir,instr=instr'
+return 
+endif
+
+if n_elements(wmapfile) eq 0 or n_elements(pifile) eq 0 then begin
+print,'Please provide the wmapfile and pifile, the head of which will be used'
+return
+endif
+
+
+sou_det_params,instr,mdim,mblock,mccd,mbmin,mbmax,mdsfrac,masfrac,mpsffiled,mbpsffile,mftail,maimoff,msubfrac
+
+if n_elements(ccd) eq 0 then ccd=mccd
+if n_elements(wemin) eq 0 then wemin=300
+if n_elements(wemax) eq 0 then wemax=8000        
+if n_elements(rebin) eq 0 then rebin=8
+if n_elements(outroot) eq 0 then outroot='region'
+if n_elements(rmfdir) eq 0 then $
+   rmfdir='/home/dongh/work/Chandra/gc_new/dongh/adapative/experiment/calcarf/rmfmy/'
+
+if n_elements(evtroot) ne 0 then begin
+    evthead=headfits(evtroot,ext=1)
+    exposure=sxpar(evthead,'exposure')
+endif else begin
+    if n_elements(exposure) eq 0 then begin
+       print,'Please provide the evtroot or exposure'
+       return
+    endif
+endelse
+
+if n_elements(backscal) eq 0 then begin
+   backscal=sxpar(headfits(pifile,ext=1),'backscal')
+endif
+
+if n_elements(list) eq 0 then begin
+   if n_elements(fname) ne 0 then begin
+
+        if n_elements(row) eq 0 then $
+               row={ccd_id:0,detx:0D,dety:0D,energy:0,pi:0,fid:''}
+
+        list_xray,fname,list,row=row,hdr=hdr
+        if n_elements(filter) ne 0 then begin
+          list_sel,filelist,list,msel,ccd=ccd,instr=instr,filter=filter,fname='evt2file_new_clean'
+          list=list(msel)  
+        endif
+   endif else begin
+     print,'Please provide event list (list) or event file (fname)'
+     return 
+   endelse
+endif else begin
+   ccdno=n_elements(ccd)
+   inde=where_tag(list,tag_name='ccd_id',values=ccd,nct)
+   if nct eq 0 then return
+   list=list(inde)
+endelse
+
+
+
+;=================================================
+;Begin: Creating the WMAP
+;=================================================
+outwmap=outroot+'.wmap'
+
+wsel=where((list.energy ge wemin) and (list.energy lt wemax),wnct)
+
+if wnct eq 0 then begin
+   print,'There is no events within the energy rang'
+   print,wemin,wemax
+   return
+endif
+
+wlist=list(wsel)
+
+wdim=8192/rebin
+
+list_image,wlist,0.5,0.5,wmap,wdim,block=rebin,det='det'
+wmaphead=headfits(wmapfile)
+writefits,outwmap,wmap,wmaphead
+;=================================================
+;End: Creating the WMAP
+;=================================================
+
+;=================================================
+;Begin: Creating the RSP
+;=================================================
+outarf=outroot+'.warf'
+outfef=outroot+'.wfef'
+outrsp=outroot+'.rsp'
+
+spawn,'punlearn ardlib'
+spawn,'punlearn mkwarf'
+spawn,'pset mkwarf infile='+outwmap
+spawn,'pset mkwarf outfile='+outarf
+spawn,'pset mkwarf weightfile='+outfef
+spawn,'pset mkwarf feffile=CALDB'
+spawn,'pset mkwarf egridspec=0.3:11.0:0.01'
+spawn,'pset mkwarf threshold=0'
+spawn,'pset mkwarf mirror=HRMA'
+spawn,'pset mkwarf verbose=1'
+spawn,'pset mkwarf mode=h'
+spawn,'mkwarf clobber=yes'
+
+
+create_weight_rmf,rmfdir,outroot
+;=================================================
+;End: Creating the RSP
+;=================================================
+
+
+;=================================================
+;Begin: Creating the spectrum file
+;=================================================
+outpi=outroot+'.pi'
+
+ncha=685
+spec=histogram(list.pi,min=1,max=1024)
+rf=headfits(pifile)
+rf1=headfits(pifile,ext=1)
+
+row={channel:0L,pi:0L,counts:0L,count_rate:0D}
+slist=replicate(row,ncha)
+channel=lindgen(ncha)+1
+pi=lindgen(ncha)+1
+slist(*).channel=channel(*)
+slist(*).pi=pi(*)
+slist(*).counts=spec(0:ncha-1)
+slist(*).count_rate=double(spec(0:ncha-1))/exposure
+
+FXWRITE,outpi,rf
+sxaddpar,rf1,'exposure',exposure
+sxaddpar,rf1,'backscal',backscal
+sxaddpar,rf1,'ANCRFILE','NONE'
+sxaddpar,rf1,'RESPFILE',outrsp
+mwrfits,slist,outpi,rf1
+;=================================================
+;End: Creating the spectrum file
+;=================================================
+
+
+spawn,'rm '+outarf+' '+outfef+' '+outwmap
+
+end

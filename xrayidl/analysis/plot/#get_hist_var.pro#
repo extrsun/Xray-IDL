@@ -1,0 +1,83 @@
+pro get_hist_var,xx,count,back,expt,dist,dl,dh,flux,eflux,texpt $
+,dlow=dlow,dhigh=dhigh,ctonth=ctonth,sel=sel
+;+
+; construct a histogram that has roughly a constant singal-to-noise ratio
+;
+; xx - X axis 
+; count, back, expt - count, background, and exposure vectors
+;*Outputs:
+; dist - the mean X-axis values of the histogram
+; dl, dh - the lower and upper limits of the histogram bins
+; flux, eflux, texpt - the calculated flux, flux error, and total exposure
+;		multiplied by the number of bins in each histogram bin
+; dlow, dhigh - the lower and upper limits of the channel numbers.
+;		Def =min(xx) and max(xx)
+; ctronth - signal-to-noise ratio (def ctonth=3)
+; sel - indexs of the vectors
+; 
+; written by wqd, March 8, 1996
+; modified to include the dlow and dhigh. wqd, May 7, 2002
+;-
+if n_params() eq 0 then begin
+print,'CALLING SEQUENCE -- get_hist_var,xx,count,back,expt,dist,dl,dh'
+print,',flux,eflux,texpt,dlow=dlow,dhigh=dhigh,ctonth=ctonth,sel=sel'
+return
+endif
+if n_elements(ctonth) eq 0 then ctonth=3.
+nsel=n_elements(sel)
+if  nsel ne 0 then begin
+	x=xx(sel)
+	rcount=count(sel)
+	rback=back(sel)
+	rexpt=expt(sel)
+endif else begin
+	nsel=n_elements(xx)
+	x=xx
+	rcount=count
+	rback=back
+	rexpt=expt
+endelse
+if n_elements(dlow) eq 0 then dl=x(0) else dl=dlow
+if n_elements(dhigh) eq 0 then dhigh=x(nsel-1) 
+ssel=where(x ge dl and x le dhigh,nssel)
+if nssel ne nsel then begin
+	x=x(ssel)
+	rcount=rcount(ssel)
+	rback=rback(ssel)
+	rexpt=rexpt(ssel)
+	nsel=nssel
+endif
+flux=[-999]
+eflux=[-999]
+texpt=[-999]
+dist=[-999]
+dh=[-999]
+db=0. & cb=0 & bb=0. & eb=0.
+for k=0L, nsel-1 do begin
+	db=db+x(k)*rcount(k)
+	cb=cb+rcount(k)
+	bb=bb+rback(k)
+	eb=eb+rexpt(k)
+;	if cb ge ctonth or k eq (nsel-1) then begin 
+	if imdiv(cb-bb,sqrt((cb > bb) > 5.)) ge ctonth or k eq (nsel-1) then begin 
+		if k ne (nsel-1) then div=(x(k)+x(k+1))*0.5 else div=dhigh
+		dh=[dh,div]
+		dl=[dl,div]
+		dist=[dist,db/cb]
+		flux=[flux,(cb-bb)]
+		eflux=[eflux,sqrt(cb > bb)]
+		texpt=[texpt,eb]
+		db=0 & cb = 0 & bb=0 & eb=0
+	endif
+
+;if k gt 60 then stop
+endfor
+dl=dl(0:n_elements(dist)-2)
+dh=dh(1:*)
+dist=dist(1:*)
+flux=flux(1:*)
+eflux=eflux(1:*)
+texpt=texpt(1:*)
+if !debug eq 2 then stop
+return
+end

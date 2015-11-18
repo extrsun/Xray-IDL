@@ -1,0 +1,9 @@
+Rosat standard default parameters for spatial filtering
+10
+1,REGION=none,Region descriptor (ASCII string, .reg, .pl file)
+2,XMIN=0,Minimum X value for field (0=minimum of data)
+3,XMAX=0,Maximum X value for field (0=maximum of data)
+4,YMIN=0,Minimum Y value for field (0=minimum of data)
+5,YMAX=0,Maximum Y value for field (0=maximum of data)
+6,PIXEL=UNBL,Pixel convention (def=UNBL=unblocked, BL=blocked)
+7,ZOOM=1,Blocking factor (def = 1)

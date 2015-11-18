@@ -1,0 +1,263 @@
+
+12 June 1991
+
+     This file contains some (hopefully) helpful hints for new IDL users,
+and on how to get on-line help for Rosat IDL procedures and functions.
+
+
+A. Some tips for new IDL users:
+
+     IDL has a lot of flexibility in how the inputs to programs (and their
+outputs) can be specified, and this can make things look complicated:
+
+1. Data types:
+
+     Data can be of a number of different types: byte, integer, longword
+integer, floating point, double precision, and character strings (plus a few
+others that I've forgotten or not learned yet). The first five are fairly
+straightforward. String variables are defined using quotes. For example, you
+can assign a variable called dummy to the string 'This is a character string'
+by the command 
+
+IDL> dummy = 'This is a character string'
+
+Then if you print dummy, the result is
+
+IDL> print,dummy
+ This is a character string
+
+     For more information about data types, see Chapter 3 in the IDL Users'
+Guide. 
+
+
+2. Specifying inputs to programs:
+
+     An input to a program can be a variable which has already been defined, or
+an expression whose result is a variable. For example, if you want to run a
+program that needs to use a character string (say, the one from the example
+above) as an input, you can do it either by typing dummy in the command line
+*or* by typing 'This is a character string' 
+
+e.g.
+
+IDL> programname,var1,var2,dummy,other
+
+or
+
+IDL> programname,var1,var2,'This is a character string',other.
+
+Similarly, if you have defined a variable
+
+ra = (hrs+min*60.+sec*3600.)*15.
+
+then you could type either ra or (hrs+min*60.+sec*3600.)*15. in the command 
+line.
+
+
+3. Procedures and functions:
+
+     The results of calculations can be returned as procedures or as functions.
+Functions return only one output variable, while procedures can return more
+than one. When calling a function, you put parentheses around the input
+variables, which are separated by commas, e.g. 
+
+IDL> time = tbget(h,tab,1)
+
+where the single result of tbget is stored in the variable time. When
+calling a procedure, all of the variables are still separated by commas and
+there are no parentheses, e.g.
+
+IDL> tbread,'rp150011_moi_1',h,tab
+
+where the input variable is the name of the file ('rp150011_moi_1' in this
+case) and the results are stored in h & tab. This could also have been done
+by assigning 'rp150011_moi_1' to a variable name:
+
+IDL> filename='rp150011_moi_1'
+IDL> tbread,filename,h,tab
+
+     A function that is called by a routine must be defined during (or before)
+the compilation of that routine. If your session is set up correctly,
+then everything will work. If, for example, your IDL_PATH is not defined 
+correctly, then the compiler may not be able to find a function that is called.
+The compiler will then (incorrectly) assume that the function name is 
+acctually an array variable. When you attempt to use the routine, you will
+get an error message which will tell you that that variable has not yet been
+defined. To fix this, you will then need to return to the main level of your
+session, compile the function explicitly, and then recompile the routine that
+calls it:
+
+IDL> retall
+IDL> .run foobar                    (e.g., the name of the function)
+IDL> .run progname                  (the routine that calls foobar)
+
+
+4. Some input (and output) parameters can be optional:
+
+   Often you are not required to enter all of the parameters listed on a
+command line. Programs are often set up to assume certain defaults, if these
+variables are not entered. Hereafter, parameters that are not required will be
+called optional.
+
+
+5. Parameters can be positional or named (keywords):
+
+     Inputs to procedures can be specified in either of two ways: as positional
+parameters, or as keywords (named parameters). Positional parameters must be
+entered on the command line in a specific order. Keywords may be entered in any
+order, anywhere on the command line, and must be entered in the form 
+
+     keyword=keyword
+
+You are also allowed to type only as much of the name of the keyword as is
+unique in the code. Keywords are usually used for optional parameters, and/or
+for inputs for which it is more convenient to remember the name of the input
+than its order on the command line. 
+
+     As an example, consider the procedure doc_list:
+
+IDL> doc_list,'fitsa',p='idlaul'
+
+and
+
+IDL> topic = 'fitsa'
+IDL> proj = 'idlaul'
+IDL> doc_list,project=proj,topic
+
+will do exactly the same thing. Project is the only keyword, and so p and
+project are both OK here. So are pr, proj, etc.
+
+
+6. Structure variables:
+
+     A structure variable is essentially a group of data of various types which
+are all associated with one overall name, the structure name. The individual
+"pieces" of data (or fields) are given tag names. The structure variable has a
+defined format (which tells IDL how memory is parcelled out among the different
+variables). The format of a particular structure name may not be changed during
+your IDL session. Structure variables are defined according to the following
+syntax: 
+
+     row = {xevent,x:0,y:0,pha:0,pi:0,time:0.0D0,dx:0,dy:0}
+
+In this example, xevent is the structure name. The xevent structure has
+7 tags: x, y, pha, pi, time, dx, and dy. The format is Integer (2 bytes),
+Integer, Integer, Integer, Double Precision (16 bytes), Integer, Integer.
+(In this particular example, the data stored are the x and y positions of
+the photon, the raw and invariant pulse height amplitudes, the arrival time,
+and the detector x and y positions of the photon.) To see the value stored
+within a particular field, use the following syntax:
+
+IDL> print,row.x
+
+To see the structure of a structure variable, type
+
+IDL> help,row,/struc
+
+     Structure variables can also contain vectors, arrays, or even other
+structures, and can themselves be imbedded in vectors. This last is convenient
+because the length of a vector within a structure must be know when the
+structure is defined. To define a vector of structures, use the replicate
+command 
+
+IDL> plist = replicate(row,num)
+
+Plist will then be a structure variable of num elements. Each element will
+also be a structure variable, with the xevent structure.
+
+     Structures of this type are convenient because they allow criteria
+set by one of the fields to be applied to all of the fields within the 
+structure. For example, one can select all of the data between two particular
+times using the following commands:
+
+IDL> ind = where( (plist.time ge time1) and (plist.time le time2) )
+IDL> plist2 = plist(ind)
+
+     For more information concerning structure variables, see Chapter 8 in
+the IDL Users' Guide.
+
+
+B. On-line help for Rosat IDL procedures
+
+1. To get a list of supported procedures, type
+
+     doc_list,proj='rosat'    
+
+or  
+
+     doc_list,proj='idlaul'
+
+You will then get a list of topics for either Rosat specific procedures, or
+for more general procedures in the IDL Astronomical Users' Library (put
+together by Wayne Landsman, Bill Thompson, and others in Code 681 at GSFC).
+To get a list of procedures useful for a particular topic, type, e.g.,
+
+     doc_list,proj='rosat',topic
+
+where topic is the name of one of the topics, enclosed by single quotes.
+For example, typing 
+
+     doc_list,proj='rosat','fits_3d'
+
+will give a list of procedures useful for reading Rosat 3D FITS files.
+
+
+2. To get more information on a particular procedure, type
+
+     doc_library,procedure
+
+where procedure is the name of the procedure, enclosed by single quotes.
+For example, typing 
+
+     doc_library,'rsaspect'
+
+will give you details about the procedure rsaspect.
+
+
+3. If you have only forgotten the format of the command line for an IDL
+procedure, simply type the name of the procedure with no arguments. The
+procedure will respond by typing the command line, using the following
+convention
+
+     input variables in lower case (in the order expected)
+     output variables in upper case
+     keywords typed with the = sign (e.g., project=project) at the end
+     optional variables enclosed in square brackets
+
+For example, if you type
+
+IDL> make_list
+
+then the program responds
+
+MAKE_LIST, inputs, PLIST, NUMPIX, TBEG, TEND, [OPARMS=OPARMS]
+
+The only input variable that you *must* specify for MAKE_LIST is the parameter
+called inputs. The other parameters are optional. PLIST, NUMPIX, TBEG, TEND are
+parameters. Oparms is a keyword and may be entered anywhere within the list of
+parameters. 
+
+     To see the syntax for a function (this will also work for procedures),
+compile it, and then type help,/routines. This will give you the syntax for
+all procedures and functions which have already been compiled.
+
+You can also type 
+
+     help,/routines
+
+to see the command syntax for all procedures and functions which have already
+been compiled.
+
+4. To exit IDL, simply type
+
+     exit
+
+or
+
+     ctrl Z
+
+Note that when you exit IDL, all of the dynamic memory associated with you
+session will be released. You will lose all variables that you have not
+saved (using the IDL SAVE procedure) or otherwise written out to disk. Of
+course, any disk files that you have created will not be affected.
+

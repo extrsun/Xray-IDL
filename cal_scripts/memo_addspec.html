@@ -1,0 +1,12 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+  <meta content="text/html; charset=ISO-8859-1"
+ http-equiv="content-type">
+  <title>memo_cal.html</title>
+  <meta content="Daniel Wang" name="author">
+</head>
+<body>
+<pre>This is a slightly revised version of the original meno by Shikui on<br> combining few spectrum files together.<br><br> 1) copy all the files(including source spectra,  ancrfile, respfile, and <br> background spectra) into one directory, and check the header of spectrum file,<br> which should have the correct values for BACKFILE, ANCRFILE (using fv or CIAO<br> command dmlist/dmhedit to list or edit these keywords; e.g.,)<br><br> dmlist the_spectrum header,clean,raw | egrep 'BACKFILE|ANCRFILE'<br> dmhedit the_spectrum_file  (then following the prompts)<br><br> 2) list all the source spectrum files into one file (each line for one file) <br> and all the spectrum are not grouped(or grouped in the exact way,I guess)<br> ls *_source_spectrum.pi &gt; infile<br><br> 3)run the command addspec with the parameter of error calculation:<br><br>  addspec infile errmeth='Gauss' properr='yes'<br><br> (then following the prompts)<br><br> 4) You need to have the background spectra combined for each source, even if <br> they are going to be shared by different sources. The addspec add the<br> source related scaling information to the combined background spectrum<br> (according to what have been told; wqd).<br><br> To get detail information for all the parameters, typing:<br> fhelp addspec<br><br> If there is anything still unclear, please let Shikui know. <br> <br> tangsk@astro.umass.edu</pre>
+</body>
+</html>

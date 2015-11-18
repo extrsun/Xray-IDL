@@ -1,0 +1,109 @@
+;======================================================
+; Memo for dealing with a new ACIS subarray observation
+; wqd, Sept., 2002
+;========================================================
+; For the new N157B, no evt1toevt2 processing is needed.
+; directly produce the exposure maps
+;
+in cal
+ln -s ../500233/primary/acisf02783_001N001_bpix1.fits acisf02783_001N001_bpix1.fits
+ln -s ../500233/primary/pcadf146512415N001_asol1.fits  pcadf146512415N001_asol1.fits
+
+$PUBDIR/cal_scripts/assign_bpix.e
+$PUBDIR/cal_scripts/make_expmap_sa.e aciss acisf02783N001_evt2 asol_file 7
+;================================================================
+;just for a try
+punlearn mkinstmap 
+pset mkinstmap verbose=0 
+pset mkinstmap grating=NONE maskfile=NONE mirror=HRMA 
+pset mkinstmap ardlibparfile=ardlib.par 
+set xpixelgrid="1:256"
+set ypixelgrid="1:1024"
+set binning=1024
+#pset mkinstmap pixelgrid=${xpixelgrid}:#${binning},${ypixelgrid}:#${binning}
+pset mkinstmap pixelgrid=${xpixelgrid},${ypixelgrid}
+pset mkinstmap mode=h 
+pset mkinstmap clobber=yes
+pset mkinstmap obsfile="acisf02783N001_evt2.fits"
+set caldir=$PUBDIR/cal_scripts/
+pset mkinstmap spectrumfile=${caldir}/weights_3000:7000.txt
+pset mkinstmap detsubsys=ACIS-7
+pset mkinstmap outfile=test.fits
+mkinstmap
+;=============================================================
+cd xdata
+set MAINDIR=..
+set evtfname=acisf02783N001_evt2
+set evtdir=$MAINDIR/cal/
+ln -s ${evtdir}${evtfname}.fits  ${evtfname}.fits
+ln -s ${evtdir}${evtfname}_i300:700_ccd7.fits   ${evtfname}_i1.fits
+ln -s ${evtdir}${evtfname}_i700:1500_ccd7.fits  ${evtfname}_i2.fits
+ln -s ${evtdir}${evtfname}_i1500:3000_ccd7.fits ${evtfname}_i3.fits
+ln -s ${evtdir}${evtfname}_i3000:7000_ccd7.fits ${evtfname}_i4.fits
+;=============================================================
+;==============================================================
+
+;now start idl and in anal
+evtroot='../xdata/acisf02783N001_evt2'
+evt_image,evtroot,'aciss',carr,ta,imdim=512,datadir='../xdata/',list=list,hdr=hdr,imblock=1,imccd=[7]
+;=============================================================
+;==============================================================
+Now run the script under ciao in the same directory:
+$PUBDIR/cal_scripts/mcsmooth.e &
+;=============================================================
+;==============================================================
+read_mimages,4,mh,fs,a,mv,cor=cor,edge=edge,mdim=mdim
+;------------------------------
+; only used for rescaling and adjusting the colors
+;for 1+2,3, 4 bands
+a(*,*,0)=bscale(alog10(fs(*,*,0)+fs(*,*,1)),alog10(mv(0)+mv(1)),alog10((mv(0)+mv(1))*100))
+a(*,*,1)=bscale(alog10(fs(*,*,2)),alog10(mv(2)),alog10(mv(2)*10000))
+a(*,*,2)=bscale(alog10(fs(*,*,3)),alog10(mv(3)),alog10(mv(3)*10000))
+cont_grey,a,mh,cor=cor,true=3,mr=0,/ps,/nocon,/full,f_c=-1,barf=0.
+
+a(*,*,0)=bscale(alog10(fs(*,*,0)+fs(*,*,1)),alog10((mv(0)+mv(1))*5),alog10((mv(0)+mv(1))*100))
+a(*,*,1)=bscale(alog10(fs(*,*,2)),alog10(mv(2)*5),alog10(mv(2)*100000))
+a(*,*,2)=bscale(alog10(fs(*,*,3)),alog10(mv(3)*5),alog10(mv(3)*100000))
+cont_grey,a,mh,cor=cor,true=3,mr=0,/ps,/nocon,/full,f_c=-1,barf=0.
+
+for k=0,3 do fs(*,*,k)=(fs(*,*,k)-mv(k)) > 1.e-5
+mvmin=1.2
+mvmax=0.5
+a(*,*,0)=bscale(alog10(fs(*,*,0)+fs(*,*,1)),mvmin,max(alog10(mvmax*(fs(*,*,0)+fs(*,*,1)))))
+a(*,*,1)=bscale(alog10(fs(*,*,2)),mvmin,max(alog10(mvmax*fs(*,*,2))))
+a(*,*,2)=bscale(alog10(fs(*,*,3)),mvmin,max(alog10(mvmax*fs(*,*,3))))
+cont_grey,a,mh,cor=cor,true=3,mr=0,/ps,/nocon,/full,f_c=-1,barf=0.
+
+;for 1,2,3+4 bands
+mvmin=1.
+mvmax=0.1
+a(*,*,0)=bscale(alog10(fs(*,*,0)),mvmin,max(alog10(mvmax*fs(*,*,0))))
+a(*,*,1)=bscale(alog10(fs(*,*,1)),mvmin,max(alog10(mvmax*fs(*,*,1))))
+a(*,*,2)=bscale(alog10((fs(*,*,2)+fs(*,*,3))),mvmin,max(alog10(mvmax*(fs(*,*,2)+fs(*,*,3)))))
+cont_grey,a,mh,cor=cor,true=3,mr=0,/ps,/nocon,/full,f_c=-1,barf=0.
+scale='30"'
+scale_plot,cor,mh,0.08,0.93,1/2.,scale,thick=2,char=2,color=!d.n_colors-1
+s=tvrd(0,0,true=3) & write_jpeg,target+'_rgb.jpg',s,true=3
+;-----------------
+;You can use the following for a look of individual channel (e.g.,):
+erase
+k=4
+tv,bscale(alog10(fs(*,*,k)),alog10(mv(k)*2),alog10(mv(k)*100000)),chan=k+1
+;-------------------------------
+;output jpeg images:
+s=tvrd(0,0,true=3) & write_jpeg,target+'_rgb.jpg',s,true=3
+;-------------------------------
+window,1,xs=mdim(0),ys=mdim(1)
+cont_grey,a,mh,cor=cor,true=3,mr=0,/ps,/nocon,/full,f_c=-1,barf=0.
+scale='1''
+scale_plot,cor,mh,0.08,0.93,1,scale,thick=2,char=2,color=!d.n_colors-1
+source_plot,soufile,cor,mh,/fits,probth=probth,psym=6,sym=2
+source_plot,soufile,cor,mh,/fits,probth=probth,psym=6,sym=1,/sou
+
+s=tvrd(0,0,true=3) & write_jpeg,target+'_rgb_s.jpg',s,true=3
+;-----------------
+;get a broad band X-ray image:
+loadct_self,18
+f=total(fs,3)
+cont_grey,f,mh,cor=cor,/ps,barf=0.,/def,/noc,greymin=total(mv),greymax=30,greylo=1
+;-------------------------------------

@@ -1,0 +1,63 @@
+pro blist_image,ba,tblist,bnorm,hdr,xmin,ymin,bmin,bmax,imblock,nofits=nofits,bimfroot=bimfroot,fidv=fidv
+; cast a background event list into images in various energy bands
+; 
+; for multiple pointings, fidv needs to be provided (not yet tested)
+; ba - output image array 
+; tblist - input event list originally from get_blist
+; bnorm - exposure normalization
+; hdr - header of a 2-D image (used for getting the dimension and for
+;       fits image output; same as those from evt_image
+; xmin,ymin,bmin,bmax,imblock - all these parameters should be the
+;                               same as those from evt_image
+; bimfroot - the root name of the output background image 
+;           files (def = 'b_')
+; fidv - vector containing the OBS_ID of individual pointings, used
+;        for their specific normalizations
+;
+; written by wqd, June 7, 2007
+;-
+if n_params() eq 0 then begin
+print,'CALLING SEQUENCE --- blist_image,ba,tblist,bnorm,hdr,xmin,ymin,bmin,bmax,imblock,nofits=nofits,bimfroot=bimfroot,fidv=fidv'
+return
+endif
+
+imdim=sxpar(hdr,'naxis*')
+nbfname=n_elements(bnorm)
+nb=n_elements(bmin)
+if n_elements(bimfroot) eq 0 then bimfroot='b_'
+ba=fltarr(imdim(0),imdim(1),nb)
+;eba=fltarr(imdim(0),imdim(1),nb) ;csmooth does not seem to use such
+;background error!!!
+;ebb=0.
+for k=0,nb-1 do begin
+	if nbfname eq 1 then begin
+              list_image,tblist,xmin,ymin,imarr,imdim(0) $
+                ,imdim(1),block=imblock,emin=bmin(k),emax=bmax(k),nsel=nsel
+              bb=bnorm(0)*imarr
+;              ebb=ebb+(bnorm(0))^2*imarr
+          endif else begin
+              bb=0
+              for kk=0,nbfname-1 do begin
+                  fsel=where_tag(tblist,nfound,tag_name='fid',value=fidv(k))
+                  if nfound ne 0 then $
+                    list_image,tblist(fsel),xmin,ymin,imarr,imdim(0) $
+                    ,imdim(1),block=imblock,emin=bmin(k),emax=bmax(k),nsel=nsel
+                  if nsel ne 0 then begin
+                      bb=bb+bnorm(kk)*imarr
+;                      ebb=ebb+(bnorm(kk))^2*imarr
+                  endif 
+              endfor 
+          endelse 
+        if n_elements(nofits) eq 0 then $
+		writefits,bimfroot+strtrim(k+1,2)+'.fits',bb,hdr
+        ba(*,*,k)=bb
+endfor 
+if keyword_set(bmaponly) eq 0 and n_elements(nofits) eq 0 then begin
+    tba=total(ba,3)
+    writefits,'b_b.fits',tba,hdr
+;    writefits,'eb_b.fits',sqrt(ebb),hdr
+    writefits,'eb_b.fits',tba*0.,hdr
+endif
+if !debug eq 3 then stop
+return
+end

@@ -1,0 +1,105 @@
+pro read_reg,un,crval,nshape,sra,sdec,spara,nsign,factor=factor,sname=sname,texto=texto
+;+
+; read and interpret an entry of a region file 
+;
+;*Inputs:
+; un - index of an opened region file
+; crval - the coordinates of the image reference point
+;
+;Outputs:
+; nshape - the shape number to be used by plot_shape (for example)
+; sra, sra - the coordinate center of the region
+; spara - the parameter vector that defines the region, depending on
+;         the shape
+; nsign - the sign of the region
+;
+;*Optiional Inputs:
+; factor - the magnification factor to be applied to the size of the
+;          regions (def =1)
+; 
+; written by wqd, July 6, 2007, extracted from plot_reg.pro
+;-
+if n_params() eq 0 then begin
+print,'CALLING SEQUENCE -  read_reg,un,crval,nshape,sra,sdec,spara,nsign,factor=factor'
+return
+endif
+if n_elements(factor) eq 0 then factor=1.
+pixarcmin=!size_pixel/60.*factor ;to convert to the size in units of arcmin
+text=''
+    readagain: readf,un,text
+    texto=text
+;    print,text
+    if strmid(text,0,1) eq '#' then begin
+        sname=gettok(strmid(text,1),'!!') 
+         ;only for the source region file from sou_fits_reg.pro
+        goto,readagain
+    endif 
+    if strmid(text,0,9) eq 'physical;' then textrem=gettok(text,';')
+    shape=gettok(text,'(')
+    if strlen(text) eq 0 then goto,readagain
+    if strmid(shape,0,1) eq '-' then begin
+        shape=strmid(shape,1,strlen(shape)-1)
+        nsign=1
+    endif else nsign=0
+    if shape eq 'polygon' then begin
+        sra=crval(0) & sdec=crval(1)
+    endif else begin
+        xp=gettok(text,',')
+        yp=gettok(text,',')
+        trans_loct,xp-!pref,yp-!pref,crval(0),crval(1),sra,sdec $
+          ,/deg,pixsize=!size_pixel
+    endelse 
+    case  shape of
+        'circle': begin
+            nshape=0
+            spara=gettok(text,')')*pixarcmin
+        end
+        'box': begin
+            nshape=1
+            dimx=gettok(text,',')
+            dimy=gettok(text,',')
+            if strlen(text) ne 0 then rangle=gettok(text,')') $
+            else begin
+                dimy=gettok(dimy,')')
+                rangle=0.
+            endelse 
+            spara=[[dimx,dimy]*pixarcmin,rangle]
+            end
+        'rotbox': begin
+            nshape=1
+            spara=[gettok(text,','),gettok(text,',')]*pixarcmin
+            spara=[spara,gettok(text,')')]
+        end 
+        'ellipse': begin
+            nshape=2
+            scale1=gettok(text,',')*pixarcmin
+            scale2=gettok(text,',')*pixarcmin
+            angle=gettok(text,',')
+            if strlen(text) eq 0 then $
+              spara=[scale1,1-scale2/float(scale1),angle-90.] else begin
+              nshape=5 ;actually this is an ellipse annulus
+              spara=[scale1,1-scale2/float(scale1)]
+              scale1=angle*pixarcmin ;outer major
+              scale2=gettok(text,',')*pixarcmin ;outer minor
+              spara=[spara,scale1,1-scale2/float(scale1),gettok(text,')')-90.]
+             endelse 
+        end 
+        'polygon': begin
+            nshape=3
+            spara=[-999.]
+            text=gettok(text,')')
+            while strlen(text) ne 0 do begin
+                spara=[spara,gettok(text,',')]
+            endwhile 
+            spara=[spara(1:*),spara(1:2)]
+            nspara=n_elements(spara)/2
+            spara=(reform(spara,2,nspara)-!pref)*pixarcmin
+        end
+        'annulus': begin
+            nshape=4
+            scale1=gettok(text,',')
+            spara=[scale1,gettok(text,')')]*pixarcmin
+        end
+        else: print,'The region shape ',shape,' needs to be implemented!'
+    endcase
+end

@@ -1,0 +1,10 @@
+Rosat standard default parameters for contructing exposure maps
+25
+0,OBSEQ=!seq_no,Root name of input file
+1,DIR=!data_dir,Directory containing data file
+3,INSTR=P,Instrument (default is P for PSPC)
+4,PROC=US,Format of processed files (def=US, or MPE)
+5,ACTFIL=NONE,Name of file with accepted time intervals(or NONE)
+6,BAND=,Number of channel band of instrument map
+7,MAPFIL=,Name of output exposure map fits file (or NONE)
+9,CHATTER=1,Controls chattiness of program

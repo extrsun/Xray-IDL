@@ -1,0 +1,52 @@
+pro conf_bts_ell,xp,yp,rlo,rhi,rn,paraa,pam,xc,yc,lines=lines,bpix=bpix $
+,nsim=nsim,seed=seed,siglevel=siglevel,choice=choice,noverb=noverb $
+,inpar=inpar,pradius=pradius,pbest=pbest
+;+
+; calculate confidence limits using bootstrapping samples of a cluster model.
+; xp, yp - arrays containing pixel coordinates of individual counts
+; pbest - the best-fit angle (def = median of the boots trapping sample data)
+; also see comments in ell_plot_it.pro
+; writen by wqd, 7/15, 1995
+;-
+if n_params() eq 0 then begin
+print,'CALLING SEQUENCE - conf_bts_ell,xp,yp,rlo,rhi,rn,paraa,pam,xp,yp'
+print,',lines=lines,bpix=bpix,nsim=nsim,seed=seed,siglevel=siglevel'
+print,',choice=choice,noverb=noverb,inpar=inpar,pradius=pradius,pbest=pbest'
+return
+endif
+
+if n_elements(pradius) ne 0 then begin
+	; only counts within dim diameter will be resampled
+	case !instr of
+  		'p':  hdim=7679.5 
+  		'h':  hdim=4095.5
+	endcase
+	xc=xp+hdim
+	yc=yp+hdim
+	sel=where((xp-xc)^2+(yp-yc)^2 le pradius^2,nc)
+	if nc eq 0 then stop,'No count is within the radius!!!'
+	xpsel=xp(sel)
+	ypsel=yp(sel)
+endif else begin
+	xpsel=xp
+	ypsel=yp
+	nc=n_elements(xp)
+endelse
+bts,seed,lindgen(nc),s,nbs=nsim
+
+for k=0,nsim-1 do begin
+ xx=xpsel(s(*,k))
+ yy=ypsel(s(*,k))
+
+ ell_plot_it,xx,yy,rlo,rhi,rn,para,cor,xc,yc,bpix=bpix,choice=choice $
+	,noverb=noverb,inpar=inpar
+ if k eq 0 then begin
+	sz=size(para)
+	paraa=fltarr(sz(1),rn,nsim)
+ endif
+ paraa(*,*,k)=para
+endfor
+bts_perc,paraa,pam,siglevel=siglevel,pbest=pbest
+return
+end
+

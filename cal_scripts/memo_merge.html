@@ -1,0 +1,368 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+  <meta content="text/html; charset=ISO-8859-1"
+ http-equiv="content-type">
+  <title>memo_merge</title>
+  <meta content="Daniel Wang" name="author">
+</head>
+<body>
+<h3 style="text-align: center;">Memo on producing and analyzing merged
+data sets of
+multiple observations</h3>
+;================================================================<br>
+; Assumptions:<br>
+<ul>
+  <li>basic data calibration has been done for individual observations
+and the data have been placed in the xdata directory of each observation</li>
+  <li>Individual file root names are included in the file flist.dat</li>
+</ul>
+;written by wqd<br>
+;modified to use the pre-created background images, wqd, July 9, 2007<br>
+;================================================================<br>
+; <span style="font-weight: bold;">Merge the events</span>:<br>
+instr='acisi' ; for high b projects<br>
+cenvset,instr <br>
+fdir='../xdata/'<br>
+flist=fdir+'flist.dat' ;with entries like
+"8210_evt2file_new_clean.fits" for
+each observation<br>
+rfname='../xdata/8210_evt2file_new_clean.fits' ;just a reference
+herder;
+change the file name accordingly<br>
+subfac=2<br>
+;======================================================<br>
+;setup various parameters (including band weights for exposure maps):<br>
+sou_det_params,instr,dim,block,ccd,bmin,bmax <br>
+mblock=3<br>
+mdim=long([1,1]*1024)<br>
+;----------------------------------------<br>
+mtype=0&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; ;for Ra and Dec &nbsp;
+coordinates<br>
+;mtype=1 ;for Galactic coordinates<br>
+h=headfits(rfname,ext=1)<br>
+gradec=[73.96082608767d,-66.445092274716] ;image center coordinates
+(may be from hprint,h, TCRVL11, TCRVL12)<br>
+<br>
+pixsize=!size_pixel/3600<br>
+del=pixsize*mblock ;pixel size in units of deg<br>
+;generate a fits header<br>
+get_fitshead,0,ph,del=pixsize,crval=gradec,dim=mdim*mblock,type=2,equi=2000
+;,/galactic
+;for Galactic coordinates<br>
+get_fitshead,0,mh,ph,del=del,dim=mdim,type=4 ;real image header<br>
+<br>
+;read events<br>
+row =
+{x:0.,y:0.,energy:0,detx:0,dety:0,chipx:0,chipy:0,ccd_id:0,pi:0,time:0.0D0,mx:0.,my:0.,fid:0}
+;the last three cannot be changed!!!<br>
+list_merge,flist,ph,mlist,mtype=mtype,ftail='.fits',fdir=fdir,row=row,ccd=[0,1,2,3],mgti=mgti<br>
+print,total(mgti.stop-mgti.start)<br>
+<br>
+;just to have a look of the image:<br>
+list_image,mlist,1,1,cb,mdim(0),mdim(1),block=mblock,emin=1000,emax=8000,det='m'<br>
+window,xs=mdim(0),ys=mdim(1)<br>
+loadct_self,18<br>
+tv,bscale(cb,0,3)<br>
+;===============================================================<br>
+;construct images in multiple bands:<br>
+detagname='m'<br>
+xmin=1 &amp; ymin=1<br>
+cim=intarr(mdim(0),mdim(1),4)<br>
+for k=0,3 do begin &amp;&nbsp;
+list_image,mlist,xmin,ymin,cb,mdim(0),mdim(1),block=mblock,emin=bmin(k),emax=bmax(k),det=detagname
+&amp; cim(*,*,k)=cb &amp; endfor<br>
+;-------------------<br>
+;construct exposure maps<br>
+tim=fltarr(mdim(0),mdim(1),4)<br>
+for k=1,4 do begin &amp;
+cast_main,flist,mh,t,ftail='_i',mtype=mtype,fdir=fdir,eband=[k]
+&amp;tim(*,*,k-1)=t &amp; endfor ;for mblock &lt; sqrt(2)*block, e.g.,
+block=3 for ACIS-I; otherwise add the keyword ,/mtoi<br>
+;-------------------<br>
+;create background images with proper exposure normalizations<br>
+bim=fltarr(mdim(0),mdim(1),4)<br>
+for k=1,4 do begin &amp;
+cast_main,flist,mh,t,ftail='_b',mtype=mtype,fdir=fdir,eband=[k],/mtoi,/nonorm
+&amp;bim(*,*,k-1)=t &amp; endfor<br>
+;the keyword&nbsp; mtoi is necessary here (ignore the warning)!<br>
+<br>
+;just check the integraty of the merge images:<br>
+f=imdiv(cim-bim,tim)<br>
+g5=psf_gaussian(fwhm=5,/norm,npix=121)<br>
+tv,bscale(convolve(total(f,3)*1.e4,g5),0,0.2)<br>
+;===============================================================<br>
+;If there are streaks to remove, construct the streak map (if there is
+any) to be subtracted from the
+count map:<br>
+sim=fltarr(mdim(0),mdim(1),4)<br>
+for k=1,4 do begin &amp;
+cast_main,'sflist.dat',mh,b,ftail='_s',mtype=mtype,eband=[k],/nonorm,avgkey=0,fdir='../xdata/'
+&amp;sim(*,*,k-1)=b*(mblock/float(block))^2 &amp; endfor<br>
+<br>
+;test:<br>
+b=total(imdiv(cim-sim,tim),3)<br>
+tv,bscale(convolve(b,g5),0,1.e-4)<br>
+;===============================================================<br>
+;output basic products to the main<span style="font-weight: bold;">
+xdata </span>directory for later analysis:<span
+ style="font-family: monospace;"></span><br>
+;convert the tag names for source detection with the merged event file<br>
+;mx and my are now for the original x and y of individual observations<br>
+a=mlist<br>
+mlist.x=a.mx &amp; mlist.y=a.my<br>
+mlist.mx=a.x &amp; mlist.my=a.y<br>
+;just for testing:<br>
+list_image,mlist,1,1,cb,mdim(0),mdim(1),block=mblock,emin=1000,emax=8000
+<br>
+tv,bscale(cb,0,3)<br>
+;--------------------------------------------------------------------------<br>
+;move the central coordinates to be the same as the standard evt file<br>
+mlist.x=mlist.x+(!pref-(mdim(0)*mblock+1.)/2.)<br>
+mlist.y=mlist.y+(!pref-(mdim(1)*mblock+1.)/2.)<br>
+xmin=1+(!pref-(mdim(0)*mblock+1.)/2.)<br>
+ymin=1+(!pref-(mdim(1)*mblock+1.)/2.)<br>
+;--------------------------------------------------------------------------<br>
+;write the converted file into a merged evt file:<br>
+;rfname='../xdata/945_evt2file_new_clean.fits' ;example, just for the
+header format <br>
+evtfname='n11'<br>
+writefits_evt,evtfname+'.fits',mlist,gradec,[!pref,!pref],pixsize,rfname,h1=h1,gti=mgti<br>
+<br>
+;the corresponding merged exposure maps:<br>
+for k=1,4 do
+writefits,evtfname+'_i'+strtrim(k,2)+'.fits',tim(*,*,k-1),mh<br>
+for k=1,4 do
+writefits,evtfname+'_b'+strtrim(k,2)+'.fits',bim(*,*,k-1),mh<br>
+;------------------------------<br>
+;produce a mask for calculating backscal if non-ciao spectral
+extraction will be done (in xdata):<br>
+;mh=headfits(fdir+'n11_i1.fits')<br>
+cast_main,flist,mh,t,ftail='_i',mtype=mtype,fdir=fdir,eband=[0],/nonorm&nbsp;&nbsp;
+<br>
+writefits,evtfname+'_i0.fits',t,mh <br>
+cast_main,'../imaging/'+flist,mh,t,ftail='_i',mtype=mtype,fdir=fdir,eband=[0],/nonorm,soufile=soufile<br>
+writefits,evtfname+'_i0s.fits',t,mh <br>
+;===============================================================<span
+ style="font-family: monospace;"></span><br>
+;output the images for csmoothing:<br>
+;cd,'../imaging'<br>
+$mkdir images<br>
+cd,'images'<br>
+c=total(cim,3)<br>
+;c=total(cim-sim,3) ;with streaks<span style="font-family: monospace;"><br>
+</span>;-------------------------------------<span
+ style="font-family: monospace;"><br>
+</span>;fill the zero exposure regions with a median value to minimize
+artifical bumps produced by csmooth (see memo_csmooth for details).<br>
+<pre>a=c<br>b=convolve(c,g5)<br>t=tim(*,*,0)<br>s=where(t le 0.,ns)<br>if ns ne 0 then a(s)=median(b(where(t gt 0))) ;just a representative value<br>;have a look:<br>tv,bscale(a,0,1)<br>curval,a ;off regions should have a non-zero value<br>;-------------------------------------<br></pre>
+writefits,'c_b.fits',c,mh<br>
+for k=0,3 do
+writefits,'c_'+strtrim(k+1,2)+'.fits',cim(*,*,k),mh <br>
+;
+for k=0,3 do
+writefits,'c_'+strtrim(k+1,2)+'.fits',cim(*,*,k)-sim(*,*,k),mh <br>
+for k=0,3 do writefits,'t_'+strtrim(k+1,2)+'.fits',tim(*,*,k),mh <br>
+for k=0,3 do writefits,'b_'+strtrim(k+1,2)+'.fits',bim(*,*,k),mh <br>
+$PUBDIR/cal_scripts/mcsmooth.e "1 2 3 4" 2.5 3 1 &amp;<br>
+;===============================================================<br>
+;===============================================================<br>
+<span style="font-weight: bold;">Source detection</span> based on the
+merged file (assuming that the pointing directions of individual
+observations are about the same!!! Otherwise, memo_sou_det_merged_file
+may need to be followed; talk to wqd before proceeding in this case.<br>
+<br>
+;Actual source detection (do this in another idl window, following
+memo_anal):<br>
+detagname='m' ;using mx and my for calculating the off-axis angles of
+individual events<br>
+evtfname='n11'<span style="font-family: monospace;"><br>
+</span>slow=2.5 ;def=2. which may be too small for a deep obs of a
+crowded field <br>
+;=====================================================================<br>
+;===============================================================<br>
+;<span style="font-weight: bold;">Diffuse emission image (in imaging):<br>
+</span>soufile='../sou/n11_map70BSH_hr'<br>
+;list_xray,'../xdata/n11.fits',mlist&nbsp;&nbsp;&nbsp; <br>
+detagname='m' ;prefix for the original coordinates of individual
+observations<br>
+list_sel,flist,mlist,msel,ftail='.fits',fdir=fdir,souf=soufile,subfac=subfac,eband=eband,det=detagname<br>
+bmlist=mlist(msel)<br>
+list_image,bmlist,xmin,ymin,cb,mdim(0),mdim(1),block=mblock,emin=bmin(0),emax=max(bmax)
+;,det=detagname<br>
+tv,bscale(cb,0,5)<br>
+;--------------------------------------------------------------------------<br>
+;ouput the source-removed merged evt file:<br>
+;rfname='../xdata/945_evt2file_new_clean.fits' ;example, just for the
+header format <br>
+evtfname=fdir+'n11_b'<br>
+writefits_evt,evtfname+'.fits',bmlist,gradec,[!pref,!pref],pixsize,rfname,h1=h1<br>
+;--------------------------------------------------------------------------<br>
+;construct source-removed images:<br>
+nb=4<br>
+cim=intarr(mdim(0),mdim(1),nb)<br>
+for k=0,3 do begin
+list_image,bmlist,xmin,ymin,cb,mdim(0),mdim(1),block=mblock,emin=bmin(k),emax=bmax(k)
+&amp; cim(*,*,k)=cb<br>
+;---------------------<br>
+;construct a source removing exposure maps:<br>
+tim=fltarr(mdim(0),mdim(1),4)<br>
+for k=1,4 do begin &amp;
+cast_main,flist,mh,t,ftail='_i',mtype=mtype,fdir=fdir,soufile=soufile,subfac=subfac,flow=flow,eband=[k]&nbsp;
+&amp;tim(*,*,k-1)=t &amp; endfor<br>
+<br>
+bim=fltarr(mdim(0),mdim(1),4)<br>
+for k=1,4 do begin &amp;
+cast_main,flist,mh,t,ftail='_b',mtype=mtype,fdir=fdir,soufile=soufile,subfac=subfac,flow=flow,eband=[k],/mtoi,/nonorm
+&amp;bim(*,*,k-1)=t &amp; endfor<br>
+<br>
+;test:<br>
+b=convolve(total(imdiv(cim-bim,tim),3),g5)*(1./(60*del))^2*1.e3<br>
+&nbsp;cont_grey,b,mh,cor=cor,mr=0,/ps,/noc,/full,barf=0.,greymin=1.,greymax=50,greylo=1<br>
+&nbsp;source_plot,soufile,cor,mh,slow=0,probth=probth,psym=7.,sym=1.,/fits<br>
+<br>
+;-----------------------------------------------------------------<br>
+;output the diffuse images:<br>
+cd,'dif'<br>
+for k=0,3 do
+writefits,'c_'+strtrim(k+1,2)+'.fits',cim(*,*,k),mh <br>
+;
+for k=0,3 do
+writefits,'c_'+strtrim(k+1,2)+'.fits',cim(*,*,k)-sim(*,*,k),mh ;for
+streak subtraction<br>
+for k=0,3 do writefits,'t_'+strtrim(k+1,2)+'.fits',tim(*,*,k),mh <br>
+for k=0,3 do writefits,'b_'+strtrim(k+1,2)+'.fits',bim(*,*,k),mh <br>
+<pre>;output the images for calcuating scales in csmooth:<br>;normally diffuse emission is seen only in the first two bands, so<br>maxbn=1<br>writefits,'c_b.fits',total(cim(*,*,0:maxbn),3),mh<br>writefits,'b_b.fits',total(bim(*,*,0:maxbn),3),mh<br>writefits,'eb_b.fits',bim(*,*,0)*0.,mh</pre>
+;in ciao, run csmooth with the background supplied (see memo_csmooth
+for details):<br>
+$PUBDIR/cal_scripts/mcsmooth_b.e&nbsp;<span
+ style="font-family: monospace;"> </span>"1 2" 4. 5 1 &amp; <br>
+;===============================================================<span
+ style="font-family: monospace;"><br>
+</span>;===============================================================<br>
+;<span style="font-weight: bold;">Spectral analysis</span> based on
+merged event file (<span
+ style="font-weight: bold; color: rgb(255, 0, 0);">does not work for
+ciao 4.0 beta</span>)<br>
+<pre>source $NETDIR/software/ciao.csh<br>ciao<br></pre>
+;* Requirements:<br>
+;1) /net1/hobby/pub/caldb_local/ needs to be installed.<br>
+;2) merged mask (exposure map without arf correction) has been created<br>
+; to create a mask without redoing the exposure, do the following in
+cal:<br>
+<span style="font-family: monospace;"></span>setenv CMAP 2
+<br>
+setenv INSTR acisi<span style="font-family: monospace;"><br>
+</span>setenv MAINDIR ..<span style="font-family: monospace;"><br>
+</span>setenv BANDS "500:1000"<span style="font-family: monospace;"><br>
+</span>set event_root=evt2file_new_clean<br>
+$PUBDIR/cal_scripts/make_expmap.e ${event_root} asol_file &amp;<br>
+cast_main,flist,mh,t,ftail='_i',mtype=mtype,fdir=fdir,soufile=soufile,subfac=subfac,flow=flow,eband=[0]<br>
+;===============================================================<br>
+instr='acisi'<br>
+cenvset,instr<br>
+fdir='../xdata/'<br>
+evtroot='n11'<br>
+;get the merged events:<br>
+list_xray,fdir+evtroot+'.fits',mlist ;get events<br>
+list_xray,fdir+evtroot+'_b.fits',bmlist ;source removed events<br>
+file_params,fdir+evtroot+'.fits',hdr&nbsp;&nbsp;&nbsp; ;get the proper
+header<br>
+reffname='../xdata/8467_evt2file_new_clean.fits' <br>
+&nbsp;&nbsp;&nbsp; ;used to get the tstart, should be one of the merged
+obs; critical!!!<br>
+;filtero=readfits(fdir+evtroot+'_i0.fits',mh) ;merged map without arf
+correction<br>
+;filter=readfits(fdir+evtroot+'_i0s.fits',mh) <br>
+<br>
+soufile='../sou/n11_map70BSH_hr'<br>
+sou_fits_info,soufile,slist,/all<br>
+;----------------------------------------------------------------------------------<br>
+ssel=[51] ;just an example<br>
+sra=slist(ssel).ra<br>
+sdec=slist(ssel).dec<br>
+sn='X-'+strtrim(slist(ssel).sn,2)<br>
+<br>
+;for visual inspection and get the field image header:<br>
+cor=[0.01,0.8,0.01,0.99]<br>
+asdim=[1,1]*100 ;dimension of the field of view in units of arcsec<br>
+; new hdr from file_params is now used (7/18/07):<br>
+sou_cim,mlist,hdr,sra,sdec,asdim,1,detagname='',sn=sn,char=1.2,thick=2,cor=cor,shdr=shdr,pcor=pcor,sxmin=sxmin,symin=symin,sdim=sdim<br>
+sr=3/60. ;source radius in arcmin<br>
+plot_shape,sr,pcor,shdr,[sra,sdec],color=!d.n_colors-1,nshape=0,sel=selv<br>
+<br>
+;get the mask with sources and backcal:<br>
+mfname=fdir+evtroot+'_i0.fits'<br>
+cast,mfname,shdr,outa=filtero,/noint<br>
+expt=avg(filtero(selv)) ;this gives the badpixel corrected flux in a
+spectral fit<br>
+backscal=n+elements(selv)*(sxpar(shdr,'cdelt2')*3600./!size_pixel/8192.)^2<br>
+<br>
+;now get the source spectrum:<br>
+filter=filtero*0.<br>
+filter(selv)=1.<br>
+list_image,mlist,sxmin,symin,cb,sdim(0),sdim(1),block=1,filter=filter,sel=sel<br>
+tv,bscale(cb,0,1)<br>
+refh=headfits(reffname,ext=1)<br>
+tstart=sxpar(refh,'tstart')<br>
+sfroot='spec'<br>
+multi_spec,mlist(sel),sfroot,exp=expt,backscal=backscal,wemin=500.,wemax=2000.,tstart=tstart,bspecfname=sfroot+'_b.pi'<br>
+<br>
+;get a background backscal in an annulus:<br>
+filter=filtero*0.<br>
+;If a region file is defined,<br>
+plot_reg,pcor,shdr,'test.reg',selv=selv<br>
+filter(selv)=filtero(selv)<br>
+tv,bscale(filter) ;just check the selected region!<br>
+<br>
+;alternatively defined the background region right here:<br>
+smfname=fdir+evtroot+'_i0s.fits'<br>
+cast,smfnamef,shdr,outa=filtero,/noint<br>
+plot_shape,sr*1.5,pcor,shdr,[sra,sdec],color=!d.n_colors-1,nshape=0,sel=selv_i<br>
+plot_shape,sr*10.,pcor,shdr,[sra,sdec],color=!d.n_colors-1,nshape=0,sel=selv_o<br>
+filter(selv_o)=filtero(selv_o)<br>
+filter(selv_i)=0.<br>
+<br>
+;calculate the background backscal:<br>
+sel=where(filter gt 0,nsel)<br>
+expt_b=avg(filter(sel))<br>
+backscal_b=nsel/8192.^2<br>
+<br>
+;get the background spectrum:<br>
+list_image,bmlist,sxmin,symin,cb,sdim(0),sdim(1),block=1,filter=filter,sel=sel<br>
+tv,bscale(cb,0,1)<br>
+multi_spec,bmlist(sel),sfroot+'_b',exp=expt_b,backscal=backscal_b,wemin=500.,wemax=2000.,tstart=tstart<br>
+;================================================<br>
+;<span style="font-weight: bold;">Extract spectra for a set of
+point-like sources detected</span>:<br>
+; follow the first part of the above <span style="font-weight: bold;">Spectral
+analysis and then:</span><br>
+wemin=500. &amp; wemax=2000. ;for high galactic lat regions<br>
+;wemin=2000. &amp; wemax=8000. ;for the GC region <br>
+refh=headfits(reffname,ext=1)<br>
+tstart=sxpar(refh,'tstart')<br>
+<br>
+;select sources for the spectral analysis:<br>
+ston=slist.cntrb/slist.cntrbe<br>
+sel=where(ston gt 10.)<br>
+;write the selected sources into a region file:<br>
+regfile='sou_ston10.reg'<br>
+sou_fits_reg,hdr,regfile,slist(sel),/backreg<br>
+;check the region file by loading it into ds9, together with the events<br>
+<br>
+;extract the spectra of the sources:<br>
+mfname=fdir+evtroot+'_i0.fits'<br>
+smfname=fdir+evtroot+'_i0s.fits'<br>
+sou_reg_spec,regfile,hdr,mlist,tstart,mfname,bmlist=bmlist,smfname=smfname&nbsp;
+<br>
+;================================================<br>
+;Other utilities for multiple observations:<br>
+;for outputing a table summarizing individual observation parameters:<br>
+flist='flist.dat'<br>
+tab_file_params,flist,'flist.tex',dir='../xdata/',ftail='.fits'<br>
+<br>
+<br>
+<span class="signature"><br>
+</span>
+</body>
+</html>

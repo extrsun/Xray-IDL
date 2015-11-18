@@ -1,0 +1,12 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+  <meta content="text/html; charset=ISO-8859-1"
+ http-equiv="content-type">
+  <title>memo_cal.html</title>
+  <meta content="Daniel Wang" name="author">
+</head>
+<body>
+<pre>#===========================================================<br># Construct an ACIS background event file, using either the blank-sky background<br># or the stowed (instrument) background data<br># see http://cxc.harvard.edu/contrib/maxim/acisbg/<br># <br># written by wqd, July 13, 2004, based on the info provided by ShiKui Tang<br># modified to include the construction of the blank-sky backg, wqd, Aug. 24, 05<br>#===========================================================<br>#in the main directory of the observation<br>mkdir back <br>cd back<br>setenv MAINDIR ..<br>set evtroot='evt2file_new_clean'<br><br>set bevtroot=b${evtroot}<br><br>#auto find the the aoff file <br>ln -s  $MAINDIR/cal/${evtroot}.fits ${evtroot}.fits<br>find $MAINDIR -name 'acis*_aoff1.fits.gz' -exec gunzip {} \;<br>find $MAINDIR -name 'acis*_aoff1.fits' -exec ln -s {} aoff.fits \;<br><br>#Assuming all the background data and related files are in (make sure that they are the latest) <br>set STOWDIR='/net1/hobby/CHANDRA/acisbg06/'                                 <br><br>#for the particle background only<br>#set STOWDIR='/net1/hobby/CHANDRA/stow'<br>#cp ${STOWDIR}/acis_D_0123567_stowed_evt_170404.fits ${bevtroot}.fits<br>cp ${STOWDIR}/data/acisi_D_01236_bg_evt_010205.fits ${bevtroot}.fits<br><br>#for the blank-sky background:<br>#set STOWDIR='/net1/hobby/data/caldb_3.0.0/data/chandra/acis/bcf/bkgrnd/'<br>#cp ${STOWDIR}/acisiD2000-12-01bkgrnd_ctiN0001.fits ${bevtroot}.fits<br>cp ${STOWDIR}/data/acis_D_0123567_stowed_evt_150606.fits ${bevtroot}.fits<br><br>chmod a+rwx ${bevtroot}.fits<br>#The above file needs to be modified, according to the observing phase and instr<br><br>cp /net1/hobby/CHANDRA/stow/make_acisbg.par ./<br>#emacs make_acisbg.par <br>#to see the defaults and to make appropriate changes<br><br>#ln -s ../cal/evt2file_new_clean_gti.fits ./gti.fits<br>ln -s ../cal/_eventsfile_gti.fits ./gti.fits<br><br>#/net1/hobby/CHANDRA/stow/make_acisbg<br>${STOWDIR}/bin.redhat62/make_acisbg<br><br>#end for single observation<br><br>#for processing multiple observations; e.g.,<br><br>/net1/hobby/pub/cal_scripts/bg_mob.e "2954 2953 3392 3663 1561_0 3665 1561_1 3393" /d2/gc_new/ "0,1,2,3" "/net1/hobby/data/caldb_3.0.0/data/chandra/acis/bcf/bkgrnd/" "acisiD2000-12-01bkgrnd_ctiN0001.fits"</pre>
+</body>
+</html>

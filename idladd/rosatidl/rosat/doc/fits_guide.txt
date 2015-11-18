@@ -1,0 +1,569 @@
+
+12 June 1992
+
+I. Structure and organization of the Rosat FITS files:
+
+     Rosat guest observers will obtain their data in the form of FITS files. 
+At present, three types of FITS formats are used:
+
+     1. Simple FITS images in raster format (with no extensions), used
+        for the PROS compatible image, background, and exposure map files.
+
+     2. ASCII table extensions, used for derived data files such as the .ASC, 
+        .PAR, .TAP, etc. files.
+
+     3. Binary table extensions, used for everything else.
+
+The two types of table format extensions can be distinguished by the value of 
+the header  XTENSION keyword. For the ASCII tables, XTENSION is set equal to 
+TABLE. For the binary tables, XTENSION is set to A3DTABLE (or BINTABLE).
+All data produced since around May, 1991 uses BINTABLE.
+
+     The current organization of the Rosat FITS files is as follows:
+
+     1. There are different sets of FITS files for the PSPC and the HRI.
+        Wherever possible, the same formats have been used and in these
+        instances the files have the same extension, e.g., .ASC, .TAP.
+        However, in general, the PSPC and HRI files will have different
+        extensions.
+
+     2. The FITS files can be divided into three main groups: 
+
+        a. a file documenting the contents of the GO tape (the .TAP file)
+
+        b. the files required by PROS
+
+        c. simple FITS versions of selected level 1 products from the
+           standard processing.
+
+        The file names in general have the following structure:
+
+        PROS-oriented    rp123456_abc.fits (PSPC)   rh123456_abc.fits (HRI)
+        others           rp123456.abc               rh123456.abc
+
+        where 123456 is the Rosat observation sequence number and .abc
+        is the extension of the file.
+
+     3. The tables are stored as extensions to the FITS files. The table
+        format is used so that related information can be stored within
+        a single FITS file. Beyond that, the structures of the table 
+        extensions varies so that different files are organized differently. 
+        Some files (e.g., .ASP, .SAS, .SO) contain a set of identical tables,
+        one for each observation interval (OBI) which is part of the 
+        observation sequence. Other files (e.g., .FITS) contain several 
+        different tables. Many files (especially for the HRI) consist of 
+        only one table.
+
+     4. The structure and organization of the Rosat FITS files has been
+        reviewed, and a major revision is planned as of November 1992. 
+        The intent is to reduce the total number of files, to simplify and 
+        standardize the organization of the information, and to bring the 
+        3D binary format into agreement with general FITS philosophy.
+        Generally, the specific tables stored within a given FITS file will
+        change, and in some cases the fields within a single table. 
+        However, the general mechanics of how to use IDL to read and
+        manipulate the data within the files (see section III) will still 
+        apply.
+
+
+II. A summary of the currently available PSPC and HRI FITS files:
+
+     The following excerpts from the ROSAT Data Products Users Guide give
+summaries of the file extensions currently available for the PSPC and HRI,
+together with brief descriptions of their contents. For more detailed
+information, consult the Data Products Guide.
+
+     1. PSPC:
+
+        PROS-oriented files
+
+        .FITS EVENTS file   Photon events, data quality, and good time
+                            intervals ("good" events only)
+        _IM1.FITS           Compressed image for display - total energy band
+        _IM2.FITS                                        - hard band
+        _IM3.FITS                                        - soft band
+        _BK1.FITS           Background map - total energy band
+        _BK2.FITS                          - hard band
+        _BK3.FITS                          - soft band
+        _MEX.FITS           Exposure time map (for the entire sequence)
+        _SP.FITS            Selected source spectra
+        _SKY.FITS           Sky catalog cross-identifications
+        _SRC.FITS           Detailed source list and analysis
+
+        The _SP.FITS, _SKY.FITS, and _SRC.FITS files are in ASCII table 
+        format. The .FITS files consist of three binary extensions - the first
+        gives the good time intervals, the second gives information about
+        the data quality flags, and the third gives the list of photon
+        events. The remaining image and map files are simple FITS image 
+        files with no extensions.
+
+        Other (ancilliary) files
+         
+        .ASC                ASCII data sets from the standard processing
+                            corresponding to the hardcopy outputs
+        .ASP  ASPQU file    Aspect Quality flags file
+        .CAS  CORAS file    Corrected Aspect File (SPASP + Boresight)
+        .DMP  DTMAT file    Compressed Detector Response Matrix + Energy Bins
+        .EVR  EVRAT file    Various measures of event rates
+        .HKB  HKBIN file    Binned Housekeeping data
+        .STA  HKSTA file    Gives changes in Housekeeping Status flags
+        .MOI                Modified Instrument sensitivity map
+        .MDS  MDSET file    Master Data Set (all photons, "bad" and "good")
+        .OAR  OFFAR file    Off Axis Areas file
+        .PAR  PAR files     Parameter file documenting processing
+        .RCR  RACAR file    Radiation Calibration Result file
+        .SAS  SMOAS file    Smoothed Aspect File (CORAS + FFT)
+        .SA   SPASP file    Split Aspect File
+        .SO   SPORB file    Split Orbit File
+        .TAP  ROTAPE file   Lists files on the GO tape
+ 
+        The .ASC, .PAR, and .TAP files are in ASCII table format.
+        The .ASP, .CAS, .EVR, .HKB, .MDS, .RCR, .SA, .SAS, .SO, and .STA
+        files consist of identical binary extensions, one for each OBI.
+        The .DMP, and .MOI files contain single binary tables, while the 
+        .OAR files contain two binary tables. 
+  
+     2. HRI:
+
+        PROS-oriented
+
+        .FITS EVENTS file   Photon events, data quality, and good time
+                            intervals ("good" events only)
+        _IMG.FITS           Compressed image for display
+        _BKG.FITS           Background map
+        _SKY.FITS           Sky catalog cross-identifications
+        _SRC.FITS           Detected source list and analysis
+
+        The  _SKY.FITS and _SRC.FITS files are in ASCII table format.
+        The .FITS files consist of three binary tables - the first
+        gives the good time intervals, the second gives information about
+        the data quality flags, and the third gives the list of photon
+        events. The remaining image and map files are simple FITS image 
+        files with no extensions.
+ 
+        Other (ancilliary) files
+ 
+        .ABK  AVGBKS file   Average Backgrounds file 
+        .AH   AH file       Aspect Histogram file 
+        .ANP                History of the processing of the data
+        .AO   AO file       Aspect Offsets file
+        .ASC                ASCII data sets from the standard processing
+                            corresponding to the hardcopy outputs
+        .BCR  BKCRNG file   Background Counts Histogram file
+        .BGI  BKGI file     Background Good Time Intervals file
+        .BEB  BEBKM file    Bright Earth Background Map
+        .BIR  BKIRNG file   Background Range Interval Histogram file   
+        .BKI  BKI file      Background Interval Description file
+        .BSC  BKSCR file    Background Screening File
+ ??     .BTS  BKTSU file    Temporal Status History file (SEQ processing)
+        .CPB  CPBKM file    Charged Particle Background Map 
+        .CPS  CPS file      Complete Photon Store file
+        .DBM  DETBKM file   Detector Background Map 
+        .DMS  1DMS file     Gives histogram of fluxes (cnts/sq pixel/sec)
+ ??     .GTE  TOE file      Time Ordered Events (SEQ processing)
+        .HTL  HRITALLY file History of the HRI science frame telemetry
+                            quality flags 
+ ??     .HTS  HKTSU file    Temporal Status History file (OBI processing)
+        .LTF  LTF file      Live-Time Correction Factors
+ ??     .MO   MO file       Temporal Status History file (SEQ processing)
+        .MOB  MOBITSH file  Merged OBI Temporal Status History file
+        .OAN  OANGS file    OBI Observation Angles file
+        .OBI  BEGI file     OBI Bright Earth Intervals file
+ ??     .OBP  BEPOEMS file  (OBI processing)
+ ??     .OBS  BTSH file     Temporal Status History File (OBI processing)
+        .OBT  BETOE file    OBI Bright Earth TOE file
+        .OTS  OBITSH file   OBI Temporal Status History File
+        .PAR  PAR file      Documents pipeline processing
+ ??     .POE  POE file      (SEQ processing)
+ ??     .PMS  POEMS file    (SEQ processing)
+        .QEG  QEGEOM file   Quantum Efficiency Geometry Map
+        .SAA  SAARATES file OBI SAA detector rates
+        .S1D  S1DM file     HRI Sampling Histogram file
+        .SGI  STDGI file    Standard Good Intervals file 
+        .SO   SPORB file    Split Orbit File
+        .SPS  SPS file      OBI Secondary and Primary Science Rates
+        .SSC  STDSCR file   Standard Screen Results file
+        .SXB  SFTBKM file   Soft Xray Background Map
+        .TAP  ROTAPE file   Lists contents of GO tape
+        .TSH  TSH file      HRI Temporal Status History file         
+ ??     .UGI  UVGI file     (OBI processing)
+ ??     .UPM  UVPOEMS file  (OBI processing)
+ ??     .UTE  UVTOE file    (OBI processing)
+ ??     .VTS  VGTS file     Temporal Status History file (OBI processing)
+ ??     .VTU  VGTSU file    Temporal Status History file (OBI processing)
+        .XRB  XRB file      X-ray Burst Bin Locator
+
+        The .ANP, .ASC, .PAR, and .TAP files are in ASCII table format.
+        The .AO, .CPS, .HTL, .OAN, .OBI, .OBT, .OTS, .SAA, .SO, and .SPS 
+        files consist of identical binary tables, one for each OBI.
+        The .ABK, .AH, .ANP, .BCR, .BGI, .BIR, .BKI, .DMS, .LTF, .MOB, .S1D,
+        .SGI, .SSC, .TSH, and .XRB  files consist of single binary tables.
+
+
+III. How to use IDL to read and manipulate Rosat FITS files: 
+
+     (Note: the following discussion borrows heavily from the documentation
+in the IDL Astronomical Users' Library. For more information, consult the
+.txt, .tex, and .rno files in usr:[idl_dev.idlaul] and subdirectories.)
+ 
+     IDL procedures exist which will allow Rosat guest observers to access and
+manipulate data stored in FITS format. Due to the histories of IDL and FITS
+formats, there are a number of different IDL FITS readers which generally
+speaking access different FITS formats. Most of these did not read the FITS
+files directly, but instead required that the files be converted into a
+"pseudo" ST SDAS format. Recently, however, more general FITS readers have been
+written which are able to read data from FITS files directly. 
+
+    The following steps in accessing data from a FITS file are discussed
+below:
+
+    a) transferring files (from tape or another machine) to disk in FITS 
+       format, 
+    b) reading data from FITS files into IDL variables.
+
+For users who wish to use the "pseudo" ST SDAS format, or to access data
+in disk STSDAS format files, the following are also discussed:
+
+    c) ST SDAS format(s),
+    d) transferring FITS files from tape to disk in ST SDAS format,
+    e) converting disk files from FITS to STSDAS format (and vice versa), 
+    f) accessing disk STSDAS format files.
+
+
+Some examples are given at the end.
+
+
+  A. Transferring files to disk in FITS format:
+
+     (what do Vax users use??)
+
+     Vax users can also read FITS files on tape directly into IDL variables.
+FITS2X should read simple FITS (no groups or extensions) into an IDL header
+and data array.  One feature of FITS2X is that it allows a compression factor
+(e.g. only read every 4th pixel), which is useful for a quick look of the
+images on a tape.  X2FITS will write an IDL data and header array to a FITS
+tape.
+
+     The IDL procedures that access tapes (TAPRD, TAPWRT) are not available
+in Unix IDL.  This should not pose any major problems because a disk FITS
+file can be copied to tape using dd, (as in "dd if=/dev/tape of=file.fits
+bs=2880"). For now, Unix users should use READFITS/WRITEFITS to quickly
+access disk FITS, and DFITSRD,DFITSWRT to convert between disk FITS and
+STSDAS format.
+
+     Unix users with access to IRAF may wish to load their data using the
+t2d task under package dataio. After loading the tape, the steps are
+
+     cl> dataio
+     da> allo mta                ;(allocate the tape drive)
+     da> t2d
+         Input   mta
+         List    everything
+         Root    rp123456        ;(specify a rootname here)
+                 ...
+     da> rewind mta              ;(rewind the tape)
+     da> deallo mta
+
+The output files for this example will have names rp123456001, rp123456002,
+etc. An IDL procedure which will rename the output files to the suggested
+file names is under development.
+
+(Question: what about Vax users? Can they use TAPRD and TAPWRT, if they wish?)
+
+
+  B. Reading data from FITS files into IDL variables:
+
+     The procedure READFITS can be used to read a disk FITS file into IDL data
+and header arrays. READFITS will now read REAL*4 data as well as both ASCII and
+Binary extensions. (What about WRITEFITS?) READFITS (and WRITEFITS?) uses the
+BYTEORDER procedure to determine the appropiate byte swapping for the host
+machine. 
+
+     READFITS reads an entire FITS extension into a data variable (a byte
+array). The data must then be "parsed" into columns using the data in the
+header variable (a string array). There are a number of routines which can 
+be used:
+
+     FTGET      use for ASCII table extensions    (see section F below)
+    
+     TBGET      use for Binary table extensions
+
+ASCII and Binary tables may be distinguished by the value of the XTENSION
+keyword, which is set to ASCII for Ascii tables and to Binary (or A3DTABLE) for
+Binary tables. FTHELP and TBHELP may be used to find out the internal format of
+a FITS table. 
+
+     The Rosat IDL library also contains a routine FITSGET, which determines
+the type of table from the header information, and calls either FTGET or TBGET
+as appropriate. This is a convenient routine to use when you don't know (or
+remember) which type of table you have.
+
+     The procedure HEADFITS can be used to read just the FITS header. The
+procedure SXHREAD (see section F below) can also be used to read the primary 
+header of a FITS table. FITS_INFO may be used to determine how many tables
+a particular FITS file contains. 
+
+     For more information concerning SXHREAD, FTGET, TBET, etc., see section
+F below.
+
+     An alternative set of routines have been written by Bill Thompson (GSFC
+bldg 21, Code 680) to access data in Binary table files. These routines all
+start with the characters "FXB": e.g., FXBOPEN, FXBREAD, FXBCLOSE, etc. These
+can be found in the [.fits_bintable] or /fits_bintable subdirectory.
+
+     The procedure FITS_TO_STRUCT will also read a FITS table into a structure
+variable, whose tag names and format are defined by the header information.
+
+
+  C. STSDAS Format(s):
+
+     STSDAS format is a data format developed and used by the Space Telescope
+Science Data Analysis System. Although it is not a true FITS format, it is
+very similar to FITS and is often (confusingly) called "modified FITS".
+STSDAS format differs from FITS format in the following ways:
+
+     1. The FITS header is kept as a separate ASCII file. This allows
+        the user to read the header outside of program control. A FITS file 
+        is always a single file (header and data combined).
+
+     2. The data is stored in 512 byte records, rather than the FITS
+        standard of 2880 bytes. On a Vax, this makes disk I/O much faster.
+
+     3. The binary data is stored in a format appropiate to the host
+        machine, i.e. unlike a disk FITS file, an STSDAS file does not
+        require byte swapping on a VAX.
+
+     4. FITS table extensions are stored in separate files. The data 
+        formats for these tables is not at all like that of FITS tables
+        (binary or ASCII).
+
+     The STSDAS format has been very popular with users of IDL, and many
+procedures have been developed to access these files. For historical reasons,
+the names of the procedures begin with 'SX'. (Originally the procedure names
+began with 'ST', but in 1986 the STScI changed the position of their FITS
+group parameters, and a new set of procedures was needed.)  Some of the SX
+procedures are generally useful for FITS I/O, in particular SXPAR to read the
+value of a FITS keyword, and SXADDPAR to add a FITS keyword to a header.
+
+    The IDL procedures which convert FITS to STSDAS format files do not
+change the data format of the FITS tables. Because FITS and STSDAS table
+formats differ, this means that technically a converted FITS table file is
+neither FITS nor STSDAS. Instead, it should be thought of as intermediate
+step in the parsing of a FITS table file. Further processing of the ASCII and
+binary tables is done using two different sets of procedures (file names
+beginning with 'FT' for the ASCII procedures and with 'TB' for the binary).
+Both ASCII and binary table files can use the 'SX' procedures for data I/O.
+
+
+  D. Transferring files to disk in ST SDAS format:
+
+     Vax users may use the routine FITSRD to copy a FITS tape into STSDAS
+format. It will read groups, extensions, but not REAL*4 data. It will prompt
+for files to process, filenames to write to, etc. For each tape file STSDAS
+disk files will be created with names name.HHH and name.HHD, where name is
+specified by the user. FITS extension (e.g. table) files will have names
+name_x.HHH and name_x.HHD, where x runs from 1 to the number of extensions.
+FITSWRT will write an STSDAS file to a FITS tape.
+
+     One problem that can arise is that FITSRD must read the entire image
+into VAX memory, which can cause problems for extremely large images. In
+these cases, the procedure FITSRD_LARGE should be used; it is slower but less
+demanding on virtual memory.
+
+     CAUTION: The routines that read FIT files on disk and that convert these
+into STSDAS format (READFITS and DFITSRD) expect to find files of fixed
+record length. (The actual record length is not important although it is
+usually 2880 or 512.) When transfering a disk FITS file from a Unix machine
+with FTP, be sure to specify the BINARY option. To check whether the file has
+been copied correctly do a $DIR/FULL on the .HHD file. If you see "Variable
+Length Records" then the file was not copied correctly.
+
+     The LaTex files xanadu:[idl_lib.idlaul.text]fitstape.tex and
+/home/heasfs/reichert/idllib/idlaul/text/fitstape.tex give some more
+information on the use of FITSWRT and FITSRD. 
+
+
+  E. Converting disk FITS files to STSDAS format:
+
+     The IDL routine DFITSRD will convert FITS format files stored on disk
+into STSDAS format. (Technically, the converted format is only similar to
+STSDAS format, since the data format of the tables is not changed.) All FITS
+table files, both ASCII and binary, are converted to STSDAS image (ASCII)
+files, i.e., the same format is used for both. IDL procedures for handling
+STSDAS binary format tables do exist, but should not be used for the
+converted binary files as FITS binary tables are not converted into STSDAS
+binary format.
+
+     DFITSRD will read groups, extensions, but not REAL*4 data. It will
+prompt for files to process, filenames to write to, etc. For each FITS file
+STSDAS disk files will be created with names filename.HHH and filename.HHD,
+where filename is specified by the user. FITS extension (e.g. table) files
+will have names name_x.HHH and name_x.HHD, where x runs from 1 to the number
+of extensions. DFITSWRT will copy an STSDAS file into disk FITS format.
+
+     For very large images, the procedure DFITSRD_LARGE can be used; it is 
+slower but less demanding on virtual memory.
+
+     CAUTION: Rosat file naming conventions are of the form rp123456.ext,
+where ext tells what type of information is contained (e.g., .ASC, .CAS).
+Unless the user specifies otherwise in DFITSRD, all of the converted files
+for a particular observation will be named rp123456_1.hhh and .hhd, and all
+knowledge of which file contained what data will be lost. For this reason, it
+is suggested that DFITSRD be given a root output filename which contains the
+original extension. For example, if rp123456.cas is the input file, and
+rp123456_cas is given as the output root filename, then the output files will
+be named rp123456_cas_1.hhh and .hhd, rp123456_cas_2.hhh and .hhd, etc.
+
+     The IDL procedures written specifically to access and analyze Rosat data
+assume this naming convention. A preliminary version of a higher level
+conversion routine, called CONVERT3D, is available. CONVERT3D can be run
+either interactively or automatically, and will convert all (or some) of the
+FITS files pertaining to a particular observation sequence (or sequences) to
+be converted automatically.
+
+
+  F. Accessing Disk STSDAS format files:
+
+     Files that have been converted into STSDAS format (technically, a format
+similar to STSDAS format), may be read using a large number of routines
+available in the IDL Astronomical Users' Library (usr:[idl_dev.idlaul] and
+subdirectories). The procedures are separated into three groups (procedure
+names beginning with 'SX', 'FT', or 'TB'), depending on what tpye of file is to
+be read: 
+
+     'SX': accesses "true" STSDAS image (ASCII) format files. Can also be
+           used for files converted from FITS ASCII and/or binary tables.
+           Mostly these procedures are used to access information stored 
+           in the header.
+
+     'FT': used to access data in files converted from either FITS ASCII 
+           tables or simple FITS images.
+
+     'TB': used to access data in files converted from FITS binary tables.
+
+In order to read a converted file, one must first determine which set of
+procedures to use. Table files can be distinguished from images by the _x
+appended at the end of the file name (e.g., filename_1.hhh and .hhd). To
+distinguish between ASCII and binary table files, one has to look at the
+XTENSION keyword at the beginning of the header. For ASCII table files,
+XTENSION is set to TABLE. For binary table files, XTENSION is (at present)
+set to either A3DTABLE or BINTABLE. (After the revision of the Rosat table
+files planned for February 1992, only BINTABLE will be used.)
+
+     Reading data from table files is a two-step process. First, use either
+FTREAD or TBREAD to read the header and data information into header and
+table variables. The header variable will be a string array and the table
+will be a byte array. Next, use either FTGET or TBGET to get the values
+stored in a particular field or column of the table. FTGET and TBGET will
+convert the bytes from the corresponding part of the table byte array into a
+variable of the correct data format.
+
+     Other useful procedures include routines to give lists of table files
+in a given directory, to display the fields in a table header, to display
+information about a particular field, to delete columns or rows, and to
+print specified columns and rows from the table. 
+
+     The FITS 3D Binary table format is more recent than the FITS ASCII table
+format TB... analogs for all of the FT... procedures do not exist, in
+particular, the procedures to write FITS 3D Tables. Users wishing to write FITS
+files with Binary table extensions should use the FXB... routines in the
+[.fits_bintable] or /fits_bintable subdirectories. TBPRINT is also crude and
+ultimately may not be supported in the Astronomical Users' Library. 
+      
+     For more information concerning the FT... and TB... procedures, see the
+following files:
+
+     xanadu:[idl_lib.idlaul.fits_table]aaareadme.txt,
+     xanadu:[idl_lib.idlaul.fits_3dtable]aaareadme.txt, and 
+     xanadu:[idl_lib.idlaul.fits_table]ft.tex (a LaTex file) (VMS).
+
+The appropriate Unix directories are 
+
+     /home/heasfs/reichert/idllib/idlaul/fits_table and
+     /home/heasfs/reichert/idllib/idlaul/fits_3dtable.
+
+
+  G. Examples
+
+     Below are a few examples for accessing data in various formats:
+
+     1. Read a simple FITS image, and determine the minimum and maximum
+        values
+
+     img = READFITS('myimage',h)          ;read simple image in file 
+                                          ;MYIMAGE.FITS into header, h, and
+                                          ;data, img
+     print,MINMAX(img)                    ;print minimum and maximum values
+
+     2. Read a FITS table of unkown format (in this example, one of
+        the .SO orbit files) into variables, and plot the spacecraft 
+        altitude versus time. Use FITS_INFO to first learn how many tables 
+        are in the file.
+ 
+     FITS_INFO,'rp123456.so'              ;print information about file
+                                          ;rp123456.so
+     tab = READFITS('mytab',h,ext=n)      ;read Nth OBI in file rp123456.so
+                                          ;into header, h, and data, tab
+     FITSHELP,h                           ;Display field from header
+     time = FITSGET(h,tab,'IUT1_SO') + FITSGET(h,tab,'IUT2_SO')/10000.
+                                          ;Time in sec, store in time
+     alt = FITSGET(h,tab,'IALT_SO')       ;Altitude in meters, store in alt
+     alt = FITSGET(h,tab,16)              ;Equivalent to previous statement
+     plot,time,alt
+
+     TBHELP and TBGET could have been used instead of FITSHELP and FITSGET.
+
+     3. Read an ASCII table, examine the contents, sort by flux, and print
+
+     tab = READFITS('mytab',h,ext=n)      ;read Nth table in file MYTAB.FITS 
+                                          ;into header, h, and data, tab
+     PRINT,h                              ;look at header
+     FTHELP,h                             ;look at header, pretty format
+     PRINT,STRING(tab)                    ;look at data
+     FTPRINT,h,tab                        ;look at data, pretty format
+     FTPRINT,h,tab,`X,Y,FLUX',indgen(10)  ;type fields `X', `Y' and `FLUX',
+                                          ;first 10 rows only
+     FTPRINT,h,tab,[1,3,4],[0,5,7]        ;Type rows 0, 5 and 7 of columns
+                                          ;1,3, and 4}
+     FTSORT,h,tab,`FLUX'                  ;Sort table in order of increasing 
+                                          ;flux
+     !TEXTOUT = 3                         ;Direct output to disk
+     FTPRINT,h,tab                        ;Write the entire table to an
+                                          ;ASCII file, FTPRINT.PRT
+
+     The command to read the data from the "pseudo" ST SDAS format file (i.e.,
+     result from DFITSRD) would have been 
+
+     FTREAD,'mytab',h,tab                 ;read Nth table file MYTAB_N.HHH 
+                                          ;and .HHD into header,h and data, tab
+
+     4. Find out how many tables are contained in the .ASC file for a
+        Rosat observation. Read one of the tables and find out how 
+        many fields are contained. Print out the first 60 characters of 
+        the first 10 rows.
+
+     FITS_INFO,'rp123456.asc'                    ;print information about file
+                                                 ;rp123456.asc
+     tab = READFITS('rp123456.asc',h,ext=n)      ;read Nth table in file 
+                                                 ;rp123456.asc into header, h,
+                                                 ;and data, tab
+     FTHELP,h                                    ;find out how many fields
+     data=FTGET(h,tab,1,indgen(10))              ;extract the first 10 rows
+     for ii=0,9 do print,strmid(data(ii),0,60)   ;print the first 60 char.
+
+     FITSHELP and FITSGET could have been used instead of FTHELP and FTGET.
+
+     Note: In this example, the table contains one field which is 132
+     bytes wide. FTGET converts the byte array into a string array of
+     132 characters by 40 rows. In this case, FTPRINT does not give a very
+     pretty looking table and it is better to extract the data using FTGET
+     and then use STRMID to extract the first 60 characters of each row
+     for printing.
+
+     If the .ASC file had been converted (using DFITSRD) into ST SDAS format,
+     then FTDIR and FTREAD could have been used:
+
+     FTDIR,'rp123456_asc'                        ;get a directory
+     FTREAD,'rp123456_asc_n',h,tab
+
+     TBDIR can be used to get a directory of (converted) Binary table files.

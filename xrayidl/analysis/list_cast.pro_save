@@ -1,0 +1,61 @@
+pro list_cast,mra,mdec,hdr,list,listnew,mxv,myv,pixsize=pixsize,mrefp=mrefp,mtype=mtype,naxis=naxis,msel=msel
+;+
+; cast a n event list from an off-set observation to a norminal pointing 
+; direction
+;
+; mra, mdec - RA and Dec (or Galactic Longitude and latitude, if mtype=1)
+;	of the merge image
+; hdr - fits header of the event file to be merged
+; list - list of events  to be merged
+; listnew - merged list of events in the merged coordinates
+; pixsize - pixel size in units (arcseconds; def = !size_pixel)
+; mtype - if = 1, RA and Dec of the events are converted into 
+;		Galactic coordinates
+; mrefp - merged reference pixel values (x and y)
+; naxis - the x and y axis of the merged image (events outside the images
+; 		are not included in the merged event list); naxis= mrefp*2-1
+; msel - number of events included 
+; mxv, myv - the casted coordinates of the included events 
+; 
+; written by wqd Jun/18/98
+;-
+if n_params() eq 0 then begin
+print,'CALL SEQUENCE - list_cast,hdr,mra,mdec,list,listnew,mxv,myv,pixsize=pixsize,mrefp=mrefp,mtype=mtype,naxis=naxis,msel=msel'
+return
+endif
+if N_elements(pixsize) eq 0 then pixsize=!size_pixel
+refp=sxpar(hdr,'crpix*')
+crval=sxpar(hdr,'crval*')
+trans_loct,list.x-refp(0),list.y-refp(1),crval(0),crval(1),crap,cdecp,/deg,pixsize=pixsize
+
+if mtype eq 1 then begin
+	equi=sxpar(hdr,'EQUINOX')
+	if n_elements(equi) eq 0 then $
+		stop,'equinox info is not present in the header!'
+if !debug eq 1 then stop
+	glactc,crap,cdecp,equi,crap,cdecp,1,/deg
+if !debug eq 1 then stop
+
+	glactc,crval(0),crval(1),equi,cra,cdec,1,/deg
+endif else begin
+	cra=crval(0)
+	cdec=crval(1)
+endelse
+trans_dist,mra,mdec,crap,cdecp,xp,yp,/deg,pixsize=pixsize
+trans_dist,cra,cdec,mra,mdec,refpx,refpy,/deg,pixsize=pixsize
+
+if N_elements(mrefp) eq 0 then mrefp=nint([refpx,refpy]+refp)
+if N_elements(naxis) eq 0 then naxis=mrefp*2-1
+xp=nint(xp+mrefp(0))
+yp=nint(yp+mrefp(1))
+sel=where(xp ge 1 and xp le naxis(0) and yp ge 1 and yp le naxis(1),msel)
+	;using in the fortran format
+if msel ne 0 then begin
+	listnew=list(sel)
+	mxv=xp(sel)
+	myv=yp(sel)
+endif 
+if !debug eq 1 then stop
+return
+end
+

@@ -1,0 +1,770 @@
+
+Simulation:
+nc=300
+nb=20
+p=(findgen(nb)+0.5)/nb
+get_ram,nc,x,0.3
+f=histogram(x(sort(x)),bin=1./nb)
+fe=sqrt(f)
+ploterr,p,f,fe,psym=5
+print,total((f-avg(f))^2/(fe*fe)),n_elements(f)-1
+xf=[4,0,40.]
+fit_sin,p,f,fe,xf,mf=mf
+; K-S test
+ksone,x,'const',d,prob,/plot
+ksone,(x+0.25) mod 1.,'const',d,prob,/plot
+print,d,prob
+
+psearch,t,1.5,0.
+========
+t=fits_get(h,tab,'TIME')-22980921.
+tt=t(0:2000)
+tt=t(2001:4000)
+
+nb=10
+p=(findgen(nb)+0.5)/nb
+;x=ph
+f=histogram(x(sort(x)),bin=1./nb)
+fe=sqrt(f)
+ploterr,p,f,fe,psym=5
+print,total((f-avg(f))^2/(fe*fe)),n_elements(f)-1
+   20.4932          19
+
+fit_sin,p,f,fe,[100,0.8,1100],md=md,mf=mf
+oplot,md,mf
+ ksone,ph,'func',d,prob,/plot
+IDL> print,d,prob
+    0.0998177   0.00464234
+
+pp=75.858553d 
+====================
+get_time,300,5000,time,0.4
+psearch,time,1.05,0.,pmin=0.95,phd=0.1,phase=ph
+plot,pv,dv,psym=4
+.c
+
+get_time,600,500,time,0.4
+psearch,time,1.2,0.,pmin=0.8,phd=0.1,phase=ph
+plot,pv,dv,psym=4
+.c
+
+get_time,600,5000,time,0.2
+psearch,time,1.05,0.,pmin=0.95,phd=0.1,phase=ph
+plot,pv,dv,psym=4
+.c
+
+get_time,600,500,time,0.2
+psearch,time,1.2,0.,pmin=0.8,phd=0.1,phase=ph
+plot,pv,dv,psym=4
+.c
+
+==============
+psearch,t,25,0.,pmin=16,phase=ph
+
+print,total((f-avg(f))^2/(fe*fe)),n_elements(f)-1
+      42.3233          19
+IDL> fit_sin,p,f,fe,[20,0.1,100],md=md,mf=mf
+min chisqr =       19.2877          17
+best fit paramters =       27.1284    0.0674091      338.056
+90% confidence intervals of the parameter: 
+      18.1369    0.0135130      331.454
+      37.2634     0.126044      344.978
+
+ psearch,t2,19.5,0.,pmin=18.5,phase=ph1,pbest=pbest1,pv=pv1,dv=dv1
+
+19.147256
+
+t2=l2.time
+t2=t2(sort(t2))-
+x=t2/19.147256 mod 1.
+
+nb=10
+pp=(findgen(nb)+0.5)/nb
+x=ph
+f=histogram(x(sort(x)),bin=1./nb)
+fe=sqrt(f)
+ploterr,pp,f,fe,psym=5
+print,total((f-avg(f))^2/(fe*fe)),n_elements(f)-1
+fit_sin,pp,f,fe,[10,0.2,40],md=md,mf=mf
+oplot,md,mf
+min chisqr =       5.67232           7
+best fit paramters =       15.4287    0.0680393      76.9328
+90% confidence intervals of the parameter: 
+      8.99943   0.00200939      72.3667
+      22.1708     0.135110      81.4988
+================================================
+FFT analysis:
+; This analysis uses a lot of memory for T >=5 x 10^4s for period <= 20ms
+; ASCA Observation 1:
+list_asca,'n157b_g2p1.evt',l,emin=21,emax=238 ;14108333.       14197699.
+list_asca,'n157b_g3p1.evt',l2,emin=21,emax=238 ; 14108339.
+list_asca,'n157b_g2p1.evt',l,emin=41,emax=238 ;14108333.       14197699.
+list_asca,'n157b_g3p1.evt',l2,emin=41,emax=238 ; 14108339.
+t=[l2.time,l.time]-14108333.
+t=t(sort(t))
+;-------------------
+s=lindgen(1550)
+t=t(s)
+pr,t,0.03,0.,pmin=0.01,phase=ph,pbest=pbest,pv=pv,dv=dv,phd=0.5
+
+ttotal=(14197699.0-14108333.0)
+------------------------
+;single fft on the whole light curve
+dt=ttotal/(2.0d^22) ; the maximum number 
+print,dt
+t=byte(histogram(t,bin=dt,max=ttotal,min=0.))
+fft_psd,t,p2,fr,dt=dt 
+----------------------
+; for higher frequency, This is also a way to minimize the effect of Pdot
+dt=ttotal/(2.0d^24)
+print,dt
+fft_mult,t,dt,fr,p1,ntd=8,tmax=ttotal,nfrlowr=0
+
+-----------------------
+; for even higher frequncy
+ttotal=(14197699.0-14108333.0d)/2.d
+fft_mult,t,dt,fr,p,ntd=16,tmax=ttotal
+fft_mult,t,dt,fr,p1,ntd=16,tmin=ttotal,tmax=2.*ttotal
+; for outputs of shorter vectors
+fft_mult,t,dt,fr,p1,ntd=16,tmin=ttotal,tmax=2.*ttotal,nfrlow=2l^20/2
+---------------------------
+help,tt
+pbest=0.0438723
+psearch,tt1,pbest*1.0001,0.,pmin=pbest*0.9999,phase=ph1,pbest=pbest1,pv=pv1,dv=dv1,phd=0.05
+     0.043872742     0.024494597   3.9487585e-06
+---------
+x=tt/pbest1 mod 1.
+nb=10
+p=(findgen(nb)+0.5)/nb
+;x=ph
+f=histogram(x(sort(x)),bin=1./nb)
+fe=sqrt(f)
+ploterr,p,f,fe,psym=5
+print,total((f-avg(f))^2/(fe*fe)),n_elements(f)-1
+
+fit_sin,p,f,fe,[100,0.8,1100],md=md,mf=mf
+oplot,md,mf
+min chisqr =       8.35487           7
+best fit paramters =       64.4419     0.512375      1091.26
+90% confidence intervals of the parameter: 
+      40.1449     0.450782      1074.07
+      88.7869     0.573816      1108.46
+
+list_asca,'n157b_g2p2.evt',l,emin=41,emax=238 ;20043577.       20138384.
+list_asca,'n157b_g3p2.evt',l2,emin=41,emax=238  ;20043590.       20138388.
+t=[l.time,l2.time]-20043577.
+t=t(sort(t))
+ttotal=20138384.0-20043577.0d
+
+dt=tl/(2l^25-1.d) ;the observing time is a bit longer here, trim it!!!
+t=byte(histogram(t,bin=dt,max=tl,min=0.))
+help,t
+fft_psd,t,p2,fr,dt=dt 
+----------------------
+; for higher frequency, This is also a way to minimize the effect of Pdot
+dt=ttotal/(2.0d^24)
+print,dt
+fft_mult,t,dt,fr,p2,ntd=8,tmax=ttotal,nfrlowr=0
+--------------
+; combining the two observations:
+ p=p1+p2
+get_stat,p,pm,pme
+dispersion and number of bins included  =   3.60653e-23     1048576
+mean flux and its one sigma error =   1.22700e-22  3.52200e-26
+s=where(p gt (3.*pme+pm) and fr gt 0.01)
+plot,fr(s),p(s),/ylog,/xlog
+----------------------------------
+; strengthen the harmonics ; see Pulsar astronomy P32
+nb=n_elements(fr)
+print,nb
+ph=rebin(p(0:nb/2-1),nb)
+ph=rebin(p(0:nb/2-1),nb)+rebin(p(0:nb/4-1),nb)
+ph=(ph+p)/3.
+get_stat,ph,pm,pme
+s=where(ph gt (2.*pme+pm) and fr gt 0.1)
+plot,fr(s),ph(s),/ylog,/xlog
+---------------------------------
+tt2=t
+psearch,tt2,pbest1*1.00003,0.,pmin=pbest1*0.99999,phase=ph2,pbest=pbest2,pv=pv2,dv=dv2,phd=0.05
+probth, dth =    0.00135000    0.0188375
+     0.043873702     0.019344678   0.00089125548
+ print,pbest2-pbest1
+   9.6064814e-07
+ print,pv2,dv2
+     0.043873702     0.043873699
+     0.019344678     0.019335134
+print,0.043873699-pbest1
+   9.5590684e-07
+x=tt/pbest2 mod 1.
+f=histogram(x(sort(x)),bin=1./nb)
+fe=sqrt(f)
+ploterr,p,f,fe,psym=5
+print,total((f-avg(f))^2/(fe*fe)),n_elements(f)-1
+
+fit_sin,p,f,fe,[80,0.1,1050],md=md,mf=mf
+oplot,md,mf
+min chisqr =       12.5565           7
+best fit paramters =       52.1558    0.0591811      1027.24
+90% confidence intervals of the parameter: 
+      28.6020      0.00000      1010.56
+      76.1312     0.133233      1043.93
+
+dt=20043577.-14108333.
+print,(1.-0.5*(pbest2-pbest1)/pbest1)*(dt/pbest1)-1.3528167e+08
+       12.095618
+
+
+;ph2=tt/pbest1 mod 1. 
+psearch,tt,10.,0.,pmin=1.,phase=ph2,pbest=pbest2,pv=pv2,dv=dv2,phd=0.25
+ plot,pv2,dv2,psym=5  
+IDL> oplot,pv1,dv1,psym=1
+psearch,tt,10.,0.,pmin=1.,phase=ph2,pbest=pbest2,pv=pv2,dv=dv2,phd=0.25
+fit_sin,p,f,fe,[20,0.,10],md=md,mf=mf
+oplot,md,mf
+min chisqr =       6.53233           7
+best fit paramters =       14.9431    0.0346169      47.6346
+ph=tt/pbest2 mod 1.
+x=ph
+pcor,tt2,pv2,dv2,0.,pha=ph,pvm=pv,dvm=dv,prob=0.01,pbest=pbest
+tt=[l2.time,l.time]-20043577.
+tt=tt(sort(tt))
+x=tt/2.5051936 mod 1.
+ psearch,tt,pbest*1.01,0.,pmin=pbest*0.99,phase=ph,pbest=pbest,pv=pv,dv=dv,phd=0.1
+===========================
+ hprint,headfits('psr_g3_bary.evt')
+TSTART  =  2.29781999111761E+07 /  data start time on barycenteric time
+TSTOP   =  2.30637992304787E+07 /  data end time on barycenteric time
+
+list_asca,'psr_g3_bary.evt',l,emax=238 
+
+list_asca,'psr_g3_bary.evt',l,emin=51,emax=238 
+t=l.time-2.29781999111761E+07
+t=t(sort(t))
+s=lindgen(1200)
+t=t(s)
+----------------------------------------
+pr,t,0.0505,0.,pmin=0.0503,phase=ph,pbest=pbest,pv=pv,dv=dv,phd=0.25
+probth, zth*nc, rnc =    0.00135000      73292.1       11092
+pbest,z,probmin =      0.050418436       176.91468   1.4686911e-77
+
+pr,t,0.0505,0.,pmin=0.0504,phase=ph,pbest=pbest,pv=pv,dv=dv,phd=0.5
+0.050418421
+pr,t,0.050418500,0.,pmin=0.0504184,phase=ph,pbest=pbest,pv=pv,dv=dv,phd=0.1
+
+;x=t/pbest mod 1.
+x=ph
+f=histogram(x(sort(x)),bin=1./nb,max=1.,min=0.)
+fe=sqrt(f)
+flux=avg(f)
+pflux=0.2*flux
+pha=0.0379751
+pmin=[1.e-10,0.,1.e-10]
+pmax=[1.e+10,1.,1.e+10]
+fit_sin,p,f,fe,[pflux,0.4,flux],md=md,mf=mf,pmin=pmin,pmax=pmax,/silence
+ploterr,p,f,fe,psym=5
+oplot,md,mf
+min chisqr =       30.5549          17
+best fit paramters =       143.179     0.371517      553.072
+68% confidence intervals of the parameter: 
+      135.920     0.363280      547.814
+      150.812     0.379503      558.331
+90% confidence intervals of the parameter: 
+      131.108     0.358037      544.415
+      155.624     0.384765      561.729
+--------------------------------------------
+psearch,tt,0.08,0.,pmin=0.02,phase=ph,pbest=pbest,pv=pv,dv=dv,phd=0.25
+psearch,tt,0.08,0.,pmin=0.02,phase=ph1,pbest=pbest1,pv=pv1,dv=dv1,phd=0.25
+
+pcor,tt,pv,dv,0.,pha=ph2,pvm=pv2,dvm=dv2,prob=0.001,pbest=pbest2
+
+psearch,tt,0.0505,0.,pmin=0.0503,phase=ph1,pbest=pbest1,pv=pv1,dv=dv1,phd=0.25
+psearch,tt,0.0505,0.,pmin=0.0503,phase=ph2,pbest=pbest2,pv=pv2,dv=dv2,phd=0.25
+
+
+psearch,tt,0.0506,0.,pmin=0.0503,phase=ph,pbest=pbest,pv=pv,dv=dv,phd=0.25
+     0.050418575      0.10894628   2.0251301e-07
+     0.050417526     0.090994708   8.7475633e-05
+--------------------------------------------------------------
+psearch,t,0.050419,0.,pmin=0.050417,phase=ph,pbest=pbest,pv=pv,dv=dv,phd=0.25
+probth, dth =    0.00135000    0.0181381
+     0.050418439     0.074856502   1.5509637e-54
+x=t/0.050418439 mod 1.
+nb=20
+p=(findgen(nb)+0.5)/nb
+f=histogram(x(sort(x)),bin=1./nb)
+fe=sqrt(f)
+ploterr,p,f,fe,psym=5
+print,total((f-avg(f))^2/(fe*fe)),n_elements(f)-1
+fit_sin,p,f,fe,[600,0.2,100],md=md,mf=mf
+min chisqr =       12.0298          17
+best fit paramters =       117.988    0.0379751      553.998
+68% confidence intervals of the parameter: 
+      110.549    0.0280359      548.735
+      125.427    0.0479108      559.262
+90% confidence intervals of the parameter: 
+      105.742    0.0215980      545.334
+      130.235    0.0543551      562.663
+oplot,md,mf
+MJD-OBS =  4.92539513878608E+04 / Modified Julian date of the data start time
+--------------------
+tmax=2.30637992304787E+07
+tmin=2.29781999111761E+07
+tlength=tmax-tmin
+nb=20
+p=(findgen(nb)+0.5)/nb
+list_asca,'psr_g3_bary.evt',l
+L               STRUCT    = -> ASCAE Array(28193)
+t=l.time-2.29781999111761E+07
+s=sort(t)
+t=t(s)
+pi=l.pi
+pi=pi(s)
+tt=t(where(pi ge 44 and pi lt 50))
+tt=t(where(pi ge 44 and pi lt 100))
+tt=t(where(pi ge 110 and pi lt 238))
+
+x=tt/0.050418439 mod 1.
+f=histogram(x(sort(x)),bin=1./nb,max=1.)
+fe=sqrt(f)
+flux=avg(f)
+pflux=0.2*flux
+pha=0.0379751
+pmin=[1.e-10,pha,1.e-10]
+pmax=[1.e+10,pha,1.e+10]
+fit_sin,p,f,fe,[pflux,pha,flux],md=md,mf=mf,pmin=pmin,pmax=pmax,/silence
+ploterr,p,f,fe,psym=5
+oplot,md,mf
+
+tt=t(where(pi lt 23))
+min chisqr =       20.0469          17
+best fit paramters =       8.68900    0.0379751      103.640
+68% confidence intervals of the parameter: 
+      5.37455    0.0379751      101.219
+      11.8240    0.0379751      105.777
+90% confidence intervals of the parameter: 
+      3.29368    0.0379751      99.7503
+      13.9027    0.0379751      107.245
+
+tt=t(where(pi lt 44)) ;<2 keV
+min chisqr =       15.0817          17
+best fit paramters =       97.5228    0.0379751      730.201
+68% confidence intervals of the parameter: 
+      88.9518    0.0379751      724.154
+      106.014    0.0379751      736.238
+90% confidence intervals of the parameter: 
+      83.4389    0.0379751      720.249
+      111.527    0.0379751      740.143
+
+tt=t(where(pi ge 44))
+min chisqr =       14.6505          17
+best fit paramters =       143.226    0.0379751      677.985
+68% confidence intervals of the parameter: 
+      135.020    0.0379751      672.145
+      151.482    0.0379751      683.790
+90% confidence intervals of the parameter: 
+      129.701    0.0379751      668.383
+      156.801    0.0379751      687.552
+
+tt=t(where(pi ge 20 and pi lt 44))
+min chisqr =       21.0176          17
+best fit paramters =       88.9304    0.0379751      625.415
+68% confidence intervals of the parameter: 
+      80.9558    0.0379751      619.807
+      96.7338    0.0379751      630.991
+90% confidence intervals of the parameter: 
+      75.8580    0.0379751      616.194
+      101.832    0.0379751      634.605
+
+tt=t(where(pi lt 20))
+min chisqr =       20.0469          17
+best fit paramters =       8.68900    0.0379751      103.640
+68% confidence intervals of the parameter: 
+      5.37455    0.0379751      101.219
+      11.8240    0.0379751      105.777
+90% confidence intervals of the parameter: 
+      3.29368    0.0379751      99.7503
+      13.9027    0.0379751      107.245
+
+tt=t(where(pi ge 20 and pi lt 35))
+min chisqr =       14.7329          17
+best fit paramters =       62.1386    0.0379751      392.264
+68% confidence intervals of the parameter: 
+      55.8282    0.0379751      387.785
+      68.2779    0.0379751      396.642
+90% confidence intervals of the parameter: 
+      51.8060    0.0379751      384.923
+      72.3001    0.0379751      399.504
+
+tt=t(where(pi ge 35 and pi lt 44))
+min chisqr =       20.7498          17
+best fit paramters =       26.8892    0.0379751      232.476
+68% confidence intervals of the parameter: 
+      22.0665    0.0379751      229.053
+      31.7358    0.0379751      235.872
+90% confidence intervals of the parameter: 
+      18.9423    0.0379751      226.850
+      34.8600    0.0379751      238.075
+
+tt=t(where(pi ge 44 and pi lt 50))
+in chisqr =       17.1130          17
+best fit paramters =       20.3511    0.0379751      109.545
+68% confidence intervals of the parameter: 
+      17.0784    0.0379751      107.051
+      23.7097    0.0379751      111.738
+90% confidence intervals of the parameter: 
+      14.9361    0.0379751      105.542
+      25.8520    0.0379751      113.248
+
+tt=t(where(pi ge 50 and pi lt 60))
+min chisqr =       14.9098          17
+best fit paramters =       20.1383    0.0379751      118.959
+68% confidence intervals of the parameter: 
+      16.6494    0.0379751      116.516
+      23.6116    0.0379751      121.393
+90% confidence intervals of the parameter: 
+      14.3998    0.0379751      114.940
+      25.8611    0.0379751      122.969
+
+tt=t(where(pi ge 60 and pi lt 75))
+min chisqr =       15.2962          17
+best fit paramters =       30.7030    0.0379751      131.895
+68% confidence intervals of the parameter: 
+      27.0545    0.0379751      129.317
+      34.3551    0.0379751      134.453
+90% confidence intervals of the parameter: 
+      24.6957    0.0379751      127.658
+      36.7139    0.0379751      136.113
+
+tt=t(where(pi ge 75 and pi lt 90))
+min chisqr =       17.8092          17
+best fit paramters =       26.7411    0.0379751      92.4098
+68% confidence intervals of the parameter: 
+      23.7552    0.0379751      90.2600
+      29.7586    0.0379751      94.5591
+90% confidence intervals of the parameter: 
+      21.8154    0.0379751      88.8710
+      31.6984    0.0379751      95.9481
+
+tt=t(where(pi ge 90 and pi lt 115))
+min chisqr =       12.5100          17
+best fit paramters =       23.3026    0.0379751      104.532
+68% confidence intervals of the parameter: 
+      20.0832    0.0379751      102.238
+      26.5115    0.0379751      106.811
+90% confidence intervals of the parameter: 
+      18.0061    0.0379751      100.761
+      28.5885    0.0379751      108.288
+
+tt=t(where(pi ge 115))
+min chisqr =       15.1546          17
+best fit paramters =       24.0133    0.0379751      116.894
+68% confidence intervals of the parameter: 
+      20.6056    0.0379751      114.475
+      27.4173    0.0379751      119.310
+90% confidence intervals of the parameter: 
+      18.4048    0.0379751      112.912
+      29.6182    0.0379751      120.872
+
+------------------------------------------------------------
+s=where(t ge 4500)
+tt=t(s)
+psearch,tt,0.0505,0.,pmin=0.0503,phase=ph1,pbest=pbest1,pv=pv1,dv=dv1,phd=0.25
+psearch,tt,0.0505,0.,pmin=0.0503,phase=ph2,pbest=pbest2,pv=pv2,dv=dv2,phd=0.25
+
+
+plot,pv1,dv1,psym=5,xran=pbest+20*[-1,1]*pdel
+oplot,pv,dv,psym=4 
+oplot,pv2,dv2,psym=2
+pdel=pbest2^(3/2.)/(4*sqrt(1.e4))
+x=t/0.050417981 mod 1.d
+===============================================
+;FFT transform:
+Simulation:
+get_time,1000,5000,time,0.2
+fft_psd,a,psd,fr,dt=0.1
+
+50ms pulsar:
+list_asca,'psr_g3_bary.evt',l,emin=41,emax=238 
+t=l.time-22980921.
+t=t(sort(t))
+ dt=max(t)/2l^22
+
+tt=t(where(t lt 2e4))
+fft_mult,tt,0.015,fr,psdm,ntd=10
+tt=t(where(t lt 5.e3))
+fft_mult,tt,0.01,fr,psdm,ntd=15
+
+fft_mult,tt1,0.02,fr1,psdm1,ntd=15
+
+tt2m=tt2(where(tt2 ge (max(tt2)-max(tt1))))-(max(tt2)-max(tt1))
+print,max(tt2m)-max(tt1)
+       0.0000000
+fft_mult,tt2m,0.02,fr2,psdm2,ntd=10
+
+tt=histogram(tt,bin=0.015)
+fft_psd,tt(1:*),psd,fr,dt=0.015
+
+s=where(fr gt 10)
+ get_stat,psdm(s),psdmm,psde
+       maxpsd=max(psdm(s),posi)
+	a=fr(s)
+        maxfr=a(posi)
+        print,'max psd peak is ',(maxpsd-psdmm)/psde, 'sigma,'
+        print,' at period = ',1./maxfr
+
+ 6.96780sigma at period =     0.0438723
+IDL> 
+
+s=where(fr1 gt 1 and fr1 le 24)
+
+s=where(fr gt 1 and fr le 24)
+ get_stat,psdm(s),psdmm,psde
+       maxpsd=max(psdm(s),posi)
+	a=fr1(s)
+        maxfr=a(posi)
+        print,'max psd peak is ',(maxpsd-psdmm)/psde, 'sigma,'
+        print,' at period = ',1./maxfr
+
+ 6.96780sigma at period =     0.0438723
+
+fft_mult,tt,0.01,fr,psdm,ntd=12
+
+; combined psd of the four obs.
+max psd peak is       5.99632sigma,
+IDL>         print,' at period = ',1./maxfr
+===========================================================================
+:Barycenter correction:
+ timeconv n157b_g2p1.evt 2 84.632 -69.164 /home/iraf/ftools/refdata/earth.dat /home/iraf/ftools/refdata/frf.orbit
+timeconv n157b_g3p1.evt 2 84.632 -69.164
+timeconv n157b_g2p2.evt 2 84.068 -69.181 
+timeconv n157b_g3p2.evt 2 84.068 -69.181
+
+s=where(p gt 3*psde+psdmm)
+IDL> 
+
+s=where(p1 gt (3*1.44981e-22+6.42571e-23))
+plot,/ylog,fr(s),p1(s)
+
+p1=(shift(p2,1)+p)*0.5
+s=where(p1 gt (2*1.44981e-22/sqrt(2.)+6.42571e-23) and fr lt 20 and fr gt 0.01)
+plot,fr(s),p1(s)
+
+s=where(p gt (2*1.44981e-22/sqrt(2.)+6.42571e-23) and fr lt 20 and fr gt 0.01)
+plot,fr(s),p(s)
+
+s=where(p2 gt (2*1.44981e-22/sqrt(2.)+6.42571e-23) and fr lt 20 and fr gt 0.01)
+plot,fr(s),p2(s)
+====================================
+envset,500131
+image_center,cra,cdec,/deg,/pri
+trans_radian,5,37,45.6,-69,10,10.,ra,dec,/deg
+trans_dist,cra,cdec,ra,dec,xp,yp,/deg
+spec_get,'n157b',xp,yp,fil=fltarr(160,160)+1.,dim=160,etime=15513.8,exp='all',list=l,rs=1.5,rb1=2,rb2=4,xmin=xmin,ymin=ymin,/backf,ls=ls
+====================
+
+obtime,'rp500131_gtiall.dat'
+nob,obstart,obend,obtime,obdif =
+
+       0    60235094    60236522        1428        1428
+       1    60252766    60255016        1286        2250
+
+       2    61299050    61299824         774         774
+-----
+       3    61631811    61632765         954         954
+       4    61643409    61644245         836         836
+       5    61649199    61649986         787         787
+       6    61654943    61655726         783         783
+       7    61660599    61661466         867         867
+
+       8    61717883    61718870         987         987
+
+       9    61786714    61787204         490         490
+      10    61803982    61804975         993         993
+      11    61809802    61810752         945         950
+      12    61821352    61822187         835         835
+      13    61827082    61827927         841         845
+      14    61838512    61839416         904         904
+
+      15    61872578    61873419         841         841
+      16    61877036    61879598        1432        2562
+==============
+spec_get,'n157b',8188.22-7679.5,7237.07-7679.5,fil=fltarr(160,160)+1.,dim=160,etime=15513.8,exp='all',list=l,rs=1,rb1=2,rb2=4,xmin=xmin,ymin=ymin,/backf,ls=ls
+
+t=ls.time
+e=ls.pi
+t=t(where(e gt 52))
+t=t(sort(t))
+t=t(where(t ge  61786714 and t le 61879598))-61786714
+ttotal=(61879598.-61786714.)
+
+t=t(where(t ge  61631811L and t le 61879598L))-61631811L
+ttotal=(61879598.-61631811)
+
+t=t(where(t ge  61786714L and t le 61839416L))-61786714L
+ttotal=(61879598.-61631811)
+
+;------------------------
+;single fft on the whole light curve
+dt=ttotal/(2.0d^24) ; the maximum number 
+print,dt
+tt=byte(histogram(t,bin=dt,max=ttotal,min=0.))
+fft_psd,tt(1:*),p2,fr2,dt=dt 
+s=where(fr2 gt 1)
+p=p2(s)
+fr=fr2(s)
+print,fr(ss)
+       5.8553804
+get_stat,p,pm,pme
+s=where(p gt (2.*pme+pm) and fr2 gt 0.1)
+plot,fr2(s),p=p(s),/ylog
+
+; strengthen the harmonics ; see Pulsar astronomy P32
+
+nb=n_elements(fr)
+print,nb
+ph=rebin(p(0:nb/2-1),nb)
+ph=(ph+p)/2.
+get_stat,ph,pm,pme
+s1=where(ph gt (1.*pme+pm) and fr gt 0.1)
+plot,fr(s1),ph(s1),/ylog,/xlog
+----------------------
+;upper limit
+s=where(fr2 gt 1)
+print,max(p(s),a)
+  1.01258e-21
+print,1/fr(s(a))
+     0.066153513
+
+; most of the PSPC data
+pr,t,0.06616,0.,pmin=0.06615,phase=ph,pbest=pbest,pv=pv,dv=dv,phd=0.1
+
+;x=t/pbest mod 1.
+nb=20
+p=(findgen(nb)+0.5)/nb
+x=ph
+f=histogram(x(sort(x)),bin=1./nb,max=1.,min=0.)
+fe=sqrt(f)
+flux=avg(f)
+pflux=0.1*flux
+pha=-0.3
+pmin=[1.e-10,0.,1.e-10]
+pmax=[1.e+10,1.,1.e+10]
+fit_sin,p,f,fe,[pflux,0.8,flux],md=md,mf=mf,pmin=pmin,pmax=pmax,/silence
+ploterr,p,f,fe,psym=5
+oplot,md,mf
+
+;using 0.5' aperture
+min chisqr =       18.3060          17
+best fit paramters =       14.3561     0.110856      99.7347
+68% confidence intervals of the parameter: 
+      11.2246    0.0757109      97.5016
+      17.5339     0.145924      101.968
+90% confidence intervals of the parameter: 
+      9.18605    0.0519574      96.0586
+      19.5726     0.169275      103.411
+;using the 1' aperture
+fit_sin,p,f,fe,[pflux,0.8,flux],md=md,mf=mf,pmin=pmin,pmax=pmax,/silence
+min chisqr =        14.301005          17
+best fit paramters =        13.783079      0.88427574       132.48495
+68% confidence intervals of the parameter: 
+      10.1372     0.842306      129.911
+      17.4497     0.926758      135.059
+90% confidence intervals of the parameter: 
+      7.77447     0.813438      128.248
+      19.8125     0.955720      136.722
+
+Around the hri peak
+pr,t,0.0385,0.,pmin=0.0384,phase=ph,pbest=pbest,pv=pv,dv=dv,phd=0.2
+
+print,pbest
+     0.038408854
+;does not coincide with the hri peak peroid.
+----------------------
+; for higher frequency, This is also a way to minimize the effect of Pdot
+dt=ttotal/(2.0d^24)
+print,dt
+fft_mult,t,dt,fr,p,ntd=8,tmax=ttotal,nfrlowr=0
+get_stat,p,pm,pme
+s=where(p gt (2.5*pme+pm) and fr gt 0.1)
+plot,fr(s),p(s),/ylog
+-----------------------
+; for even higher frequncy
+ttotal=(14197699.0-14108333.0d)/2.d
+fft_mult,t,dt,fr,p,ntd=16,tmax=ttotal
+fft_mult,t,dt,fr,p1,ntd=16,tmin=ttotal,tmax=2.*ttotal
+; for outputs of shorter vectors
+fft_mult,t,dt,fr,p1,ntd=16,tmin=ttotal,tmax=2.*ttotal,nfrlow=2l^20/2
+===================
+HRI
+envset,600228,/hri
+block=2
+image_center,cra,cdec,/deg
+trans_radian,5,37,47.42,-69,10,19.9,ra,dec,/deg
+trans_dist,cra,cdec,ra,dec,xp,yp,/deg
+getlistimage,l,dim=300*block,xc=4095.5+xp,yc=4095.5+yp,emin=0,emax=0,blo=block,/xyt,xmin=xmin,ymin=ymin
+spec_data,l,4095.5+xp,4095.5+yp,ls,lb,radius_s=0.2,radius_b1=0.5,radius_b2=2.
+
+t=ls.time
+t=t(sort(t))
+          18      4460.00
+    22186342    22187042
+...
+    22228484    22229704
+
+t=t-22186342
+ttotal=(22229704.-22186342)
+
+;------------------------
+;single fft on the whole light curve
+dt=ttotal/(2.0d^23) ; the maximum number 
+print,dt
+tt=byte(histogram(t,bin=dt,max=ttotal,min=0.))
+fft_psd,tt(1:*),p2,fr2,dt=dt 
+something is wrong!
+-----------------------
+t=ls.time
+t=t(sort(t))
+t=t(where(t ge  95713082L and t le 95735545L))-95713082L
+ttotal=(95735545.-95713082)
+	15    95713082    95735545        8342
+print,ttotal
+      22464.0
+
+dt=ttotal/(2.0d^23) ; the maximum number 
+print,dt
+    0.0026779175
+tt=byte(histogram(t,bin=dt,max=ttotal,min=0.))
+fft_psd,tt(1:*),p,fr,dt=dt 
+No sign of any period.
+----------------------
+;upper limit
+s=where(fr gt 1)
+print,max(p(s),a)
+ 6.75276e-25
+print,1/fr(s(a))
+  0.038483480
+
+; most of the hri data
+pr,t,0.038484,0.,pmin=0.038470,phase=ph,pbest=pbest,pv=pv,dv=dv,phd=0.2
+
+;x=t/pbest mod 1.
+nb=20
+p=(findgen(nb)+0.5)/nb
+x=ph
+f=histogram(x(sort(x)),bin=1./nb,max=1.,min=0.)
+fe=sqrt(f)
+flux=avg(f)
+pflux=0.1*flux
+pmin=[1.e-10,0.,1.e-10]
+pmax=[1.e+10,1.,1.e+10]
+fit_sin,p,f,fe,[pflux,0.3,flux],md=md,mf=mf,pmin=pmin,pmax=pmax,/silence
+ploterr,p,f,fe,psym=5
+oplot,md,mf
+min chisqr =        23.627524          17
+best fit paramters =        5.6709951      0.17786121       9.8686237
+68% confidence intervals of the parameter: 
+      4.80737     0.151223      9.16618
+      6.70068     0.203861      10.5711
+90% confidence intervals of the parameter: 
+      4.19594     0.133509      8.71226
+      7.31273     0.220863      11.0250

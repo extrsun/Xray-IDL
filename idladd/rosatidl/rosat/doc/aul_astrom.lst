@@ -1,0 +1,46 @@
+
+  FITS Astrometry and Calibration from Astronomical Users' Library  (Nov '93)
+    (see [.idlaul.text]astrom.tex or idlaul/text/astrom.tex for more 
+     documentation)
+
+    ABSCAL      :   Use BSCALE and BZERO FITS keywords to provide absolute 
+                    calibration.
+    AD2XY       :   Convert RA and DEC to pixel coordinates X,Y assuming a 
+                    tangent projection
+    ADXY        :   Interactive version of AD2XY
+    CHKIMHD     :   Check that keywords in a FITS header are appropiate to type
+                    and dimensions of an image array.
+    CONS_DEC    :   Obtain the X and Y coordinates of a line of constant 
+                    declination
+    CONS_RA     :   Obtain the X and Y coordinates of a line of constant right
+                    ascension
+    EXTAST      :   EXTract ASTrometry parameters from a FITS header
+    FITS_CD_FIX :   Change CD1_1 keywords to CD001001 keywords in a FITS header
+    GETROT      :   GET ROTation and plate scale from a FITS header
+                    Also used to convert coordinate description (CD) 
+                    parameterization to AIPS type parameterization.
+    GET_EQUINOX :   Return the numeric equinox from a FITS header
+    HASTROM     :   Rotate, Congrid, and/or shift an image until astrometry 
+                    matches that in a reference FITS header.  Used to align 
+                    images.
+    HBOXAVE     :   Boxaverage an image and update astrometry in a FITS header
+    HCONGRID    :   Congrid an image and update astrometry in a FITS header
+    HEXTRACT    :   Extract a subimage and update astrometry in a FITS header
+    HPRECESS    :   Precess the astrometry in a FITS header to a new equinox.
+    HREBIN      :   REBIN an image and update the astrometry in a FITS header
+    HREVERSE    :   Reverse an image about either dimension and update 
+                    astrometry in a FITS header
+    HROT        :   Rotate an image and update astrometry in a FITS header.
+    PRECESS_CD  :   Precess coordinate description (CD) matrix in a FITS header 
+                    to a new equinox.   Called by HPRECESS
+    PUTAST      :   Put astrometry parameters into a FITS header.  If 
+                    necessary, PUTAST will prompt for the plate scale, 
+                    rotation, and coordinates and position of a reference star.
+    STARAST     :   Obtain an exact astrometry solution given the coordinates 
+                    and plate position of 2 or 3 stars.  Results given as a CD
+                    (coordinate description) matrix
+    XYAD        :   Interactive version of XY2AD
+    XY2AD       :   Convert pixel coordinates X,Y to RA,DEC assuming a tangent
+                    projection
+    XYXY        :   To use a pair of headers to convert X/Y positions from one 
+                    frame to another

@@ -1,0 +1,29 @@
+pro image_sub,cxp,cyp,sdim,sblock,instr=instr
+;+
+; 
+; 
+; 
+; 
+; 
+; 
+; 
+; 
+; 
+; written by wqd, Nov 2, 1998
+;-
+if n_params() lt 1 then begin
+	print,'CALLING SEQUENCE - '
+	return
+endif
+if n_elements(instr) eq 0 then instr='aciss'
+refp=[1,1]*4096.5
+dim=1024
+case instr of
+	'aciss': block=2
+	'acisi': block=3
+endcase
+nrefp=refp+([cxp,cpy]-(dim+1)*0.5)*block
+; first the total volume of the survey or image.
+
+return
+end

@@ -1,0 +1,139 @@
+  
+  FITS :    Procedures (and functions) useful for FITS file I/O
+
+  most useful procedures for ROSAT FITS files
+
+    TBDIR       :   List ST SDAS table &/or converted 3D Binary table format 
+                    FITS files (ext .HHH, .HHD) 
+    TBREAD      :   Read an ST SDAS or converted 3D Binary table FITS file
+    TBHELP      :   Print abbreviated version of header (ST SDAS format)
+    HPRINT      :   Print a FITS header (with blank lines removed)
+    TBGET       :   Extract a specified field from a column in an ST SDAS
+                    or converted FITS 3D Binary table (FUNCTION)
+    
+    DFITSRD     :   Convert Rosat 3D Binary table format FITS files to 
+                    ST SDAS format
+    CONVERT3D   :   Driver for DFITSRD (useful for converting lots of files)
+    F3DLIST     :   List Rosat 3D table files which have *not* been converted
+    F3D_EXTS    :   List valid 3D table extensions (FUNCTION)
+
+  other procedures for FITS 3D Binary Table I/O 
+
+    TBDELCOL    :   Delete specified column from a FITS 3D Binary table
+    TBDELROW    :   Delete specified row(s) from a FITS 3D Binary table
+    TBINFO      :   Give information about a specified field in a FITS 3D 
+                    Binary table
+    TBPRINT     :   Print specified columns and rows in a FITS 3D Binary table
+    TBSIZE      :   Return the size and number of fields in a FITS 3D Binary 
+                    table
+
+  other procedures for STSDAS modified FITS files (ext .HHH, .HHD)
+
+    STRD        :   Combine functions of SXOPEN and SXREAD to read 
+                    STSDAS disk files into IDL data and header variables
+    STWRT       :   Combine functions of SXOPEN and SXWRITE to write 
+                    IDL data and header variables to STSDAS disk files
+    SXADDHIST   :   Add a history record to a FITS header
+    SXADDPAR    :   Add or modify a parameter in a FITS header
+    SXDELPAR    :   Delete a keyword from a FITS header
+    SXGPAR      :   Obtain group parameter values from a FITS header and 
+                    parameter block
+    SXGREAD     :   Read group parameters from an STSDAS file
+    SXHCOPY     :   Copy a selected portion of one header into another
+    SXHEDIT     :   Interactively edit a FITS header using EDT
+    SXHREAD     :   Read a FITS header from disk
+    SXHWRITE    :   Write a FITS header to disk
+    SXMAKE      :   Make a basic FITS header from an IDL array
+    SXOPEN      :   Open an STSDAS (modified FITS) disk header for 
+                    subsequent I/O
+    SXPAR       :   Obtain the value of a keyword in a FITS header
+    SXREAD      :   Read an STSDAS (modified FITS) image from disk
+    SXWRITE     :   Write an image to STSDAS (modified FITS) format
+
+  procedures for FITS ASCII Table I/O      
+
+    FTADDCOL    :   Add a new column to a FITS ASCII table
+    FTCREATE    :   Create an empty FITS ASCII table (H and TAB)
+    FTDELCOL    :   Delete specified column from a FITS ASCII table
+    FTDELROW    :   Delete specified row(s) from a FITS ASCII table
+    FTDIR       :   Give a directory of modified FITS ASCII tables on disk
+    FTGET       :   Extract a specified field from a column in a FITS ASCII 
+                    table
+    FTHELP      :   Display the fields in a FITS ASCII table header
+    FTHMOD      :   Modify the attributes of a field in a FITS ASCII table
+    FTINFO      :   Give information about a specified field in a FITS ASCII 
+                    table
+    FTPRINT     :   Print specified columns and rows in a FITS ASCII table
+    FTPUT       :   Update or add data to a field in a FITS ASCII table
+    FTREAD      :   Read a table in modified disk FITS ASCII table format.
+    FTSIZE      :   Return the size and number of fields in a FITS ASCII table
+    FTSORT      :   Sort a table according to the values in a specified field.
+    FTWRITE     :   Write a table in modified disk FITS ASCII format.
+
+  procedures for STSDAS (Binary) Table I/O 
+
+    TABLE_APPEND :  Append a list of STSDAS tables to create a single table.
+    TABLE_CALC  :   Add a new table column from an expression using existing 
+                    columns.
+    TABLE_DELETE :  Delete specified rows from an STSDAS table
+    TABLE_EXT   :   Extract column(s) of data from an STSDAS table to IDL 
+                    variable(s)
+    TABLE_HELP  :   Describe an STSDAS table.
+    TABLE_LIST  :   List the contents of an STSDAS table
+    TABLE_PRINT :   Print a disk STSDAS table in tabular form
+    TABLE_SORT  :   Order the contents of an STSDAS table by the specified 
+                    column
+    TAB_ADDCOL  :   Add a new column to a STSDAS table
+    TAB_COL     :   Extract column info from a table control block.  Called by 
+                    TAB_READ
+    TAB_CREATE  :   Create an empty STSDAS table on disk
+    TAB_DEL     :   Delete specified row(s) from an STSDAS table
+    TAB_EXPAND  :   Expand the size of an STSDAS table.  Called by TABLE_APPEND
+    TAB_FORTOSPP :  Convert a FORTRAN print format to SPP. Called by TAB_MODCOL
+    TAB_MODCOL  :   Modify a column name, format or units in an STSDAS table.
+    TAB_NULL    :   Locate null values in a STSDAS table.  Called by TAB_PUT
+    TAB_NULLROW :   Place null values into a STSDAS table.  Called by TAB_PUT
+    TAB_PRINT   :   Print the contents of an STSDAS table in tabular form
+    TAB_PUT     :   Put new values into a column of an STSDAS table
+    TAB_READ    :   Read table control block and data array from a disk STSDAS 
+                    table.
+    TAB_SIZE    :   Return the size of a STSDAS table.  Called by TABLE_LIST
+    TAB_SORT    :   Sort a STSDAS table according to the specified column
+    TAB_SPPTOFOR :  Convert SPP print format to FORTRAN.  Called by TAB_PRINT
+    TAB_TO_DB   :   Convert an STSDAS table to an IDL database
+    TAB_VAL     :   Extract values from a single column of an STSDAS table
+    TAB_WRITE   :   Write a STSDAS table to a disk file
+
+  procedures for general FITS IO 
+
+    DFITSRD     :   Interactive driver to convert from disk FITS to STSDAS 
+                    format
+    DFITSREAD   :   Convert from disk FITS to STSDAS format.  Called by DFITSRD.
+    DFITSRD_LARGE :   Like DFITSRD but works on large arrays, slower than
+                      DFITSRD but less demanding on virtual memory.
+    DFITSREAD_LARGE : Analogue of DFITSREAD, called by DFITSRD_LARGE.
+    DFITSWRT    :   Interactive driver to convert from STSDAS format to disk 
+                    FITS.
+    DFITSWRITE  :   Convert from STSDAS format to disk FITS.  Called by 
+                    DFITSWRT.
+    FITS2X      :   Read a FITS tape directly into IDL image and header 
+                    variables  (VMS)
+    FITSRD      :   Interactive driver to read a FITS tape into STSDAS 
+                    (modified FITS) disk format.  (VMS)
+    FITSRD_LARGE  :   Like DFITSRD but works on large arrays, slower than
+                      DFITSRD but less demanding on virtual memory.
+    FITSREAD    :    Read a FITS tape to STSDAS format.  Called by FITSRD (VMS)
+    FITSREAD_LARGE :  Analogue of FITSREAD, called by FITSRD_LARGE.
+    FITSLIST    :   List the headers on a FITS tape.   (VMS)
+    FITSTAPE    :   Function to perform FITS tape I/O.  Called by FITSWRITE, 
+                    FITSREAD, FITS2X, X2FITS.    (VMS)
+    FITSWRT     :   Interactive driver to write from SDAS format to FITS 
+                    tape (VMS)
+    FITSWRITE   :   Write an SDAS file to a FITS tape.  Called by FITSWRT  (VMS)
+    HEADFITS    :   Read a FITS header from a disk FITS file.
+    MKHDR       :   Make a minimal FITS header for an image array.
+    READFITS    :   Read a disk FITS file into an IDL data and header array.
+    WRITEFITS   :   Write IDL data and header array to a disk FITS file.
+    X2FITS      :   Write IDL image, header variables directly to a FITS 
+                    tape (VMS)
+

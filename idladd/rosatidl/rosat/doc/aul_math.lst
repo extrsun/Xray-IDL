@@ -1,0 +1,55 @@
+
+  General Mathematical Procedures from Astronomical Users' Library 
+    (November, 1993)
+
+    FITEXY      :   Linear Least-squares approximation in one-dimension 
+                    (y = a + b*x), when both x and y data have errors 
+    GAMMLN      :   Return the natural log of the gamma function
+                    (equivalent to IDL 2.4.0 intrinsic function LNGAMMA)
+    GAUSSIAN    :   Compute the 1-D Gaussian function and optionally the 
+                    derivative at an array of points
+    KSONE       :   Return the Kolmogorov-Smirnov statistic and associated 
+                    probability for an array of data values and a 
+                    user-supplied cumulative distribution function (CDF) of 
+                    a single variable
+    KSTWO       :   Return the Kolmogorov-Smirnov statistic and associated 
+                    probability that two arrays of data values are drawn from 
+                    the same distribution
+    LINTERP     :   Linearly interpolate tabulated data from one data grid to 
+                    another
+    MINF_BRACKET :  Bracket a local minimum of a 1-D function with 3 points
+    MINF_CONJ_GRAD: Find the local minimum of a scalar function of several 
+                    variables using the Conjugate Gradient method 
+                    (Fletcher-Reeves-Polak-Ribiere algorithm)
+    MINF_PARABOLIC: Find a local minimum of a 1-D function up to specified 
+                    tolerance
+    MINF_PARABOL_D: Find a local minimum of a 1-D function up to specified 
+                    tolerance, using the first derivative
+    POIDEV      :   Return an integer random deviate drawn from a Poisson 
+                    distribution with a specified mean
+    POLINT      :   Interpolate a set of N points by fitting a polynomial of 
+                    degree N-1
+    POLY_SMOOTH :   Reduce noise in 1-D data (e.g. time-series, spectrum)
+                    but retain dynamic range of variations in the data by
+                    applying a least squares smoothing polynomial filter
+    PROB_KS     :   Returns the significance level of an observed value 
+                    of the Kolmogorov-Smirnov statistic 
+    QSIMP       :   Integrate a function to specified accuracy using the 
+                    extended trapezoidal rule
+    QTRAP       :   Integrate a function to specified accuracy using the 
+                    extended trapezoidal rule
+    QUADTERP    :   Quadratically interpolate (3 point Lagrangian) a function 
+                    Y = f(X) at specified grid points
+    SIGMA       :   Calculate the standard deviation value of an array, or 
+                    calculate the standard deviation over one dimension 
+                    of an array as a function of all the other dimensions
+    SIXLIN      :   Compute linear regression coefficients by six different 
+                    methods (when errors in X and Y are not calculable)
+    TABINV      :   To find the effective index of a function value in
+                    an ordered vector
+    TRAPZD      :   Compute the nth stage of refinement of an extended 
+                    trapezoidal rule
+    TSUM        :   Trapezoidal summation of the area under a curve
+                    (formerly know as INTEG)
+    ZBRENT      :   Find the zero of a 1-D function up to specified tolerance
+

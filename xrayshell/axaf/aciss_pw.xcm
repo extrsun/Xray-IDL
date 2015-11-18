@@ -1,0 +1,10 @@
+data 1:1 "aciss.fak"
+response 1 "aciss_aimpoint_rmf.fits"
+arf 1 "aciss_aimpoint_arf.fits"
+cornorm 1  0.000000E+00
+ statistic chi
+model ( powerlaw )wabs
+   1.0000      1.00000E-02  -3.0000      -2.0000       9.0000       10.000
+   1.0000      1.00000E-02   0.0000       0.0000      1.00000E+24  1.00000E+24
+   1.0000      1.00000E-03   0.0000       0.0000      1.00000E+05  1.00000E+06
+ 

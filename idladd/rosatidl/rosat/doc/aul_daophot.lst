@@ -1,0 +1,33 @@
+
+  DAOPHOT-Type Photometry Procedures from Astronomical Users' Library (Nov '93)
+    (for more documentation, see [.idlaul.text]daophot.tex or
+     idlaul/text/daophot.tex)
+
+    APER        :   Circular APERture photometry
+    CNTRD       :   Obtain the centroid a star in an image array
+    DAOERF      :   Calculate the intensity, (and optionally, the derivatives) 
+                    of a bivariate Gaussian, integrated over pixels.  
+                    Called by VALUE
+    DAO_VALUE   :   Obtain the value (and optionally, the derivatives) of a 
+                    PSF, parameterized as a bivariate Gaussian, and a lookup 
+                    table of residuals.  Called by NSTAR and PKFIT
+    FIND        :   FIND point sources within an image
+    GETPSF      :   Obtain a PSF (gaussian + residuals) from isolated stars.
+    GROUP       :   Place stars with non-overlapping PSF's in distinct groups
+    MMM         :   (Mean, Median, Mode) sophisticated sky background 
+                    computation
+    NSTAR       :   Simultaneous PSF fitting of a group of stars 
+    PKFIT       :   Fit a gaussian + residuals to a isolated star (called by 
+                    GETPSF)
+    RDPSF       :   Read a PSF file that was created by GETPSF into an IDL 
+                    array.
+    REMOVE      :   Contract a vector or up to 6 vectors by removing specified
+                    elements
+    SKY         :   Compute image sky level using MMM
+    SUBSTAR     :   Subtract a scaled PSF at specified star positions
+    T_APER      :   Like APER but with I/O to FITS tables
+    T_FIND      :   Like FIND but with I/O to FITS tables
+    T_GETPSF    :   Like GETPSF but with I/O to FITS tables
+    T_GROUP     :   Like GROUP but with I/O to FITS tables
+    T_NSTAR     :   Like NSTAR but with I/O to FITS tables
+

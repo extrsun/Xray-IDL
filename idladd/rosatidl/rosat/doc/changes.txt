@@ -1,0 +1,129 @@
+
+Changes since 09 Sep 1993:
+
+03-Mar-94  Procedure rspsfh changed to include off-axis parameterization 
+           for HRI psf; procedures calcpsfh, make_psf, and rspsfprof 
+           changed to be compatible.
+
+23-Feb-94  Procedure make_list changed to fix bug when the total number of
+           photons selected is less than 20000.
+
+23-Jan-94  Procedures feldc, feldcof, feldg, feldi, read_igrf added
+
+22-Jan-94  Procedures extrapshc, getshc, interpshc added
+
+16-Feb-94  Bugs in procedure shellg_getl fixed
+
+15-Feb-94  Bugs in procedures feldcof, feldi, read_igrf fixed, procedure
+           get_bfield added
+
+03-Feb-94  Procedures shellg_getl, stoer added, procedure getshc changed to 
+           use system variable !igrfdir 
+
+02-Feb-94  Procedure rosatlib changed to add system variable !igrfdir 
+           (default directory for data files used in magnetic field computations)
+           Procedure make_emap_hdr updated to work with files that have 
+           been processed in qp format in PROS 2.3 and written back out to FITS
+           format
+
+21-Jan-94  Procedure rdforb_pos changed to replace FXPAR calls with def for
+           reference (integer & fractional) MJD values
+
+19-Jan-94  Procedure sct2ut added
+
+05-Jan-94  Procedure rscheck_sources changed to work with RDF format _src.
+           FITS files (as a temporary fix for the new astrometry keywords, 
+           calls subroutine rdf_extast), procedure rdf_extast added
+
+04-Jan-94  Procedure make_list changed to fix bug when no photons were 
+           found within specified time interval
+
+16-Dec-93 to
+30-Dec-93  Procedures rsaspect, rsevrates, rsorbit, rschecktsi, rsgetasp, 
+           rsgetevr, rsorb_pos, rsorb_plot, rsgethkb, rsgethksta, 
+           make_emap, make_emap_hdr, rsget_emap_data, make_list, rsgtimes, 
+           rslivetime, rsobitimes, rsobsdate, rs_nomasp, rs_seqinfo, 
+           rs_sources updated to work with rationalized (RDF) format files. 
+
+           As part of this update, the following procedures were added:
+           oldchecktsi, rdfchecktsi, oldgetasp, oldgetaspqu (replaces
+           rsgetaspqu), rdfgetasp, oldgetevr, rdfgetevr, oldorb_pos, 
+           rdforb_pos, oldgethkb, rdfgethkb, oldgethksta, rdfgethksta,
+           rdf_gtimes, rdf_seqinfo, old_sources, rdf_sources
+
+02-Dec-93  Procedure rsgetevr updated to return more rates and counts, to
+           simplify tag names within the output structures, and to fix bug
+           introduced with use of RS_SEQINFO; procedure rsevrates changed
+           to be compatible
+
+27-Nov-93  Procedure doc_list updated
+
+19-Nov-93  Procedure make_emap_hdr changed to add keywords to conform to
+           OGIP standards
+
+18-Nov-93  Procedures rsmake_prof, rspsfprof, rsprofile, limit_group added
+           Documentation prologue corrected in procedure rspsfp
+
+17-Nov-93  Procedure make_list changed to add region, sky, and detector 
+           pixel sizes to structure variable PLINFO
+
+16-Nov-93  Procedure make_emap changed to update choices for PSPC bands in
+           documentation prologue, to fix bug when accepted time intervals
+           file contains one (or no) time intervals, and to delete the ';*'
+           when searching for the file
+
+06-Nov-93  Procedure vsort changed to fix bug when all values = -1
+
+02-Nov-93  Procedure limit_mex added to library
+
+24-Oct-93  Procedure timebin changed to use vsort & so to run faster
+
+03-Oct-93: Procedures doc_list and qual_options changed to use system variable 
+           !docdir as default directory, to make running doc_list 
+           transparent at other sites
+           Procedure make_emap changed to make a FITS header and update it 
+           even if no output file is written
+           Procedure fixobinfo added to library
+
+01-Oct-93: Procedure defimap changed to use system variable !imapdir as default 
+           directory for detector map files, to make running make_emap
+           transparent at other sites
+           Procedure rsgetdefpar changed to be compatible with new definition 
+           of !defdir = getenv('ZDEF') 
+
+30-Sep-93: Procedure make_emap changed to use keyword IMAPDIR to allow 
+           instrument maps to be read from different directories
+
+28-Sep-93: Procedure make_emap changed to add information to FITS header 
+           created by new make_emap_hdr (and to recreate this for every band)
+
+27-Sep-93: Procedure make_emap_hdr changed to start from detector map FITS 
+           header, to use Bill Thompson's FX... routines, to extract header 
+           info from MPE as well as US processed events table headers, and to 
+           make a proper FITS header
+
+23-Sep-93: Procedure defimap changed to use keyword DIR, and to remove
+           scale factor from output list 
+           Procedure make_emap changed to use CALDB detector maps which 
+           contain the scale factor as a keyword, and to include more comment 
+           lines from Steve Snowden's original program
+           Procedure rslivetime changed to include the additional 0.0001 sec
+           deadtime per acepted event, which compensates for the removal
+           of all events less than 0.35 ms after a previous event (done to 
+           remove some of the the AP background).
+           Procedure rsget_emap_data changed to clean things up a bit
+
+16-Sep-93: Term in scattering norm in procedure rspsfp changed from 0.059*0.7
+           to 0.075 (Gunther Hasinger's newest value)
+
+14-Sep-93: Procedure make_emap changed to imbed detector matrix in a 513 by 513
+           array before rotation, so that ROT will work properly; also to
+           remove user ability to shift map in x & y as this is no longer needed
+           Procedure make_emap_hdr changed to take info about shift out, as 
+           the shift is no longer necessary
+
+12-Sep-93: Procedure mexdiv added to library
+
+10-Sep-93: Procedure rspsfp changed to fix bug in defining Gaussian sigma and
+           to incorporate fix for norm of the scattering fraction
+           Procedure rs_sources fixed to work with new version of create_struct

@@ -1,0 +1,3883 @@
+\chapter{Introduction }
+\pagenumbering{arabic}
+ 
+
+\section{Basic Information}
+ 
+This ``cookbook" is intended to illustrate uses of some of the most useful
+routines in the Rosat IDL library. If you are new to IDL, or to Rosat data
+analysis, you may wish to consult some of the online help files, especially
+
+\medskip\noindent
+\begin{verbatim}
+     File                   contains
+ 
+     contents.txt           the contents and organization of the library
+     fits_guide.txt         information on the contents and formats of the
+                            various Rosat FITS files, and how to read these
+                            in IDL
+     new_user_guide.txt     some IDL hints for users new to IDL
+\end{verbatim}
+These files can be found in the {\tt doc} libraries,
+
+\medskip\noindent
+\begin{verbatim}
+xanadu:[idl_lib.rosat.doc] on HEASRC,
+ 
+/usr1/source/idl/lib/rosat on the Suns.
+\end{verbatim}
+They can also be found in the {\tt idl} subdirectory of the GOF anonymous FTP
+account
+
+\medskip\noindent
+\begin{verbatim}
+/home/heasfs/ftp/pub/IDL
+\end{verbatim}
+under the obvious corresponding filenames. Other online help files are also
+available in these directories.
+ 
+For further information on routines available through the IDL Astronomy Users'
+Library, consult the {\tt .txt} and {\tt .text} files under subdirectories of
+
+\medskip\noindent
+\begin{verbatim}
+xanadu:[idl_lib.idlaul] 		(HEASRC) 	
+\end{verbatim}
+or
+
+\medskip\noindent
+\begin{verbatim}
+/usr1/source/idl/lib/idlaul/ 	(Suns),
+\end{verbatim}
+or contact Wayne Landsman (stars::landsman; landsman@stars.gsfc.nasa.gov).
+ 
+For more information on intrinsic IDL commands, or about IDL in general, see
+the IDL manuals.
+ 
+
+\section{How to Access the Library}
+ 
+The following instructions are for Rosat GOs who wish to obtain the library
+for use at their home institutions.
+ 
+IMPORTANT: After obtaining the library, please be sure to read section 1.3.
+ 
+There are two ways to obtain the library: via DECNET copy from the HEASRC
+Vax workstation on the LHEA Vax cluster, and via anonymous ftp from the GOF
+account on the Sun workstation {\tt rosserv.nasa.gsfc.gov}.
+ 
+1) via DECNET copy from HEASRC:
+ 
+The IDL procedures are stored on the HEASRC Vax workstation under the
+account XANADU:[IDL{\_}LIB.ROSAT].  The directory is organized into the following
+subdirectories:
+
+\medskip\noindent
+\begin{verbatim}
+      Subdirectory       contains
+ 
+     [.EXPERIMENTAL]     experimental procedure files (extension .pro)
+                         All Rosat IDL procedures are currently regarded as
+                         experimental.
+ 
+     [.WORKING]          working procedure files (i.e., those which have been
+                         tested and are no longer experimental)
+ 
+     [.DOC]              online help files (extension .txt) and files used
+                         by the procedure DOC_LIST (extension .lst)
+ 
+     [.DEF]              parameter default files (extension .def) used by
+                         the interface for the higher level procedures
+ 
+     [.AUX]              auxiliary data files (extension .dat) used by
+                         various library procedures (also contains SVDF.DAT
+                         and CONTINENT.DAT from IDL Astronomical Users'
+                         library).
+\end{verbatim}
+As an example, to obtain the procedure (extension .pro) files containing
+the code, type
+
+\medskip\noindent
+\begin{verbatim}
+   copy heasrc::xanadu:[idl_lib.rosat.experimental]*.* (your node and directory)
+\end{verbatim}
+Please be sure that your institution is running IDL version 2.
+ 
+2) Via anonymous ftp from the GOF account:
+ 
+The IDL procedure, online help, parameter default, and auxiliary data
+files are stored in an uncompressed tar file in the directory /pub/IDL.
+The subdirectory structure of the original files is preserved. To reach
+the GOF account, type:
+
+\medskip\noindent
+\begin{verbatim}
+     ftp rosserv.gsfc.nasa.gov
+\end{verbatim}
+and at the FTP login prompt type
+
+\medskip\noindent
+\begin{verbatim}
+ROSSERV.GSFC.NASA.GOV> login anonymous  (or login ftp)
+\end{verbatim}
+and give your identity as the password (e.g., your username at your home
+institution).  Use the {\tt cd} command to change to the IDL directory
+
+\medskip\noindent
+\begin{verbatim}
+     cd /pub/IDL
+\end{verbatim}
+To obtain the {\tt tar} file, type
+
+\medskip\noindent
+\begin{verbatim}
+     binary                  (the file should be transferred in binary mode)
+     get ROSAT_lib.tar ???   (where ??? = what you want to name it)
+\end{verbatim}
+You will then need to unpack the {\tt tar} file. If you are on a Unix
+machine, you can do this by simply typing
+
+\medskip\noindent
+\begin{verbatim}
+     tar -xvf ???            (unpacks tar file and creates
+                              subdirectory structure)
+\end{verbatim}
+Note that {\tt tar} should be run from the directory which you wish to be your
+IDL top level directory. The result will be a set of files in
+subdirectories under your current directory. The subdirectory structure
+will be similar to that used for the HEASRC account XANADU:[IDL{\_}LIB.ROSAT],
+with the obvious Unix translations: {\tt experimental/}, {\tt working/}, {\tt doc/}, {\tt def/},
+{\tt aux/}.
+ 
+Please note the following:
+ 
+1) For now, all of the Rosat specific {\tt .pro} files are stored in the
+EXPERIMENTAL subdirectories because all of the software is currently
+experimental. Software will be moved to the WORKING directories once it has
+been sufficiently debugged.
+ 
+2) Many of the procedures require the parameter default {\tt .def} files in the
+DEF subdirectories. If you want to be able to run these procedures, then
+you will need to copy over the {\tt .def} files as well.
+ 
+3) The procedure DOC{\_}LIST requires the {\tt .lst} files in the DOC subdirectories.
+ 
+4) You will also need to copy the file {\tt startup.pro} from the COM
+subdirectory, so that the expected system variables will be properly defined
+when IDL is started. The statements within {\tt startup.pro} can be incorporated
+within your own startup file.
+ 
+The library routines assume that the following system logicals/symbols
+(VMS) or environmental variables/aliases (Unix) have been defined/set
+before entering IDL: ZDEF, ZDOC, ZAUX, ZCOM, and PRINTPS. To define these
+ 
+1) under VMS, type:
+
+\medskip\noindent
+\begin{verbatim}
+  define zdef   (physical device containing the parameter default .def files)
+  define zdoc   (   "                  "        doc_list .lst files)
+  define zaux   (   "                  "        auxiliary data .dat files)
+  define zcom   (   "                  "        command .com files)
+  PRINTPS   :==   print/que=???/notify/delete
+                (where ??? is the name of your postscript printer queue)
+  assign zcom:startup.pro IDL_STARTUP
+\end{verbatim}
+2) under Unix, type
+
+\medskip\noindent
+\begin{verbatim}
+  setenv ZDEF   (physical device containing the parameter default .def files)
+  setenv ZDOC   (   "                  "        doc_list .lst files)
+  setenv ZAUX   (   "                  "        auxiliary data .dat files)
+  setenv ZCOM   (physical device containing the command .com files)
+  alias  PRINTPS "??? -r -s"
+                (where ??? is the name of your postscript printer queue)
+  setenv IDL_STARTUP $ZCOM/startup.pro
+\end{verbatim}
+ 
+You will also need to add the directories which contain the procedure
+{\tt .pro} files to the system logical/environmental variable IDL{\_}PATH (see IDL
+manual for more details).
+ 
+
+\section{Distribution Policy}
+ 
+IDL is an easy language to program in, and we recognize that GOs may wish
+to adapt some of the routines for their own specialized purposes. In fact,
+many of the ROSAT routines were themselves adapted from other libraries.
+While we don't wish to discourage you from using the library, we do want
+to avoid as much chaos and confusion as possible. We have therefore adopted
+the following policy.
+ 
+We freely distribute the library. However, in obtaining the ROSAT IDL
+Library, you agree to the following:
+ 
+1) to tell us about any bugs and/or mistakes that you find in the code, so
+that we can fix them. We would much rather be told about possible bugs that
+turn out to be OK, then never to learn about them at all.
+ 
+2) to tell us your suggestions about how to improve the code, e.g., options
+that you would like to see added, simplifications of the command line, etc.
+If they are reasonable and are likely to be of general interest, then we
+will be happy to incorporate them.
+ 
+and, if you change EVEN ONE LINE of the code within one of the {\tt .pro} files,
+you agree
+ 
+3) to change BOTH the name of the {\tt .pro} file, AND the name of the procedure
+in the PRO statement within the file. It is NOT enough to simply change the
+name of the file. (What happens when you get tired of explicitly compiling
+your routine, and/or you give the modified {\tt .pro} file to someone else, and
+THEY get tired of having to remember to explicitly compile it?)
+ 
+4) to document every change, both in the documentation header (under the
+Modifications section) and where it occurs in the code. Please include
+your name as part of the documentation. Please also include a line in the
+documentation header which states which routine was the origin of your
+(modified) code.
+ 
+We hope that everyone will voluntarily follow rules 3) and 4), so that we
+can avoid endless proliferation of similar but different procedures, all
+with the same name, which may or may not work with the other routines in
+the library.
+ 
+Please understand that, if you change the IDL code in a {\tt .pro} file, then the
+modified routine is no longer part of our library and can no longer be
+supported as such.  However, if you change a routine and then give it back to
+us, we will cheerfully incorporate it.
+ 
+The success of this library depends on your willingness to share your ideas
+(and code!) with us. Even if you don't want your code to be included in the
+library, it would still help us greatly as you might have thought of a snazzy
+way to do something that hadn't occurred to us, and we could then include it in
+some other program (of course you would get full credit). If you would like to
+donate code, then even better; we gladly accept software donations.
+ 
+\chapter{Getting Help In IDL }
+ 
+
+\section{How to get help for running IDL procedures}
+ 
+There are a number of ways to get help in IDL. For example, you may wish to
+learn generally what routines exist for doing a specific task, or for a general
+kind of data analysis. Or you may wish to find out how to run a particular
+program.
+ 
+To find out what routines are available, use DOC{\_}LIST. Type {\tt doc{\_}list} with no
+arguments to find out how to run it. To remind yourself of the supported lists
+of topics for a given project, specify a value for the keyword PROJ. Currently,
+two projects are supported: ROSAT and the IDL Astronomy Users' Library.
+Finally, if you also specify a topic, then you will get a list of routines with
+one line descriptions.
+ 
+Examples:
+
+\medskip\noindent
+\begin{verbatim}
+IDL> doc_list,proj='rosat'              ;find topics for project ROSAT
+IDL> doc_list,proj='idlaul'             ;find topics for routines in the
+                                        ;IDL Astronomy Users' Library
+ 
+IDL> doc_list,proj='rosat','cal'        ;get summary descriptions of routines
+                                        ;that read, plot, etc. data from
+                                        ;ancillary (calibration) FITS files
+\end{verbatim}
+Almost all of the procedure {\tt .pro} files contain ASCII information at the
+beginning which will tell you exactly how to run the program, what to use for
+inputs, what the outputs will be, etc. Use {\tt doc{\_}library} to search your
+directory path and print out this information. The commands {\tt ?} and {\tt TYPE}
+will do something similar.
+ 
+Examples:
+
+\medskip\noindent
+\begin{verbatim}
+IDL> doc_library,'rsaspect'             ;print ASCII header documentation
+                                        ;for routine RSASPECT
+ 
+IDL> type,'explib:rsaspect.pro'         ;types out the .pro file, with ASCII
+                                        ;header. The advantage is that you
+                                        ;get to see the whole file. The
+                                        ;disadvantage is that you have to
+                                        ;know exactly where it is.
+ 
+IDL> ?                                  ;starts up the widgets help facility
+                                        ;(you must use OPENWIN instead of
+                                        ; XWINDOWS on the Sun)
+\end{verbatim}
+Note: Be careful not to start up the widgets facility in XWINDOWS, as you can
+crash IDL.
+ 
+If the routine is a procedure (as opposed to a function), then in most cases
+you can simply type the name of the procedure with no arguments. Most
+procedures will respond by typing a line which gives you the command syntax.
+This won't work for functions, unfortunately. For a function, you can use the
+IDL command TYPE (see above). You can also use HELP with the keyword ROUTINES
+(see Chapter 1) to list the command syntax for all procedures and functions
+which have been compiled in your session.
+ 
+Examples:
+
+\medskip\noindent
+\begin{verbatim}
+IDL> rschecktsi                           ;get command syntax for RSCHECKTSI
+\end{verbatim}
+In this example, the procedure will respond with
+
+\medskip\noindent
+\begin{verbatim}
+RSCHECKTSI, inputs, TSINFO, LEVELS, textout=textout, OPARMS=OPARMS
+   Uses inputs OBSEQ, DIR, INSTR, and CHATTER from RSGET.DEF
+\end{verbatim}
+Generally, the syntax will follow the convention: lowercase for input
+parameters, uppercase for output parameters, and name={\tt name} for keyword
+parameters. In this example, INPUTS is a positional input parameter, TSINFO and
+LEVELS are positional output parameters, TEXTOUT is an input keyword parameter,
+and OPARMS is an output keyword parameter.
+ 
+
+\section{How to get help for your IDL session}
+
+\medskip\noindent
+\begin{verbatim}
+IDL> help               ;lists information concerning variables defined
+                        ;in your session, and which procedures and functions
+                        ;have been compiled
+ 
+IDL> help,/routines     ;gives command syntax for all functions and
+                        ;procedures compiled in your session
+ 
+IDL> help,sctime,roll,delx,nomasp,obinfo        ;get information about
+SCTIME          DOUBLE    = Array(13453)        ;variables sctime,roll,delx,
+ROLL            FLOAT     = Array(13453)        ;nomasp, and obinfo
+DELX            INT       = Array(13453)
+NOMASP          DOUBLE    = Array(3, 5)
+OBINFO          STRUCT    = -> OBITIME Array(5)
+\end{verbatim}
+In this example, SCTIME, ROLL, and DELX are double precision, floating point,
+and integer vectors with 13453 elements each. NOMASP is a double precision, 2D
+array with 3 columns and 5 rows. OBINFO is a structure variable, with 5
+elements, each of the structure format named OBITIME. To learn more about
+OBINFO, type
+
+\medskip\noindent
+\begin{verbatim}
+IDL> help,obinfo,/struc
+ ** Structure OBITIME, 10 tags, length=48:
+   SCTBEG          DOUBLE           28220716.
+   YRBEG           INT           1991
+   DAYBEG          INT            114
+   UTSBEG          DOUBLE           43923.000
+   SCTEND          DOUBLE           28222692.
+   YREND           INT           1991
+   DAYEND          INT            114
+   UTSEND          DOUBLE           45899.000
+   IBEG            LONG                 0
+   IEND            LONG              1976
+\end{verbatim}
+In this example, we see that the structure format OBITIME has tag names SCTBEG,
+YRBEG, DAYBEG, UTSBEG, SCTEND, YREND, DAYEND, UTSEND, IBEG, and IEND. The
+values of the first element for each of these tags are also shown.
+ 
+To learn more about structure variables, see Chapter 8 in the IDL Users' Guide.
+
+\medskip\noindent
+\begin{verbatim}
+IDL> help,/files        ;lists information concerning which logical units
+                        ;have been opened, and assigned to which files
+\end{verbatim}
+ 
+\chapter{A (VERY) Few Basic and Incredibly Useful IDL Commands }
+ 
+This chapter describes a few simple IDL commands which can make your life much
+easier.
+ 
+
+\section{The JOURNAL Command}
+ 
+You can use the JOURNAL command to make a journal file of what you did during
+your session:
+
+\medskip\noindent
+\begin{verbatim}
+IDL> journal,'08jul92.log'              ;Starts a journal file. Subsequent
+                                        ;commands will be written to
+                                        ;the file 08jul92.log
+IDL> journal                            ;subsequent command closes the file
+                                        ;and turns journal option off
+\end{verbatim}
+If you develop a sequence of steps that you like, you can even paste these into
+another file, add a PRO statement to the beginning, append RETURN and END
+statements at the end, and voila! you have your own IDL procedure.
+ 
+
+\section{The FORPRINT Command}
+ 
+
+\subsection{Printing a table of related quantities}
+ 
+If you have several related vectors (say values of various quantities measured
+at the same times), then you can use FORPRINT to print out a table, where the
+values at one time are printed on one line. For example, suppose you have
+vectors ROLL, DELX, and DELY, which contain measurements made at the times
+stored in vector SCTIME. Then
+
+\medskip\noindent
+\begin{verbatim}
+IDL> forprint,sctime(0:10),roll(0:10),delx(0:10),dely(0:10)
+\end{verbatim}
+will print the first 11 (IDL indices start at zero) values of sctime, roll,
+delx, and dely like this:
+
+\medskip\noindent
+\begin{verbatim}
+       28220716.     -5.00597    -223     249
+       28220716.     -5.00556    -224     267
+       28220718.     -5.00514    -225     282
+       28220718.     -5.00486    -227     294
+       28220720.     -5.00472    -228     305
+       28220720.     -5.00458    -229     314
+       28220722.     -5.00472    -230     322
+       28220722.     -5.00458    -232     328
+       28220724.     -5.00444    -234     336
+       28220724.     -5.00444    -235     343
+       28220726.     -5.00417    -237     349
+\end{verbatim}
+You can use the keyword TEXTOUT to direct the output display from FORPRINT. The
+options are -1 (no listing), 1 (TERMINAL using /more option), 2 (TERMINAL
+without /more option), 3 ({\tt <program>.prt}), 4 ({\tt laser.tmp}), 5 (user defined
+file), and FILENAME (default extension of {\tt .prt}). If option 5 is used, then
+you the user must open the file. The default value is TEXTOUT=1.
+ 
+
+\subsection{Printing values of a vector of structure variables}
+ 
+You can also use FORPRINT to print out a vector when each of the elements is a
+structure variable. (This vector is itself a structure variable, btw.) Say you
+have a variable OBINFO with the following structure:
+
+\medskip\noindent
+\begin{verbatim}
+IDL> help,obinfo
+OBINFO          STRUCT    = -> OBITIME Array(5)
+IDL> help,obinfo,/struc
+ ** Structure OBITIME, 10 tags, length=48:
+   SCTBEG          DOUBLE           28220716.
+   YRBEG           INT           1991
+   DAYBEG          INT            114
+   UTSBEG          DOUBLE           43923.000
+   SCTEND          DOUBLE           28222692.
+   YREND           INT           1991
+   DAYEND          INT            114
+   UTSEND          DOUBLE           45899.000
+   IBEG            LONG                 0
+   IEND            LONG              1976
+\end{verbatim}
+Using FORPRINT will give something like this:
+
+\medskip\noindent
+\begin{verbatim}
+IDL> forprint,obinfo
+{       28220716.    1991     114       43923.000       28222692.    1991
+     114       45899.000           0        1976}
+{       28270666.    1991     115       7472.0000       28273346.    1991
+     115       10153.000        1977        4656}
+{       28273350.    1991     115       10158.000       28274232.    1991
+     115       11039.000        4657        5539}
+{       28275884.    1991     115       12691.000       28280082.    1991
+     115       16889.000        5540        9737}
+{       28293816.    1991     115       30623.000       28297530.    1991
+     115       34337.000        9738       13452}
+\end{verbatim}
+The values are printed in tag order, element by element. The braces indicate
+that the elements of OBINFO are structure variables. (No, I don't know why, and
+I don't know how to get FORPRINT NOT to print them. Sorry!)
+ 
+You can also print the values of OBINFO for a single element:
+
+\medskip\noindent
+\begin{verbatim}
+IDL> print,obinfo(0)                     ;print info for 1st obi
+{       28220716.    1991     114       43923.000       28222692.    1991
+     114       45899.000           0        1976}
+\end{verbatim}
+ 
+
+\subsection{Easy ways to print information to an ASCII file}
+ 
+OK, say now you have the vectors from above, and want to write these to an
+ASCII file. The easiest way to do this is just to use FORPRINT with the
+textout={\tt filename} option:
+
+\medskip\noindent
+\begin{verbatim}
+IDL> forprint,text='aspect.prt',sctime(0:10),roll(0:10),delx(0:10),dely(0:10)
+% TEXTOPEN: Output is being directed to a file ASPECT.PRT
+\end{verbatim}
+The first 11 elements of the vectors SCTIME, ROLL, DELX, and DELY will be
+written to the file {\tt aspect.prt}. To see what's in the file, use TYPE:
+
+\medskip\noindent
+\begin{verbatim}
+IDL> type,'aspect.prt'
+       28220716.     -5.00597    -223     249
+       28220716.     -5.00556    -224     267
+       28220718.     -5.00514    -225     282
+       28220718.     -5.00486    -227     294
+       28220720.     -5.00472    -228     305
+       28220720.     -5.00458    -229     314
+       28220722.     -5.00472    -230     322
+       28220722.     -5.00458    -232     328
+       28220724.     -5.00444    -234     336
+       28220724.     -5.00444    -235     343
+       28220726.     -5.00417    -237     349
+\end{verbatim}
+Suppose now that you would like to write more than one set of information to
+the same file. For example, perhaps you have an array NOMASP
+
+\medskip\noindent
+\begin{verbatim}
+IDL> help,nomasp
+NOMASP          DOUBLE    = Array(3, 5)
+\end{verbatim}
+and also the structure variable OBINFO (from above) which you would like to
+write into the same file as the other vectors. To do this, use FORPRINT with
+keyword TEXTOUT set to 5. You will first need to open the file. Follow these
+steps:
+
+\medskip\noindent
+\begin{verbatim}
+IDL> openw,un,'aspect.prt',/get_lun     ;open the file and assign it to a
+                                        ;free logical unit
+IDL> !textunit=un                       ;make sure !TEXTUNIT=logical unit UN
+IDL> printf,!textunit,'Aspect Information for $disk15:[rsgof.mydata]rp123456:'
+                                        ;this prints a header line
+IDL> printf,!textunit,'   '             ;print a blank line
+IDL> forprint,text=5,obinfo             ;TEXTOUT=5 option
+IDL> printf,!textunit,'   '             ;equivalent to printf,un,...
+ 
+IDL> for ii=0,4 do printf,un,adstring(nomasp(0:1,ii)/2./3600.),nomasp(2,ii)
+\end{verbatim}
+[This line is a bit complicated; there's a lot going on here. In this example,
+each row of NOMASP contains 3 elements - R.A. in units of half arcsec, Dec. in
+units of half arcsec, and Roll angle in units of degrees (see Chapter 5).
+NOMASP(0:1,ii) contains the first 2 elements of row ii+1 in NOMASP (RA and
+Dec), and NOMASP(2,ii) is the third element (Roll angle). (Remember that row
+numbers in IDL start with zero.) NOMASP(0:1,ii)/2./3600. converts the first 2
+elements from half arcsec pixels (see Chapter 5) into degrees. Finally,
+adstring(NOMASP(0:1,ii)/2./3600.) constructs an ASCII string which gives the
+values of RA and Dec in hr min sec, deg min sec format.]
+
+\medskip\noindent
+\begin{verbatim}
+IDL> printf,!textunit,'   '
+IDL> forprint,text=5,sctime(0:10),roll(0:10),delx(0:10),dely(0:10)
+IDL> close,un                           ;close the file
+IDL> free_lun,un                        ;free the logical unit
+\end{verbatim}
+To see what's in the file:
+
+\medskip\noindent
+\begin{verbatim}
+IDL> type,'aspect.prt'
+Aspect Information for $disk15:[rsgof.mydata]rp123456:
+ 
+{       28220716.    1991     114       43923.000       28222692.    1991
+     114       45899.000           0        1976}
+{       28270666.    1991     115       7472.0000       28273346.    1991
+     115       10153.000        1977        4656}
+{       28273350.    1991     115       10158.000       28274232.    1991
+     115       11039.000        4657        5539}
+{       28275884.    1991     115       12691.000       28280082.    1991
+     115       16889.000        5540        9737}
+{       28293816.    1991     115       30623.000       28297530.    1991
+     115       34337.000        9738       13452}
+ 
+ 08 40 45.6  -44 38 24.0       348.06472
+ 08 40 45.6  -44 38 24.0       354.98264
+ 08 40 45.6  -44 38 24.0       355.00056
+ 08 40 45.6  -44 38 24.0       354.99667
+ 08 40 45.6  -44 38 24.0       354.98681
+ 
+       28220716.     -5.00597    -223     249
+       28220716.     -5.00556    -224     267
+       28220718.     -5.00514    -225     282
+       28220718.     -5.00486    -227     294
+       28220720.     -5.00472    -228     305
+       28220720.     -5.00458    -229     314
+       28220722.     -5.00472    -230     322
+       28220722.     -5.00458    -232     328
+       28220724.     -5.00444    -234     336
+       28220724.     -5.00444    -235     343
+       28220726.     -5.00417    -237     349
+\end{verbatim}
+OK, so now suppose you want to add more things to the end of the file. Say you
+also have defined some vectors RATES and COUNTS, measured at times stored in
+vector SCTEVR, and another structure variable OBINFO2 (which has the same
+structure as OBINFO). To append these to the file, follow these steps:
+
+\medskip\noindent
+\begin{verbatim}
+IDL> forprint,text=5,obinfo2.sctbeg,obinfo2.sctend
+ 
+ You must set !TEXTUNIT to the desired unit number...   ;oops! This is what
+                    ...see following example            ;happens when you
+                                                        ;forget to define
+                    OPENW, LUN, filename, /GET_LUN      ;!textunit first
+                    !TEXTUNIT = LUN
+                    DBPRINT...
+ 
+ Action: returning
+ 
+IDL> openu,un,'aspect.prt',/get_lun     ;open the file for updating
+IDL> !textunit=un
+IDL> readstr = ''                       ;so that READF will expect to read
+                                        ;an ASCII string
+IDL> while not eof(un) do readf,un,readstr      ;Important: read to the end
+                                                ;of the file. Otherwise you
+                                                ;will write over what you
+                                                ;wrote before!
+IDL> printf,un,' '
+IDL> forprint,text=5,obinfo2.sctbeg,obinfo2.daybeg,obinfo2.utsbeg, $
+	obinfo2.sctend,obinfo2.dayend,obinfo2.utsend
+IDL> printf,un,' '
+IDL> forprint,text=5,sctevr(0:10),a1r(0:10),mvr(0:10),ter(0:10),aer(0:10)
+IDL> close,un
+IDL> free_lun,un
+\end{verbatim}
+Now this will be appended to the end of file {\tt aspect.prt}:
+
+\medskip\noindent
+\begin{verbatim}
+....... (the rest of the file here) .........
+ 
+       28220716.     114       43923.000       28222690.     114
+       45897.000
+       28270667.     115       7473.0000       28273345.     115
+       10151.000
+       28273349.     115       10156.000       28274230.     115
+       11036.000
+       28275884.     115       12690.000       28280080.     115
+       16886.000
+       28293817.     115       30623.000       28297528.     115
+       34334.000
+ 
+       28220716.     0.000000     0.000000     0.000000     0.000000
+       28220718.     0.000000     0.000000     0.000000     0.000000
+       28220720.     0.000000     0.000000     0.000000     0.000000
+       28220722.     0.000000     0.000000     0.000000     0.000000
+       28220724.     0.000000     0.000000     0.000000     0.000000
+       28220726.     0.000000     0.000000     0.000000     0.000000
+       28220727.     0.000000     0.000000     0.000000     0.000000
+       28220729.     0.000000     0.000000     0.000000     0.000000
+       28220731.     0.000000     0.000000     0.000000     0.000000
+       28220733.     0.000000     0.000000     0.000000     0.000000
+       28220735.     0.000000     0.000000     0.000000     0.000000
+\end{verbatim}
+OK, so finally suppose you don't like the formats that were used in printing
+the file. You can define your own format within the PRINTF command. For
+example, in the example above you can replace
+
+\medskip\noindent
+\begin{verbatim}
+IDL> forprint,text=5,obinfo2.sctbeg,obinfo2.daybeg,obinfo2.utsbeg, $
+     obinfo2.sctend,obinfo2.dayend,obinfo2.utsend
+\end{verbatim}
+with
+
+\medskip\noindent
+\begin{verbatim}
+IDL> form1='$(2(f12.1,i6,f10.2))'
+IDL> sctb=obinfo.sctbeg & dayb=obinfo2.daybeg & utb=obinfo2.utsbeg
+IDL> scte=obinfo.sctend & daye=obinfo2.dayend & ute=obinfo2.utsend
+IDL> for ii=0,4 do printf,un,format=form1,sctb(ii),dayb(ii),utb(ii),$
+        scte(ii),daye(ii),ute(ii)
+\end{verbatim}
+which will print this to the file:
+
+\medskip\noindent
+\begin{verbatim}
+  28220716.0   114  43923.00  28222692.0   114  45897.00
+  28270666.0   115   7473.00  28273346.0   115  10151.00
+  28273350.0   115  10156.00  28274232.0   115  11036.00
+  28275884.0   115  12690.00  28280082.0   115  16886.00
+  28293816.0   115  30623.00  28297530.0   115  34334.00
+\end{verbatim}
+Note: The routine FORPRINT also takes the FORMAT keyword.
+ 
+
+\section{The PLOT Command(s)}
+ 
+The plotting commands in IDL are very versatile, and this cookbook can only
+barely scratch the surface! If you simply want a plot of one vector against
+another (say RATES against COUNTS), then you can use all of your session
+defaults. If the x-axis variable is not monotonic, then you will probably want
+to use a value for the psym keyword which does not connect the plot symbols,
+e.g.,
+
+\medskip\noindent
+\begin{verbatim}
+IDL> plot,counts,rates,psym=3,/xst,/yst,/yno
+                                ;plot RATES vs COUNTS, using dots for
+                                ;plotting symbol.
+\end{verbatim}
+In this example, {\tt /xst} stands for xstyle=1, {\tt /yst} for ystyle=1, and {\tt /yno}
+for ynozero=1 (keywords of the {\tt plot} command). This combination mean that the
+plot will be scaled according to the values in the x and y axis variables, and
+that the y axis will not be forced to include zero.
+ 
+Useful plot symbols:	
+
+\medskip\noindent
+\begin{verbatim}
+psym=1 (plus), psym=2 (asterisk), psym=3 (dot),
+psym=7 (cross), psym=10 (histogram),
+psym=0 (straight lines connect the points; default)
+\end{verbatim}
+You can also use the routine SET{\_}XY to restrict the limits of your plot. The
+syntax is
+
+\medskip\noindent
+\begin{verbatim}
+IDL> set_xy,xmin,xmax,ymin,ymax
+\end{verbatim}
+For example, typing
+
+\medskip\noindent
+\begin{verbatim}
+IDL> set_xy,1.0,5.0,2.5,3.0
+\end{verbatim}
+will restrict the x axis to values between 1.0 and 5.0, and the y axis to
+values between 2.5 and 3.0. (There may be complications depending on how you
+have set some of the default plot parameters. If you run into problems getting
+exactly the range that you want, try using the XSTYLE and YSTYLE keywords.) To
+go back to autoscaling, type
+
+\medskip\noindent
+\begin{verbatim}
+IDL> set_xy,0,0,0,0
+\end{verbatim}
+Finally, you can use the OPLOT command if you want to plot more data on top of
+the first plot, without erasing.
+ 
+For more information on how to make plots in IDL, see Chapters 10 and 11 in the
+IDL Users' Guide.
+ 
+\chapter{How To Use The Parameter Interface }
+ 
+This chapter tells you generally how to use procedures which use the parameter
+interface.
+ 
+
+\section{The {\tt inputs}  Parameter}
+ 
+Many of the Rosat IDL procedures use a command interface, in which the values
+of many parameters are controlled by a single input. If you see the parameter
+{\tt inputs} on the command line, this is your clue that the procedure uses the
+parameter interface. There are four different ways that this parameter can be
+specified:
+
+\begin{itemize}
+\item  {\tt Inputs} can be a number. Use 1 to specify all parameters interactively,
+and 0 to use all defaults, as specified in the default parameters file.
+ 
+\item  {\tt Inputs} can be a string, of the form 'name=value,name=value,...name=value'.
+The exact parameters will depend on the program.
+ 
+\item  {\tt Inputs} can be a string array, where each element specifies the value of
+the parameter associated with that element. The values must be given in
+order. The exact parameters and their order will depend on the program.
+ 
+\item  The values can be specified in a disk file, where each line gives the
+value of the parameter, according to the format name=value. {\tt Inputs}
+should then be set to the name of the file.
+\end{itemize}
+ 
+
+\section{Using the interactive option}
+ 
+For interactive input, the procedure will respond with (e.g., for RSASPECT)
+
+\medskip\noindent
+\begin{verbatim}
+      OBSEQ=                           PROC=US
+        DIR=                           TRIM=Y
+      EXTYP=                        CHATTER=1
+      INSTR=P                       READORB=N
+ 
+Enter parameters:  name=value
+Enter HELP for description of parameters, END when done
+Hit <CR> to review values, or type:   name=?
+\end{verbatim}
+You then specify values for {\tt obseq} and {\tt dir} by typing (after the {\tt ?})
+
+\medskip\noindent
+\begin{verbatim}
+?  obseq=rp123456
+?  dir=$disk15:[rsgof.mydata]
+\end{verbatim}
+To see the values of the parameters, hit the return key. The procedure will
+respond with
+
+\medskip\noindent
+\begin{verbatim}
+      OBSEQ=rp123456                   PROC=US
+        DIR=$disk15:[rsgof.mydat       TRIM=Y
+      EXTYP=                        CHATTER=1
+      INSTR=P                       READORB=N
+\end{verbatim}
+The value of DIR didn't really get truncated; the procedure just didn't
+print it all. To see this, type
+
+\medskip\noindent
+\begin{verbatim}
+? dir=?
+\end{verbatim}
+The procedure will respond with
+
+\medskip\noindent
+\begin{verbatim}
+DIR=$disk15:[rsgof.mydata]
+\end{verbatim}
+To get brief descriptions of the various parameters, type
+
+\medskip\noindent
+\begin{verbatim}
+? help
+\end{verbatim}
+The procedure will respond with
+
+\medskip\noindent
+\begin{verbatim}
+      OBSEQ=rp123456            Root name of input file
+        DIR=$disk15:[rsgof.myda Directory containing data file
+      EXTYP=                    Extension type of input file (e.g., CAS, ASP)
+      INSTR=P                   Instrument (default is P for PSPC)
+       PROC=US                  Format of processed files (def=US, or MPE)
+       TRIM=Y                   Trim data to Good Time Intervals? Y(es) or N(o)
+    CHATTER=1                   Controls chattiness of program
+    READORB=N                   Read corresponding orbit data? Y(es) or N(o)
+\end{verbatim}
+To finish entering values, type
+
+\medskip\noindent
+\begin{verbatim}
+? end
+\end{verbatim}
+and the procedure will continue.
+ 
+
+\section{How to use the different options}
+
+\medskip\noindent
+\begin{verbatim}
+mode 1) Interactive
+IDL> rsaspect,1,obinum
+?obseq=rp123456
+?dir=$disk15:[rsgof.mydata]
+?chatter=0
+?end
+ 
+mode 2) command line (for mode 1) using string
+IDL> list='obseq=rp123456,dir=$disk15:[rsgof.mydata],chatter=0'
+IDL> rsaspect,list,obinum
+ 
+mode 3) command line (for mode 1) using parameter array
+IDL> list=strarr(20,10)
+IDL> list(0)='rp123456'
+IDL> list(1)='$disk15:[rsgof.mydata]'
+IDL> list(9)='0'
+IDL> rsaspect,list,obinum
+ 
+mode 4) disk file
+IDL> $edit myinput.dat
+obseq=rp123456
+dir=$disk15:[rsgof.mydata]
+	:
+	:               { 1 line/parameter (include name & =)}
+chatter=0
+ *exit
+IDL> rsaspect,'myinput.dat',obinum
+\end{verbatim}
+All of these examples are equivalent.
+ 
+
+\section{An illustration of a parameter defaults (.{\tt def}) file}
+ 
+The parameter defaults files all have extension .{\tt def}, and are stored in the
+{\tt zdef} subdirectory. If you are running the routines on your home computer,
+then you will need to either
+ 
+1) Under VMS: assign the subdirectory which contains the .{\tt def} files to the
+logical {\tt zdef}, e.g.,
+
+\medskip\noindent
+\begin{verbatim}
+$ assign mydisk:[mydirectory.def] zdef
+\end{verbatim}
+or
+ 
+2) Under Unix: set the environmental variable {\tt zdef} to the subdirectory
+which contains the .{\tt def} files, e.g.,
+
+\medskip\noindent
+\begin{verbatim}
+% setenv ZDEF mydisk/mydirectory/def
+\end{verbatim}
+The routines that read the .{\tt def} files expect to find them in subdirectory
+{\tt zdef}.
+ 
+The parameter defaults file {\tt rsget.def} (used by {\tt rsgetasp} in the examples
+above) is shown below:
+
+\medskip\noindent
+\begin{verbatim}
+Rosat standard default parameters for reading data in ancillary files
+12
+0,OBSEQ=,Root name of input file
+1,DIR=,Directory containing data file
+2,EXTYP=,Extension type of input file (e.g., CAS, ASP)
+3,INSTR=P,Instrument (default is P for PSPC)
+4,PROC=US,Format of processed files (def=US, or MPE)
+8,TRIM=Y,Trim data to Good Time Intervals? Y(es) or N(o)
+9,CHATTER=1,Controls chattiness of program
+10,READORB=N,Read corresponding orbit data? Y(es) or N(o)
+\end{verbatim}
+The first line describes the purpose of the file. The second line gives the
+maximum number of parameters whose values can be set (in this case, 12 -
+set high on purpose to allow for more to be added). Each subsequent line
+contains the parameter number, the name of the parameter followed by an {\tt =}
+and a default value (if given), a comma, and a short description or
+explanation of the parameter. The descriptions are printed in response to
+the command HELP.
+ 
+\chapter{General Routines for Reading and Writing FITS Files }
+ 
+This chapter discusses how to use some of the general purpose routines in the
+IDL Astronomical Users' Library to read FITS (and other format) files. For more
+information concerning Rosat FITS files, and FITS files in general, and
+handling FITS files in IDL, see the file {\tt fits{\_}guide.txt} in the {\tt doc}
+subdirectories, or the {\tt aaareadme.txt} files in the {\tt idlaul~fits...}
+subdirectories.
+ 
+
+\section{Accessing Information in FITS Headers}
+ 
+Information can be stored in a FITS header in two ways: as a keyword parameter,
+or within a history record. You can use the routine SXPAR (from the IDL
+Astronomy Users' Library) to get the value of a header keyword. To get the
+value of a quantity stored in a history record, you can use the routine
+GETHISTVAL. (There are also some special purpose routines written to get
+history information stored in the ancillary files; see Chapter 5.)
+ 
+These routines do not use the parameter interface.
+ 
+
+\subsection{Reading FITS headers into IDL}
+ 
+For all of these procedures, you will first need to read the FITS header into
+IDL. You can do this using HEADFITS, e.g.,
+
+\medskip\noindent
+\begin{verbatim}
+IDL> hdr=headfits('$disk15:[rsgof.mydata]rp123456_im1.fits')
+\end{verbatim}
+or
+
+\medskip\noindent
+\begin{verbatim}
+IDL> hdr=headfits('$disk15:[rsgof.mydata]rp123456.cas',ext=1)
+\end{verbatim}
+In the first example, {\tt hdr} is the FITS header of the image stored in file
+
+\medskip\noindent
+\begin{verbatim}
+$disk15:[rsgof.mydata]rp123456_im1.fits
+\end{verbatim}
+In the second, {\tt hdr} is the header of the first table extension in file
+
+\medskip\noindent
+\begin{verbatim}
+$disk15:[rsgof.mydata]rp123456.cas
+\end{verbatim}
+You can also read the sequence header for the second file by not specifying an
+extension.
+ 
+
+\subsection{Printing FITS headers}
+ 
+You can use the procedure HPRINT to print the header information in an easy to
+read format. For example, typing
+
+\medskip\noindent
+\begin{verbatim}
+IDL> hdr=headfits('$disk15:[rsgof.mydata]rp123456.fits')
+IDL> hprint,hdr
+\end{verbatim}
+prints something like this
+
+\medskip\noindent
+\begin{verbatim}
+SIMPLE  =                    T  /  FITS STANDARD
+BITPIX  =                    8  /  Binary Data
+NAXIS   =                    0  /  No image data array present
+EXTEND  =                    T  /  There may be standard extensions
+DATE    = '04/01/92'  /  FITS creation date
+EVENT   = 'EVENTS  '  /  A3D table containing event record
+HISTORY = 'rp123456.toe (hdr=pspc.hdr, gti=rp123456.gti, tsi=rp123456.tsi)'  /
+TITLE   = 'YOUR TARGET                                                     '  /
+OBJECT  = 'YOUR TARGET                                                     '  /
+QPOENAME= './rp123456.qp'  /  IRAF QPOE filename
+END
+\end{verbatim}
+If the output fills more than one page, then you will be asked to respond
+after each page is filled. To exit {\tt hprint}, simply type {\tt Q}.
+ 
+
+\subsection{Getting the value of a FITS header keyword}
+ 
+Use SXPAR to return the value of a FITS keyword in the header:
+
+\medskip\noindent
+\begin{verbatim}
+IDL> hdr=headfits('$disk15:[rsgof.mydata]rp123456.cas',ext=1)
+IDL> crval1=sxpar(hdr,'CRVAL1')
+IDL> help,crval1
+CRVAL1          FLOAT     =       130.190
+\end{verbatim}
+ 
+
+\subsection{Getting information from FITS history records}
+ 
+In general, you can use the routine GETHISTVAL to get information from history
+records. The command syntax is
+
+\medskip\noindent
+\begin{verbatim}
+GETHISTVAL,hdr,match,VALUE,LNUM,token=token,chatter=chatter
+\end{verbatim}
+HDR is the FITS header, and MATCH is a string variable which contains the text
+that you wish to match. TOKEN is an optional separator between MATCH and VALUE.
+If TOKEN is specified, then the routine returns the numeric value of remainder
+of the history record. If TOKEN is not specified, then the program simply
+returns the remainder of the history record after MATCH.
+ 
+Examples:
+
+\medskip\noindent
+\begin{verbatim}
+IDL> hdr=headfits('$disk15:[rsgof.mydata]rp123456.cas',ext=1)
+IDL> gethistval,hdr,'SASS File =',value,lnum
+IDL> help,value,lnum
+VALUE           STRING    = ' P$ROSCO_1:[OBI.US500013P001_1.N1.P1]CORAS.OB'...
+LNUM            LONG      = Array(1)
+IDL> print,value
+ P$ROSCO_1:[OBI.US500013P001_1.N1.P1]CORAS.OBI;1
+IDL> print,lnum
+          32
+IDL> print,hdr(lnum)
+HISTORY  SASS File = P$ROSCO_1:[OBI.US500013P001_1.N1.P1]CORAS.OBI;1
+\end{verbatim}
+VALUE and LNUM are the outputs from GETHISTVAL. In this example, TOKEN is not
+given a value. LNUM is the number(s) of the history record(s) which contain the
+text to be matched. VALUE contains the string remainders of the history
+record(s) which contain the text to be matched.
+
+\medskip\noindent
+\begin{verbatim}
+IDL> gethistval,hdr,'Nominal Observation RA',value,lnum,token='='
+IDL> help,value,lnum
+VALUE           DOUBLE    =        937368.00
+LNUM            LONG      = Array(1)
+IDL> print,value,lnum,hdr(lnum)
+       937368.00          33
+HISTORY  Nominal Observation RA (units of 0.5 arcsec) =                 937368
+\end{verbatim}
+In this example, TOKEN is set equal to '='. VALUE is the numeric value of the
+string after TOKEN. LNUM is as in the example above.
+ 
+If the text to be matched is found in more than one history record, then VALUE
+is a string array which contains the string remainders of the matching history
+records. For example:
+
+\medskip\noindent
+\begin{verbatim}
+IDL> gethistval,hdr,'OBI',value,lnum
+Text string found in more than one history record.
+IDL> help,value,lnum
+VALUE           STRING    = Array(7)
+LNUM            LONG      = Array(7)
+IDL> print,lnum
+          32          36          37          38          39          40
+          41
+IDL> forprint,value
+.US500013P001_1.N1.P1]CORAS.OBI;1
+ start time in spacecraft time (secs) =                   28220715
+ end time in spacecraft time (secs) =                     28222691
+ start time UTC (YYMMDD) =                                  910424
+ start within YYMMDD UTC (millisec) =                     43922000
+ end time UTC (YYMMDD) =                                    910424
+ end within YYMMDD UTC (millisec) =                       45898000
+IDL> print,hdr(lnum)
+HISTORY  SASS File = P$ROSCO_1:[OBI.US500013P001_1.N1.P1]CORAS.OBI;1
+ HISTORY  OBI start time in spacecraft time (secs) =                   28220715
+ HISTORY  OBI end time in spacecraft time (secs) =                     28222691
+ HISTORY  OBI start time UTC (YYMMDD) =                                  910424
+ HISTORY  OBI start within YYMMDD UTC (millisec) =                     43922000
+ HISTORY  OBI end time UTC (YYMMDD) =                                    910424
+ HISTORY  OBI end within YYMMDD UTC (millisec) =                       45898000
+\end{verbatim}
+ 
+
+\section{Determining the structure of a FITS file}
+ 
+You can use the routine FITS{\_}INFO to help you determine the structure of the
+table and figure out which extension(s) you want to read. For example:
+
+\medskip\noindent
+\begin{verbatim}
+IDL> fits_info,'$disk15:[rsgof.mydata]rp123456_mex.fits'
+$DISK15:[RSGOF.US500013]RP500013_MEX.FITS;2 has 0 extensions
+Primary header: 74 records
+Image -- Integer*2 array ( 512 512 )
+\end{verbatim}
+Here, {\tt rp500013{\_}mex.fits} is a simple 512 by 512 image, with no extensions.
+FITS{\_}INFO can also be used for FITS images which contain extensions:
+
+\medskip\noindent
+\begin{verbatim}
+IDL> fits_info,'$disk15:[rsgof.mydata]rp123456.cas'
+$DISK15:[RSGOF.US500013]RP500013.CAS;1 has 5 extensions
+Primary header: 42 records
+No data
+Extension 1 -- 'CORAS   ' /Corrected Aspect File (SPASP + Boresight)
+               Header : 48 records
+               type -- BINARY TABLE ( 22 1977 )
+Extension 2 -- 'CORAS   ' /Corrected Aspect File (SPASP + Boresight)
+               Header : 48 records
+               type -- BINARY TABLE ( 22 2680 )
+Extension 3 -- 'CORAS   ' /Corrected Aspect File (SPASP + Boresight)
+               Header : 48 records
+               type -- BINARY TABLE ( 22 883 )
+Extension 4 -- 'CORAS   ' /Corrected Aspect File (SPASP + Boresight)
+               Header : 48 records
+               type -- BINARY TABLE ( 22 4198 )
+Extension 5 -- 'CORAS   ' /Corrected Aspect File (SPASP + Boresight)
+               Header : 48 records
+               type -- BINARY TABLE ( 22 3715 )
+\end{verbatim}
+The file {\tt \$disk15:[rsgof.mydata]rp123456.cas} contains 5 table extensions (of
+identical structure) and no primary image. The extensions may be of different
+structures:
+
+\medskip\noindent
+\begin{verbatim}
+IDL> fits_info,'$disk15:[rsgof.mydata]rp123456.oar'
+$DISK15:[RSGOF.US500013]RP500013.OAR;1 has 2 extensions
+Primary header: 18 records
+No data
+Extension 1 -- 'OFFARANG' /Off-Axis Area File Angles
+               Header : 16 records
+               type -- BINARY TABLE ( 56 1 )
+Extension 2 -- 'OFFARARE' /Off-Axis Area File Areas
+               Header : 16 records
+               type -- BINARY TABLE ( 56 729 )
+\end{verbatim}
+FITS{\_}INFO uses common block DESCRIPTOR, which contains a variable
+FILE{\_}DESCRIPT. FILE{\_}DESCRIPT is an ASCII string which gives information about
+the structure of the primary image and each table extension, which can be
+passed within a calling routine. To see what is stored in FILE{\_}DESCRIPT, the
+common block must be defined before running the routine:
+
+\medskip\noindent
+\begin{verbatim}
+IDL> common descriptor,file_descript
+IDL> fits_info,'$disk15:[rsgof.mydata]rp123456_mex.fits'
+IDL> help,file_descript
+FILE_DESCRIPT (DESCRIPTOR)STRING    = ' 74 2 2 512 512'
+\end{verbatim}
+or
+
+\medskip\noindent
+\begin{verbatim}
+IDL> fits_info,'$disk15:[rsgof.mydata]rp123456.cas'
+IDL> print,file_descript
+ 42 0 48 BINTABLE 2 1 22 1977 48 BINTABLE 2 1 22 2680 48 BINTABLE 2 1 22
+883 48
+BINTABLE 2 1 22 4198 48 BINTABLE 2 1 22 3715
+\end{verbatim}
+ 
+
+\section{Reading simple FITS images}
+ 
+You can use the routine READFITS to read data from a simple FITS image:
+
+\medskip\noindent
+\begin{verbatim}
+IDL> im=readfits('$disk15:[rsgof.mydata]rp123456_mex.fits',hdr)
+% READFITS: File may contain FITS extensions
+% READFITS: Now reading 512 by 512 array
+\end{verbatim}
+The image values will be stored in the array variable IM
+
+\medskip\noindent
+\begin{verbatim}
+IDL> help,im
+IM              FLOAT     = Array(512, 512)
+\end{verbatim}
+and the FITS header will be stored in the string array HDR
+
+\medskip\noindent
+\begin{verbatim}
+IDL> help,hdr
+HDR             STRING    = Array(74)
+\end{verbatim}
+You can print out the FITS header using the command HPRINT (see Chapter 5.1.2).
+ 
+As an alternative, you can also use the routine FXREAD to read simple FITS
+images. FXREAD is one of the routines in the {\tt fits{\_}bintable} subdirectory
+(see sections 5.4.3 and following). The main difference between the two is
+that FXREAD will allow you to read only part of an array, and also to
+subsample the array or average pixels together.
+ 
+Examples of using FXREAD are:
+
+\medskip\noindent
+\begin{verbatim}
+IDL> file = '$disk15:[rsgof.mydata]rp123456_mex.fits'      ;Filename
+IDL> fxread,file,im,hdr                                    ;Read full image
+IDL> help,im
+IM              FLOAT   = Array(512,512)
+ 
+IDL> fxread,file,im,hdr,0,255,0,255             ;Read pixels (0:255,0:255)
+IDL> help,im
+IM              FLOAT   = Array(256,256)
+ 
+IDL> fxread,file,im,hdr,4                       ;Read every 4th pixel in X & Y
+IDL> help,im
+IM              FLOAT   = Array(128,128)
+ 
+IDL> fxread,file,im,hdr,4,/average,ystep=2      ;Average 4x2 pixels
+IDL> help,im
+IM              FLOAT   = Array(128,256)
+\end{verbatim}
+Other variations are also possible.
+ 
+
+\section{Reading FITS table extensions}
+ 
+
+\subsection{Reading the data from a FITS extension}
+ 
+There are two steps to reading the data from a FITS table extension:
+ 
+1) reading the data into IDL, into a byte array, and 2) using the header
+information to extract the data from a given column in the table.
+ 
+To read the table data into the byte array, use READFITS with the extension
+keyword:
+
+\medskip\noindent
+\begin{verbatim}
+IDL> tab=readfits('$disk15:[rsgof.mydata]rp654321.FITS',hdr,ext=3)
+% READFITS: Reading FITS extension of type BINTABLE
+% READFITS: Now reading 20 by 90476 array
+IDL> help,hdr,tab			
+HDR             STRING    = Array(94)
+TAB             BYTE      = Array(20, 90476)
+\end{verbatim}
+The table data is stored in variable TAB. The next step is to extract the
+desired column of numbers from TAB. First, you can use TBHELP (or FTHELP) to
+remind yourself of the structure of the table:
+
+\medskip\noindent
+\begin{verbatim}
+IDL> tbhelp,hdr                 ;remind yourself of the table structure
+FITS Table Header
+Size of Table Array: 20 by 90476
+Extension Name:   EVENTS
+ 
+Field      Name       Unit      Frmt   Null    Comment
+ 
+  1     X                       1I            Label for field
+  2     Y                       1I            Label for field
+  3     PHA                     1I            Label for field
+  4     PI                      1I            Label for field
+  5     TIME                    1D            Label for field
+  6     DX                      1I            Label for field
+  7     DY                      1I            Label for field
+IDL> xev=fits_get(hdr,tab,'x')          ;Extract the values of field 'x'
+IDL> yev=tbget(hdr,tab,'y')             ;Extract the values of field 'y'
+\end{verbatim}
+In this example, both FITS{\_}GET and TBGET were used to extract columns from TAB.
+FITS{\_}GET is basically a routine that decides whether to call FTGET or TBGET,
+and is useful when you don't know (or remember) which kind of table you are
+reading. There were 90,476 rows stored in this table.
+ 
+If your table file is large, then you may wish to read in only part of the
+table. To do this, use the STARTROW and NUMROW keywords, where STARTROW is the
+first photon that you wish to include and NUMROW is the number of photons that
+you wish to include. Data for NUMROW consecutive rows starting from STARTROW
+will then be read.
+ 
+Example:
+
+\medskip\noindent
+\begin{verbatim}
+IDL> tab=readfits('$disk15:[rsgof.us500013]rp500013.fits',ext=3,hdr,$
+	st=355309,num=1000)
+% READFITS: Reading FITS extension of type BINTABLE
+% READFITS: Now reading 20 by 1000 array
+ 
+IDL> help,hdr,tab
+HDR             STRING    = Array(94)
+TAB             BYTE      = Array(20, 1000)
+\end{verbatim}
+In this example, data for 1000 photons starting from photon number 355309 were
+read. Note that the header NAXIS2 keyword will reflect the fact that you only
+read data for 1000 photons. The rest of the header is unchanged.
+
+\medskip\noindent
+\begin{verbatim}
+IDL> hprint,hdr
+XTENSION= 'BINTABLE'  /  FITS 3D BINARY TABLE
+BITPIX  =                    8  /  Binary data
+NAXIS   =                    2  /  Table is a matrix
+NAXIS1  =                   20  /  Width of table in bytes
+NAXIS2  =                 1000 //  Number of entries in table
+PCOUNT  =                    0  /  Random parameter count
+GCOUNT  =                    1  /  Group count
+TFIELDS =                    7  /  Number of fields in each row
+EXTNAME = 'EVENTS  '  /  Table name
+...(the rest of the header is the same as when reading the whole table).
+\end{verbatim}
+ 
+
+\subsection{Reading a FITS extension into an IDL structure variable}
+ 
+You can use the routine FITS{\_}TO{\_}STRUCT to read data from a FITS table into a
+structure variable. This is useful if you don't know the exact structure of the
+file and just want to read it quickly into IDL as is.
+ 
+FITS{\_}TO{\_}STRUCT will use the values of the TTYPE and TFORM header keywords to
+define the structure tag names and format. The command syntax is:
+
+\medskip\noindent
+\begin{verbatim}
+FITS_TO_STRUCT,file,HDR,STRUCT,exten=exten,dir=dir,STRNAME=STRNAME
+\end{verbatim}
+FILE is the name of the file, DIR is the file directory, EXTEN is the number of
+the table extension, and STRNAME is the name to be used for the structure
+format. If a value for STRNAME is not given, then the header keyword EXTNAME is
+used.
+
+\medskip\noindent
+\begin{verbatim}
+IDL> fits_to_struct,'rp123456.fits',dir='$disk15:[rsgof.mydata]',ext=1,hdr,dat
+ 
+IDL> help,hdr,dat
+HDR             STRING    = Array(17)
+DAT             STRUCT    = -> GTI Array(8)
+IDL> help,dat,/struc
+ ** Structure GTI, 2 tags, length=16:
+   START           DOUBLE           28220860.
+   STOP            DOUBLE           28222692.
+\end{verbatim}
+In this example, the data in the first (Good Times Interval, or GTI) table of
+the data (``qp") FITS file was read into the structure variable DAT. DAT has two
+tags: START and STOP, the (spacecraft) start and stop times of the good time
+intervals. The values of START and STOP are EXACTLY as given in the FITS table.
+ 
+(Note: FITS{\_}TO{\_}STRUCT was contributed by R. Stern, JPL.)
+ 
+
+\subsection{Alternate Routines for Reading FITS Binary Tables}
+ 
+Data in FITS binary table extensions can also be read using an alternate
+set of routines in the IDL Astronomical Users' Library. These routines are
+stored in the {\tt fits{\_}bintable} subdirectory. The names of the routines begin
+with the letters ``FX" or ``FXB". One advantage of these routines is that
+procedures for writing IDL variables into FITS binary table extensions are
+also included (see below). The FXB... routines also include support for all
+data types described in the binary tables specification, for variable
+length arrays, and for the multidimensional array facility (TDIM). Finally,
+FXB... procedures for copying FITS files from tape to disk, and vice versa,
+are also included (although these procedures work for VMS users only).
+ 
+In using the FXB... routines to read data from FITS binary tables, one does
+not read the entire table into IDL memory. Instead, FXBOPEN is used to open
+the table. The data is then read column by column, using FXBREAD. FXBREAD
+is functionally equivalent to TBGET (which is also used to read the table
+column by column, but from memory rather than disk), and FXBOPEN is
+likewise equivalent to READFITS when applied to a binary table. If desired,
+data can be read from selected rows, as well as from the entire table (this
+is also true of TBGET). When the desired data have been read, FXBCLOSE is
+used to close the file.
+ 
+The following steps illustrate the use of the FXB... routines in reading a
+FITS binary table:
+
+\medskip\noindent
+\begin{verbatim}
+IDL> fxbopen,un,'$disk15:[rsgof.mydata]rp654321.fits',3,hdr
+                                        ;open the file, to read extension 3
+IDL> help,un,hdr
+UN              LONG      =          102
+HDR             STRING    = Array(94)
+IDL> fxbhelp,un                         ;remind yourself of the structure
+ 
+FITS Binary Table:  EVENTS
+Table contains 7 columns, by 14226 rows
+ 
+Col  Name                Type Size           Units             Null
+ 
+  1  X                   Int  1
+  2  Y                   Int  1
+  3  PHA                 Int  1
+  4  PI                  Int  1
+  5  TIME                Dbl  1
+  6  DX                  Int  1
+  7  DY                  Int  1
+ 
+IDL> fxbread,un,x,1                     ;read the first column of the table
+IDL> fxbread,un,y,'Y'                   ;read the column named 'Y'
+IDL> help,x,y
+X               INT       = Array(14226)
+Y               INT       = Array(14226)
+\end{verbatim}
+There were 14,226 events in this ``qp" table file. When you are done reading
+the table, use FXBCLOSE to close it:
+
+\medskip\noindent
+\begin{verbatim}
+IDL> fxbclose,un                        ;close the table
+\end{verbatim}
+For more information on how to use the FXB... routines to read FITS binary
+tables, use doc{\_}library, consult the help file aaareadme.txt in the
+{\tt fits{\_}bintable} subdirectory, or consult W. Landsman (stars::landsman,
+landsman@stars.gsfc. nasa.gov) or W. Thompson (stars::thompson,
+thompson@stars.gsfc.nasa.gov).
+ 
+
+\section{Writing IDL variables to simple FITS images and FITS table extensions}
+ 
+The IDL Astronomical Users' Library also contains routines for writing data
+stored in IDL variables to disk FITS files. Generally, there are two steps
+involved: 1) creating a FITS header, and 2) writing the file.
+ 
+
+\subsection{Creating a FITS header for a Simple FITS image}
+ 
+You can use the routines MKHDR and SXADDPAR (or FXADDPAR) to create a FITS
+header. Say you have a two dimensional array, PSFIMG:
+
+\medskip\noindent
+\begin{verbatim}
+IDL> help,psfimg
+PSFIMG          FLOAT     = Array(51, 51)
+\end{verbatim}
+The routine MKHDR will make a simple FITS header, which contains the
+minimum information that will be needed:
+
+\medskip\noindent
+\begin{verbatim}
+IDL> mkhdr,hdr,psfimg           ;create header and store in variable HDR
+IDL> help,hdr			
+HDR             STRING    = Array(14)
+IDL> hprint,hdr                 ;print the header
+SIMPLE  =                    T /Written by IDL:  Thu Sep 17 21:02:00 1992
+BITPIX  =                   32 /
+NAXIS   =                    2 /
+NAXIS1  =                   51 /
+NAXIS2  =                   51 /
+DATATYPE= 'REAL*4'             /Type of data
+GROUPS  =                    F /No groups
+END
+\end{verbatim}
+In this example, PSFIMG is a two dimensional array, with 51 rows and 51
+columns, so the values for NAXIS, NAXIS1, and NAXIS2 are 2, 51, and 51,
+respectively.
+ 
+[Note: MKHDR took the information that it needed from the IDL variable
+PSFIMG. If you do not specify a variable, then MKHDR will prompt you for the
+information instead.]
+ 
+If you would like to add values for more keywords to the header, and/or add
+history records, use the routine SXADDPAR (or FXADDPAR):
+
+\medskip\noindent
+\begin{verbatim}
+IDL> sxaddpar,hdr,'BSCALE',1.0,'  Real = data*BSCALE + BZERO'
+IDL> sxaddpar,hdr,'BZERO',0.0,'  Real = data*BSCALE + BZERO'
+IDL> sxaddpar,hdr,'HISTORY','This is a trial run at creating a FITS header'
+IDL> sxaddpar,hdr,'DATE','18/09/92','Creation date','HISTORY'
+\end{verbatim}
+Note that you can specify a location for the new header record in SXADDPAR
+(or FXADDPAR), as was done for the record containing the value for 'DATE'
+above. In this example, the 'DATE' record will be placed before the first
+history record in HDR. The header will now look like this:
+
+\medskip\noindent
+\begin{verbatim}
+IDL> hprint,hdr
+ 
+.......  (the rest of the header here) ........
+ 
+GROUPS  =                    F /No groups
+BSCALE  =              1.00000 /  Real = data*BSCALE + BZERO
+BZERO   =             0.000000 /  Real = data*BSCALE + BZERO
+DATE    = '18/09/92'           /Creation date
+HISTORY This is a trial run at creating a FITS header
+END
+\end{verbatim}
+[Note: in FXADDPAR, the location of the new record is specified by the
+keyword parameters BEFORE or AFTER, and not by a positional parameter.]
+ 
+You can also use SXADDPAR (or FXADDPAR) to change the values of keywords:
+
+\medskip\noindent
+\begin{verbatim}
+IDL> sxaddpar,hdr,'DATE','20/09/92','Creation date'
+\end{verbatim}
+which will change that record in HDR to
+
+\medskip\noindent
+\begin{verbatim}
+DATE    = '20/09/92' /Creation date
+\end{verbatim}
+ 
+
+\subsection{An Alternate Way to Create a FITS Header for A Simple FITS Image}
+ 
+The subdirectory {\tt fits{\_}bintable} also contains routines which will allow you
+to create a FITS header for a simple image. These routines are FXHMAKE
+(more or less equivalent to MKHDR) and FXADDPAR (an improved version of
+SXADDPAR). These routines include more support for headers of files with
+binary table extensions, which require keywords such as EXTEND.
+ 
+The steps to create a header similar to that in Chapter 5 (but for a file which
+would contain extensions) would be:
+
+\medskip\noindent
+\begin{verbatim}
+IDL> fxhmake,hdr,psfimg,/extend,/date		;create a simple header
+IDL> help,hdr
+HDR             STRING    = Array(36)
+IDL> hprint,hdr				;print the header
+SIMPLE  =                    T /Written by IDL:  18-Sep-1992 15:36:00.00
+BITPIX  =                  -32 /Real*4 (floating point)
+NAXIS   =                    2 /
+NAXIS1  =                   51 /
+NAXIS2  =                   51 /
+EXTEND  =                    T /File contains extensions
+DATE    = '18/09/92'           /
+END
+ 
+IDL> fxaddpar,hdr,'BSCALE',1.0,'  Real = data*BSCALE + BZERO'
+IDL> fxaddpar,hdr,'BZERO',0.0,'  Real = data*BSCALE + BZERO'
+IDL> fxaddpar,hdr,'HISTORY','This is a trial run at creating a FITS header'
+\end{verbatim}
+The above commands would modify the header to look like this:
+
+\medskip\noindent
+\begin{verbatim}
+IDL> hprint,hdr
+ 
+.......  (the rest of the header here) ........
+ 
+DATE    = '18/09/92'           /
+BSCALE  =              1.00000 /  Real = data*BSCALE + BZERO
+BZERO   =             0.000000 /  Real = data*BSCALE + BZERO
+HISTORY This is a trial run at creating a FITS header
+END
+\end{verbatim}
+ 
+
+\subsection{Writing a Simple FITS Image}
+ 
+Once you have created the header, then it is very simple to write an IDL
+array to a simple FITS image. Use the routine WRITEFITS:
+
+\medskip\noindent
+\begin{verbatim}
+IDL> writefits,'mytest.fits',psfimg,hdr
+\end{verbatim}
+where PSFIMG and HDR are the data array and FITS header variables from Chapter 5
+The data will be written to the file {\tt mytest.fits}.
+ 
+
+\subsection{Creating a FITS header for a FITS Binary Table Extension}
+ 
+You can create a minimal header for a FITS binary table extension using
+the routine FXBHMAKE. For example:
+
+\medskip\noindent
+\begin{verbatim}
+IDL> fxbhmake,exthdr,10,'test','This is a test file'
+IDL> help,exthdr
+EXTHDR         STRING    = Array(36)
+\end{verbatim}
+will create a header which looks like this:
+
+\medskip\noindent
+\begin{verbatim}
+IDL> hprint,exthdr
+XTENSION= 'BINTABLE'           /Written by IDL:  17-Sep-1992 22:49:55.00
+BITPIX  =                    8 /
+NAXIS   =                    2 /Binary table
+NAXIS1  =                    0 /Number of bytes per row
+NAXIS2  =                   10 /Number of rows
+PCOUNT  =                    0 /Random parameter count
+GCOUNT  =                    1 /Group count
+TFIELDS =                    0 /Number of columns
+EXTNAME = 'test    '           /This is a test file
+END
+\end{verbatim}
+In this example, EXTHDR contains a minimal header for a table of 10 rows.
+You will then need to modify EXTHDR to correspond to the table that
+you wish to write (using FXBADDCOL). Specifically, you will need to
+modify the values given for NAXIS1 and TFIELDS, add a record giving a
+value for EXTVER, and add records giving the values of TUNIT, TFORM, and
+TTYPE for each column.
+ 
+For example, suppose you wish to write a table extension containing the
+data stored in variables TIME, DX, DY, ROLL, and PI:
+
+\medskip\noindent
+\begin{verbatim}
+IDL> help,time,dx,dy,roll,pi
+TIME            DOUBLE    = Array(10)
+DX              INT       = Array(10)
+DY              INT       = Array(10)
+ROLL            FLOAT     = Array(10)
+PI              BYTE      = Array(10)
+\end{verbatim}
+Follow these steps:
+
+\medskip\noindent
+\begin{verbatim}
+IDL> fxbaddcol,colt,exthdr,time(0),'TIME', $
+'Time of measurement in sec',tunit='SEC'
+IDL> fxbaddcol,colx,exthdr,dx(0),'DX','X Offset',tunit='0.5 Arcsec'
+IDL> fxbaddcol,coly,exthdr,dy(0),'DY','Y Offset',tunit='0.5 Arcsec'
+IDL> fxbaddcol,colr,exthdr,roll(0),'ROLL','Roll Angle',tunit='0.5 Arcsec'
+IDL> fxbaddcol,colpi,exthdr,pi(0),'Invariant pha channel',$
+ tunit='Channel number'
+\end{verbatim}
+In this example, COLT, COLX, COLY, COLR, and COLPI are output variables
+which contain the number of column in the table which corresponds to
+TIME, DX, DY, ROLL, and PI, respectively:
+
+\medskip\noindent
+\begin{verbatim}
+IDL> help,colt,colx,coly,colr,colpi
+COLT            LONG      =            1
+COLX            LONG      =            2
+COLY            LONG      =            3
+COLR            LONG      =            4
+COLPI           LONG      =            5
+\end{verbatim}
+FXBADDCOL corrects the values for NAXIS1 and TFIELDS after adding each
+column. Use FXADDPAR to add a record giving the value for EXTVER:
+
+\medskip\noindent
+\begin{verbatim}
+IDL> fxaddpar,exthdr,'EXTVER',1,after='EXTNAME'
+\end{verbatim}
+Your header will look like this:
+
+\medskip\noindent
+\begin{verbatim}
+IDL> hprint,exthdr
+XTENSION= 'BINTABLE'           /Written by IDL:  17-Sep-1992 22:49:55.00
+BITPIX  =                    8 /
+NAXIS   =                    2 /Binary table
+NAXIS1  =                   17 /Number of bytes per row
+NAXIS2  =                   10 /Number of rows
+PCOUNT  =                    0 /Random parameter count
+GCOUNT  =                    1 /Group count
+TFIELDS =                    5 /Number of columns
+EXTNAME = 'test    '           /This is a test file
+EXTVER  =                    1 /
+TFORM1  = '1D      '           /Real*8 (double precision)
+TTYPE1  = 'TIME    '           /Time of measurement in sec
+TUNIT1  = 'SEC     '           /Units of column 1
+TFORM2  = '1I      '           /Integer*2 (short integer)
+TTYPE2  = 'DX      '           /X Offset
+TUNIT2  = '0.5 Arcsec'         /Units of column 2
+TFORM3  = '1I      '           /Integer*2 (short integer)
+TTYPE3  = 'DY      '           /Y Offset
+TUNIT3  = '0.5 Arcsec'         /Units of column 3
+TFORM4  = '1E      '           /Real*4 (floating point)
+TTYPE4  = 'ROLL    '           /Roll Angle
+TUNIT4  = '0.5 Arcsec'         /Units of column 4
+TFORM5  = '1B      '           /Integer*1 (byte)
+TTYPE5  = 'INVARIANT PHA CHANNEL' /Label for column 5
+TUNIT5  = 'Channel number'     /Units of column 5
+END
+\end{verbatim}
+ 
+
+\subsection{Writing IDL Variables to a FITS Binary Table Extension}
+ 
+In order to write data to FITS binary tables, you will need to use the
+FXB... routines (in the {\tt fits{\_}bintable} subdirectory). First you will need to
+create the header for the primary data array (see Chapter 5), and
+headers for each of the table extensions. Next, you will need to create the
+file, and write the primary header and image to the file. (You need to
+write the primary header even if you are not writing a primary image to the
+file.) Finally, you will need to add the headers and data for each of the
+tables, in order.
+ 
+For example, say you want to write a FITS file which contains no primary data,
+and you wish it to contain one table (like the table in Chapter 5.4.1, say).
+Say also that you have created a primary header HDR, and an extension header,
+EXTHDR:
+
+\medskip\noindent
+\begin{verbatim}
+IDL> hprint,hdr
+SIMPLE  =                    T /
+BITPIX  =                    8 /
+NAXIS   =                    0 /
+EXTEND  =                    T /
+FILENAME= 'test.fits' /Suggested file name
+DATE    = '09/17/92' /Date of file creation
+COMMENT  This file contains data from a Corrected Aspect file
+HISTORY  This is a test of how to write a FITS binary table
+END
+\end{verbatim}
+(EXTHDR as in Chapter 5.5.4)
+ 
+To write a table of 10 rows, containing the data stored in TIME, DX, DY,
+ROLL, and PI (as defined in Chapter 5), follow these steps:
+
+\medskip\noindent
+\begin{verbatim}
+IDL> fxwrite,'test.fits',hdr                    ;write primary header
+IDL> fxbcreate,un,'test.fits',exthdr            ;open test.fits and write
+                                                ;extension header
+IDL> for i=0,9 do fxbwrite,un,time(i),1,i+1     ;write data in TIME to table
+IDL> for i=0,9 do fxbwrite,un,dx(i),2,i+1       ;write data in DX
+IDL> for i=0,9 do fxbwrite,un,dy(i),3,i+1       ;write data in DY
+IDL> for i=0,9 do fxbwrite,un,roll(i),4,i+1     ;write data in ROLL
+IDL> for i=0,9 do fxbwrite,un,pi(i),5,i+1       ;write data in PI
+IDL> fxbfinish,un                               ;close the FITS file
+\end{verbatim}
+To check what kind of file you have written, use FXBHELP:
+
+\medskip\noindent
+\begin{verbatim}
+IDL> fxbhelp,un
+ 
+FITS Binary Table:  test
+Table contains 5 columns, by 10 rows
+ 
+Col  Name                Type Size           Units             Null
+ 
+  1  TIME                Dbl  1              SEC
+  2  DX                  Int  1              0.5 Arcsec
+  3  DY                  Int  1              0.5 Arcsec
+  4  ROLL                Flt  1              0.5 Arcsec
+  5  INVARIANT PHA CHANNEByt  1              Channel numb
+\end{verbatim}
+(well, nobody's perfect!)
+ 
+For more information on how to use the FXB... routines to write FITS binary
+tables, use doc{\_}library, consult the help file {\tt aaareadme.txt} in the
+{\tt fits{\_}bintable} subdirectory, or consult W. Landsman (stars::landsman,
+landsman@stars.gsfc. nasa.gov) or W. Thompson (stars::thompson,
+thompson@stars.gsfc.nasa.gov).
+ 
+
+\section{Copying FITS Files from Tape to Disk (and Vice Versa)}
+ 
+The IDL Astronomical Users' Library also contains routines for copying
+FITS files from tape directly to disk. These routines are part of the
+FXB... routines in the {\tt fits{\_}bintable} subdirectory.
+ 
+To copy FITS files from tape to disk, use the routine FXTAPEREAD. To copy
+FITS files from disk to tape, use FXTAPEWRITE. The easiest thing to do is
+to just type the name of each routine with no arguments; the routine will
+then prompt you for inputs.
+ 
+Note: These routines are for VMS users only! Unix users can use the ``dd"
+command to copy files. First, use the ``mt" command to go to the file on the
+tape that you want to copy, e.g.,
+
+\medskip\noindent
+\begin{verbatim}
+mt -f /dev/nrst1 fsf 10
+\end{verbatim}
+This particular command tells the tape drive to skip forward 10 file marks
+from its current position.
+ 
+Note: For Unix ``nonexperts", this command parses out as follows:
+
+\medskip\noindent
+\begin{verbatim}
+        mt              Means magtape, not mount (there is no Unix
+                        equivalent to the VMS MOUNT command for tapes.
+ 
+        -f /dev/nrst1   This means use device nrst1, which stands for
+                           n   = no-rewind on close
+                           r   = raw-device
+                           st1 = SCSI tape 1
+ 
+        fsf 10          Forward skip files 10 (i.e. skip 10 file marks).]
+\end{verbatim}
+If instead you wanted to read the 10th file on the tape, and the tape
+wasn't positioned at the beginning, then you would first have to type
+
+\medskip\noindent
+\begin{verbatim}
+mt -f /dev/nrst1 rewind
+\end{verbatim}
+to position the tape at the beginning.
+ 
+After positioning the tape, you could then copy the file by typing
+
+\medskip\noindent
+\begin{verbatim}
+dd if=/dev/nrst1 of=myfile.fits bs=2880
+\end{verbatim}
+Unfortunately, you the user have to specify the output filename yourself,
+as {\tt dd} can't extract the name of the file from the FITS file header.
+ 
+Unix users can copy from disk to tape, using a command like
+
+\medskip\noindent
+\begin{verbatim}
+dd if=myfile.fits of=/dev/nrst1 bs=2880
+\end{verbatim}
+For more information on how to use the FXB... routines to copy FITS files, use
+{\tt doc{\_}library}, consult the help file {\tt aaareadme.txt} in the {\tt fits{\_}bintable}
+subdirectory, or consult W. Landsman (stars::landsman, landsman@stars.gsfc.
+nasa.gov) or W. Thompson (stars::thompson, thompson@stars.gsfc.nasa.gov).
+ 
+
+\section{Reading ST SDAS binary tables}
+ 
+ST SDAS binary format table files are often used in PROS/IRAF. To access data
+stored in these types of files, use the TAB{\_}... and TABLE{\_}... routines of the
+IDL Astronomical Users' Library.
+
+\medskip\noindent
+\begin{verbatim}
+IDL> tab_read,'$disk15:[rsgof.mydata]mytable.tab',tcb,table,header
+IDL> elo = tab_val(tcb,table,'lo_energy')
+IDL> ehi = tab_val(tcb,table,'hi_energy')
+\end{verbatim}
+Here TCB is the ``table control block", which contains information concerning
+the structure of the table, and header is a FITS-style ASCII header. TAB{\_}READ
+reads the data into IDL, and TAB{\_}VAL extracts the data for a particular field
+(or column). To determine the structure of a table, use the routine TABLE{\_}HELP:
+
+\medskip\noindent
+\begin{verbatim}
+IDL> table_help,tcb,header
+\end{verbatim}
+The data from ST SDAS binary table files can also be read into IDL
+structure variables, using the routine TAB{\_}TO{\_}STRUCT. TAB{\_}TO{\_}STRUCT is
+analogous to FITS{\_}TO{\_}STRUCT, and is used in much the same way. For example:
+
+\medskip\noindent
+\begin{verbatim}
+IDL> tab_to_struct,'test_psf',hdr,tstruct               ;read the table
+IDL> help,tstruct
+TSTRUCT         STRUCT    = -> PSF_TAB Array(5309)
+IDL> help,tstruct,/struc
+ ** Structure PSF_TAB, 2 tags, length=8:
+   RADIUS          FLOAT          0.000000
+   COUNTS_R        FLOAT           1.00000
+\end{verbatim}
+Here TSTRUCT is a structure variable which  has two tags: unique radius
+(RADIUS) and counts in the point spread function (PSF) at each radius
+(COUNTS{\_}R). The values of RADIUS and COUNTS{\_}R are exactly as given in the
+file {\tt test{\_}psf.tab} (which was created using the routine MAKE{\_}PSF; see
+Chapter 12).
+ 
+(Note: TAB{\_}TO{\_}STRUCT was contributed by R. Stern, JPL.)
+ 
+For more information concerning ST SDAS binary tables, see the help files in
+the IDL Astronomical Users' Library (subdirectory {\tt sdas{\_}table}).
+ 
+\chapter{Ancillary (and Calibration) Data }
+ 
+This chapter tells how to use the procedures (and functions) dealing with ROSAT
+calibration and information contained in other ancillary FITS files.
+ 
+The procedures described in this chapter are RSASPECT, RSEVRATES, RSORBIT,
+RSCHECKTSI, RSGETASP, RSGETASPQU (and FILLASPQU), RSGETEVR, RSORB{\_}POS (and
+TIMESEQ, UT2SCT), RSGETVG, RSGETHKB, RSGETHKSTA, GETNOMASP, RSGETSEQINFO,
+RSOBITIMES, and GETHISTVAL.
+ 
+See also routine FITS{\_}TO{\_}STRUCT in chapter 5.4.2.
+ 
+
+\section{High Level Routines for Examining Ancillary File Data}
+ 
+RSASPECT, RSEVRATES, and RSORBIT are all high level procedures which read data
+in specific ancillary files, make pretty plots, and allow you to use the cursor
+to find out values for specific times. No data is returned to IDL. All have
+much the same command syntax:
+
+\medskip\noindent
+\begin{verbatim}
+RSASPECT,inputs,obinum,OPARMS=OPARMS
+RSEVRATES,inputs,obinum,OPARMS=OPARMS
+RSORBIT,inputs,obinum,plcont=plcont,saamodel=saamodel,x_color=x_color,
+        OPARMS=OPARMS
+\end{verbatim}
+All of these procedures use the parameter interface (see Chapter 4). {\tt Inputs}
+controls the values of
+
+\medskip\noindent
+\begin{verbatim}
+OBSEQ   the observation sequence, or root name, of the file, e.g. 'rp123456'
+DIR     the directory of the file, e.g., '$disk15:[rsgof.mydata]'
+EXTYP   the extension of the file, e.g., 'cas'
+INSTR   the instrument, 'P' for PSPC and 'H' for HRI
+PROC    the format of the processed files ('US' or 'MPE', default is 'US')
+TRIM    controls whether data will be trimmed to good time intervals ('Y')
+        or not ('N').
+CHATTER controls procedure feedback to user. Set to 0 for nofeedback,
+        or 1.
+READORB controls whether orbital data will be read ('Y') or not ('N')
+\end{verbatim}
+Default values of the parameters controlled by {\tt inputs} are stored in the file
+{\tt zdef:rsget.def}. Defaults for the parameter EXTYP are set by each procedure as
+follows: CAS for PSPC, AO for HRI (RSASPECT), EVR (RSEVRATES),  SO (RSORBIT).
+ 
+Other input parameters:
+
+\begin{itemize}
+\item  OBINUM specifies the obis for which you wish to read the data. Use 0 to
+read data for all of the obis.
+ 
+\item  OPARMS is a string array, the internally parsed version of {\tt inputs}. (It
+has the same form as list in mode 3; see Chapter 4.) You can use OPARMS in
+subsequent calls to the program (where you want to use all the same
+parameters as before), to save yourself some typing.
+ 
+\item  RSORBIT also uses the input keywords PLCONT, SAAMODEL, and X{\_}COLOR.
+Setting PLCONT to 1 will cause the orbits to be plotted over a map of the
+continents. Set SAAMODEL to SAA contours, if you wish these to be drawn
+on the plot. X{\_}COLOR controls the color of the plot.
+\end{itemize}
+ 
+Examples:
+
+\medskip\noindent
+\begin{verbatim}
+rsaspect,1,0,op=oparms          ;Read and plot aspect data. Specify parameters
+                                ;interactively. Read data for all obis.
+                                ;Store parsed inputs in string array oparms.
+ 
+rsevrates,oparms,[1,3]          ;Read and plot event rates data, using
+                                ;same parameter values as for rsaspect above.
+                                ;Only data for 1st and 3rd obis are read.
+ 
+rsorbit,oparms,2,plcont=1,saa=[0,1,2,3,4,9]     ;Read and plot orbit data for
+                                                ;2nd obi. Plot continents,
+                                                ;and SAA contours 0-4, and 9.
+\end{verbatim}
+ 
+
+\section{Checking Temporal Status Intervals}
+ 
+RSCHECKTSI reads information stored in the temporal status intervals (TSI)
+table of the photon list FITS file (e.g., {\tt rp123456.fits}), concatenates
+intervals whose bit codes are equal, and translates the ASCII bit codes into
+something that a human can read (understanding is something else again). The
+syntax is
+
+\medskip\noindent
+\begin{verbatim}
+RSCHECKTSI,inputs,tsinfo,levels,textout=textout,OPARMS=OPARMS
+\end{verbatim}
+This procedure uses the parameter interface. {\tt Inputs} controls the same
+parameters as for RSASPECT, etc. (see above). The default value for EXTYP is
+{\tt FITS}.
+ 
+TEXTOUT directs the output display. The options are -1 (no listing), 1
+(TERMINAL using /more option), 2 (TERMINAL without /more option), 3
+({\tt <program>.prt}), 4 ({\tt laser.tmp}), 5 (user defined file), and FILENAME
+(default extension of {\tt .prt}). If option 5 is used, then you the user must open
+the file. The default value is TEXTOUT=1.
+ 
+Example:
+
+\medskip\noindent
+\begin{verbatim}
+IDL> rschecktsi,1,tsinfo,levels,text='tsilevels'
+                                ;Read temporal status intervals and bit codes.
+                                ;List concatenated intervals and ASCII
+                                ;translations of bit codes to file
+                                ;tsilevels.prt
+\end{verbatim}
+To see what the outputs are, type
+
+\medskip\noindent
+\begin{verbatim}
+IDL> help,tsinfo,levels
+TSINFO          STRUCT    = -> TSI_INFO Array(28)
+LEVELS          STRUCT    = -> PSPC_TSI_LEVELS Array(36)
+\end{verbatim}
+This tells us that TSINFO and LEVELS are both structure variables. To learn
+more, type
+
+\medskip\noindent
+\begin{verbatim}
+IDL> help,tsinfo,/struc
+ ** Structure TSI_INFO, 8 tags, length=64:
+   TSIBEG          DOUBLE           28220715.
+   TSIEND          DOUBLE           28220860.
+   FAILED          STRING    'Detector, High Voltage  //'
+   STATUS          STRING    'Status of Detector, High Voltage  //'
+   TELQUAL         STRING    'No flags set  //'
+   FAILBITS        STRING    '0000000010000000000001'
+   STATBITS        STRING    '000010000010000001'
+   TELQBITS        STRING    '000000000000000000'
+ 
+IDL> help,levels,/struc
+ ** Structure PSPC_TSI_LEVELS, 4 tags, length=20:
+   TSTART          DOUBLE           28220715.
+   TSTOP           DOUBLE           28220860.
+   RMB             INT              0
+   DFB             INT              0
+\end{verbatim}
+For TSINFO: FAILBITS, STATBITS, and TELQBITS are the failure, status, and
+telemetry quality bit codes read from the table. FAILED, STATUS, and TELQUAL
+are the ASCII translations of the bit codes (see Data Products Guide). TSIBEG
+and TSIEND are the start and stop times of each interval (in spacecraft seconds
+since launch).
+ 
+In this example LEVELS has the PSPC structure. TSTART and TSTOP are the
+(spacecraft) start and stop times at which the levels were measured. (These
+intervals are NOT combined.) RMB is the running mean background, and DFB is the
+difference between the RMB and (something - the Data Products Guide is not
+clear on this).
+ 
+For the HRI, LEVELS would be a structure of a different format, with the
+following tags: TSTART and TSTOP (same as for PSPC), HIBK (the High Background
+Level), HVLEV (the High Voltage Level), VG (the Viewing Geometry Code), ASPERR
+and ASPSTVALS (the integer values of the Aspect Tracker Status and their ASCII
+translations), SAAIND (the ASCII translation of the active SAA detector(s)),
+SAADA and SAADB (the levels of SAA Detectors A and B), and TEMP1, TEMP2, and
+TEMP3 (the temperatures of Temperature Sensors 1, 2, and 3). (See Data Products
+Guide for more information on any of these.)
+ 
+
+\section{Reading Ancillary File Data Into IDL}
+ 
+The higher level routines RSASPECT, RSEVRATES, and RSORBIT do not return data
+to IDL. If you wish to read the data from the files into IDL, you will need to
+call these routines directly:
+
+\medskip\noindent
+\begin{verbatim}
+RSGETASP        reads aspect data
+RSGETASPQU      reads aspect quality data
+RSGETEVR        reads events rates data
+RSORB_POS       reads orbital data
+\end{verbatim}
+In addition, the following routines also read and return data from ancillary
+files
+
+\medskip\noindent
+\begin{verbatim}
+RSGETVG           reads orbital data and calculates viewing geometry
+RSGETHKB          reads binned housekeeping data
+RSGETHKSTA        reads housekeeping status flags
+RSGET_EMAP_DATA   reads aspect and events rates data, and returns aspect
+                  data and livetime factors at the times of aspect
+                  measurement
+\end{verbatim}
+All of these have similar command syntax:
+
+\medskip\noindent
+\begin{verbatim}
+RSGETASP,inputs,obinum,SCTIME,ROLL,DELX,DELY,NOMASP,OBINFO=OBINFO,OPARMS=OPARMS
+RSGETEVR,inputs,obinum,SCTIME,RATES,COUNTS,OBINFO=OBINFO,OPARMS=OPARMS
+RSORB_POS,inputs,obinum,TIME,SATPOS,ORBVECS,RELPOS,OBINFO=OBINFO,OPARMS=OPARMS
+RSGETVG,inputs,obinum,TIME,VGINFO,ORBVECS,OBINFO=OBINFO,OPARMS=OPARMS
+RSGETHKB,inputs,obinum,SCTIME,HKDAT,OBINFO=OBINFO,OPARMS=OPARMS
+RSGETHKSTA,inputs,obinum,SCTIME,HKFLAGS,OBINFO=OBINFO,OPARMS=OPARMS
+\end{verbatim}
+The command syntax for RSGET{\_}EMAP{\_}DATA is slightly different (data for all
+OBIs is returned):
+
+\medskip\noindent
+\begin{verbatim}
+RSGET_EMAP_DATA,inputs,SCTCAS,ROLL,DELX,DELY,FLIVE,ISEGS,actime=actime,$
+                deadtp=deadtp,a1llmin=a1llmin,OPARMS=OPARMS
+\end{verbatim}
+These procedures use the parameter interface. {\tt Inputs} controls the same
+parameters as for RSASPECT, etc. (see above). The default values for EXTYP are
+CAS for PSPC, AO for HRI (RSGETASP), EVR (RSGETEVR), SO (RSORB{\_}POS, RSGETVG),
+HKB (RSGETHKB) and STA (RSHKSTA).
+ 
+The procedures RSGETASP, RSGETEVR, RSORB{\_}POS, and RSGETVG will read FITS
+files in the formats used by MPE, as well as in the US formats (as will
+RSASPECT, RSEVRATES, and RSORBIT). The processing format is controlled by
+the input parameter PROC (see Chapter 6.1). The routines RSGETASPQU,
+RSGETHKB, and RSGETHKSTA will NOT read MPE format files. These three
+routines will ignore any value given for PROC.
+ 
+Examples:
+ 
+1) Read aspect data:
+
+\medskip\noindent
+\begin{verbatim}
+IDL> rsgetasp,1,0,sctime,roll,delx,dely,nomasp,ob=obinfo
+\end{verbatim}
+To see what the outputs are, type
+
+\medskip\noindent
+\begin{verbatim}
+IDL> help,sctime,roll,delx,dely,nomasp,obinfo
+SCTIME          DOUBLE    = Array(13453)
+ROLL            FLOAT     = Array(13453)
+DELX            INT       = Array(13453)
+DELY            INT       = Array(13453)
+NOMASP          DOUBLE    = Array(3, 5)
+OBINFO          STRUCT    = -> OBITIME Array(5)
+\end{verbatim}
+SCTIME contains the (spacecraft) times of measurement, ROLL the aspect roll
+angles (in degrees), DELX and DELY the x and y aspect relative offsets (in 0.5
+arcsec pixels), and NOMASP the nominal aspect positions (R.A. and Dec. in 0.5
+arcsecond pixels, Roll Angle in degrees) for each OBI. OBINFO is a structure
+variable:
+
+\medskip\noindent
+\begin{verbatim}
+IDL> help,obinfo,/struc
+ ** Structure OBITIME, 10 tags, length=48:
+   SCTBEG          DOUBLE           28220716.
+   YRBEG           INT           1991
+   DAYBEG          INT            114
+   UTSBEG          DOUBLE           43923.000
+   SCTEND          DOUBLE           28222692.
+   YREND           INT           1991
+   DAYEND          INT            114
+   UTSEND          DOUBLE           45899.000
+   IBEG            LONG                 0
+   IEND            LONG              1976
+\end{verbatim}
+SCTBEG, YRBEG, DAYBEG, UTSBEG, SCTEND, YREND, DAYEND, and UTSEND are the
+spacecraft times, years, days of year, and UT seconds of the beginning and end
+of each OBI. IBEG and IEND are the indices in SCTIME which correspond to SCTBEG
+and SCTEND.
+ 
+To see the values of {\tt nomasp}, type
+
+\medskip\noindent
+\begin{verbatim}
+IDL> print,nomasp
+       937368.00      -321408.00       348.06472
+       937368.00      -321408.00       354.98264
+       937368.00      -321408.00       355.00056
+       937368.00      -321408.00       354.99667
+       937368.00      -321408.00       354.98681
+\end{verbatim}
+You can also use ADSTRING to print the RA and Dec in hms dms format:
+
+\medskip\noindent
+\begin{verbatim}
+IDL> for ii=0,4 do print,adstring(nomasp(0:1,ii)/2./3600.),nomasp(2,ii)
+  8 40 45.6  -44 38 24.0       348.06472
+  8 40 45.6  -44 38 24.0       354.98264
+  8 40 45.6  -44 38 24.0       355.00056
+  8 40 45.6  -44 38 24.0       354.99667
+  8 40 45.6  -44 38 24.0       354.98681
+\end{verbatim}
+In this example, NOMASP(0:1,ii) contains the first 2 elements of row ii+1 in
+NOMASP (RA and Dec), and NOMASP(2,ii) is the third element (Roll angle).
+(Remember that row numbers in IDL start with zero.) NOMASP(0:1,ii)/2./3600.
+converts RA and Dec from half arcsec pixels into degrees. ADSTRING constructs
+the ASCII string which gives RA and Dec in the desired format.
+ 
+2) Read aspect quality data:
+
+\medskip\noindent
+\begin{verbatim}
+IDL> rsgetaspqu,1,obinum,sctime,qualflag,starflag,nomasp,ob=obinfo
+\end{verbatim}
+SCTIME contains the (spacecraft) times when either (or both) of the flags
+changed. NOMASP, and OBINFO are the same as for RSGETASP. To see the other
+outputs:
+
+\medskip\noindent
+\begin{verbatim}
+IDL> help,qualflag,starflag
+QUALFLAG        INT       = Array(44)
+STARFLAG        INT       = Array(44)
+\end{verbatim}
+QUALFLAG and STARFLAG are the integer values of the aspect quality and star
+tracker flags. Each value is given for an interval of time which ENDS with the
+corresponding value of SCTIME.
+ 
+Generally, the aspect quality file will contain far fewer time values than the
+other ancillary files. If you wish, say, to plot a quality flag on the same
+scale as the aspect data, you will need to ``fill in" the aspect quality
+outputs. You can do this with {\tt fillaspqu} (one of the subroutines called by
+RSASPECT):
+
+\medskip\noindent
+\begin{verbatim}
+IDL> rsgetasp,1,0,sctasp,roll,delx,dely,nomasp,op=oparms
+IDL> rsgetaspqu,oparms,0,sctqual,qualflag,starflag
+IDL> fillaspqu,sctasp,sctqual,qualflag,starflag,qualf,starf
+IDL> help,sctqual,qualflag,starflag,sctasp,qualf,starf
+SCTQUAL         DOUBLE    = Array(44)
+QUALFLAG        INT       = Array(44)
+STARFLAG        INT       = Array(44)
+SCTASP          DOUBLE    = Array(13453)
+QUALF           BYTE      = Array(13453)
+STARF           BYTE      = Array(13453)
+\end{verbatim}
+In this example, QUALF and STARF give the values of QUALFLAG and STARFLAG at
+the times of aspect measurement. (Note: remember to give different names to the
+time vector outputs from RSGETASP and RSGETASPQU.)
+ 
+3) Read events rate data:
+
+\medskip\noindent
+\begin{verbatim}
+IDL> rsgetevr,1,0,sctime,rates,counts,ob=obinfo	
+\end{verbatim}
+SCTIME and OBINFO are as for RSGETASP. To see what the other outputs are, type
+
+\medskip\noindent
+\begin{verbatim}
+IDL> help,rates,counts
+RATES           STRUCT    = -> EVRATES Array(6726)
+COUNTS          STRUCT    = -> EVCOUNTS Array(6726)
+IDL> help,rates,counts,/struc
+ ** Structure EVRATES, 4 tags, length=16:
+   A1RATE          FLOAT          0.000000
+   MVRATE          FLOAT          0.000000
+   TERATE          FLOAT          0.000000
+   AERATE          FLOAT          0.000000
+ ** Structure EVCOUNTS, 4 tags, length=16:
+   A1COUNT         FLOAT           17396.0
+   MVCOUNT         FLOAT           64789.0
+   TECOUNT         FLOAT           52519.0
+   AECOUNT         FLOAT           54032.0
+\end{verbatim}
+A1RATE, MVRATE, TERATE, and AERATE are the A1 rate above the lower level
+threshold, the Master Veto rate, the Transmitted x-ray Event rate, and the
+Accepted Event rate. A1COUNT, MVCOUNT, TECOUNT, and AECOUNT are the values of
+the counters used to derive these rates.
+ 
+[Note: The counter values are not currently supplied in the MPE format
+event rates files. Accordingly, when MPE event rates files are read, the
+output parameter COUNTS is set to zero.]
+ 
+4) Read orbit data:
+
+\medskip\noindent
+\begin{verbatim}
+IDL> rsorb_pos,1,0,time,satpos,orbvecs,relpos,ob=obinfo 	
+ 
+IDL> help,time,satpos,orbvecs,relpos
+TIME            FLOAT     = Array(228)
+SATPOS          STRUCT    = -> SPORBLONLAT Array(228)
+ORBVECS         STRUCT    = -> SPORBVECS Array(228)
+RELPOS          STRUCT    = -> SPORBAZEL Array(228)
+\end{verbatim}
+TIME contains the UT (not spacecraft!) times of measurement. SATPOS, ORBVECS,
+and RELPOS are all structure variables. (To learn more about structure
+variables, see the IDL Users' Guide, Chapter 8.)
+
+\medskip\noindent
+\begin{verbatim}
+IDL> help,satpos,orbvecs,relpos,/struc
+ ** Structure SPORBLONLAT, 3 tags, length=12:
+   LON             FLOAT           33.7950
+   LAT             FLOAT          -39.3896
+   HEIGHT          FLOAT           582.489
+ ** Structure SPORBVECS, 9 tags, length=36:
+   SUNX            FLOAT          0.973408
+   SUNY            FLOAT     -5.859265e-02
+   SUNZ            FLOAT          0.221460
+   MOONX           FLOAT         -0.594238
+   MOONY           FLOAT          0.801697
+   MOONZ           FLOAT      6.452208e-02
+   SATX            FLOAT          0.643850
+   SATY            FLOAT          0.430939
+   SATZ            FLOAT         -0.632256
+ ** Structure SPORBAZEL, 4 tags, length=16:
+   AZ              FLOAT           162.543
+   EL              FLOAT          -42.2454
+   GHA             FLOAT           35.0292
+   DIST            FLOAT           9363.28
+\end{verbatim}
+LON, LAT, and HEIGHT are the satellite longitude, latitude, and height (above
+the Earth's surface, in kilometers). SUNX, SUNY, and SUNZ, MOONX, MOONY, and
+MOONZ, and SATX, SATY, and SATZ are the x,y, and z components of the unit
+vectors from the center of the Earth to the Sun, Moon, and satellite (in the
+ECF frame). AZ, EL, GHA, and Distance are the satellite azimuth, elevation,
+Greenwich Hour Angle, and distance from the Weilheim station.
+ 
+Note: TIME contains the times as stored in the {\tt .SO} files. These are given as
+UT seconds from beginning of day, and may not increase monotonically if the
+sequence spans more than one day. To create a monotonic time vector for
+plotting purposes, you can use TIMESEQ:
+
+\medskip\noindent
+\begin{verbatim}
+IDL> timeseq,time,tcorr,ob=obinfo
+\end{verbatim}
+where TIME and OBINFO are outputs from RSORB{\_}POS. The output vector TCORR is
+time given as (day number of year).(fraction of day), eg., 170.50, etc.
+ 
+You might also want to plot orbit data against spacecraft time (i.e., seconds
+since launch), rather than against UT. To convert UT time to spacecraft time,
+you can use UT2SCT:
+
+\medskip\noindent
+\begin{verbatim}
+IDL> sctime = ut2sct(time,obinfo)
+\end{verbatim}
+Note: The conversion relies upon the information written to the FITS
+headers and currently is not accurate to better than about a second.
+ 
+5) Calculate viewing geometry:
+
+\medskip\noindent
+\begin{verbatim}
+IDL> rsgetvg,1,0,time,vginfo,orbvecs,ob=obinfo,op=oparms
+ 
+IDL> help,time,vginfo,orbvecs,obinfo
+TIME            FLOAT     = Array(228)
+VGINFO          STRUCT    = -> VIEWGEOM Array(228)
+ORBVECS         STRUCT    = -> SPORBVECS Array(228)
+OBINFO          STRUCT    = -> OBITIME Array(5)
+\end{verbatim}
+TIME and ORBVECS are the same as for RSORB{\_}POS (see above). VGINFO is a
+structure variable:
+
+\medskip\noindent
+\begin{verbatim}
+IDL> help,vginfo,/struc
+ ** Structure VIEWGEOM, 6 tags, length=18:
+   LMST            FLOAT           2.32238
+   SESANG          FLOAT           62.5187
+   ESTANG          FLOAT           134.975
+   SSCODE          INT              3
+   EPCODE          INT              0
+   VGCALC          INT              2
+\end{verbatim}
+LMST is the Local Mean Sidereal Time at the times in TIME, SESANG is the
+Sun-Earth-Satellite Angle, ESTANG is the Earth-Satellite-Target Angle, SSCODE
+and EPCODE are the numerical codes for the SES and EST angles (see Data
+Products Guide), and VGCALC is the viewing geometry code (see Data Products
+Guide).
+ 
+Note: Use TIMESEQ to compute a monotonically increasing time vector (as
+discussed for RSORB{\_}POS).
+ 
+6) Read aspect and events rates data, calculate live time factors, and
+   return aspect data and live time factors at times of aspect measurement
+
+\medskip\noindent
+\begin{verbatim}
+IDL> rsget_emap_data,1,sctime,roll,delx,dely,flive,isegs,ac=actime,op=oparms
+\end{verbatim}
+Here SCTIME, ROLL, DELX, DELY and OPARMS are as in example 1). FLIVE is a
+vector containing the PSPC livetime factors at the times that the aspect
+offsets were measured. ISEGS is a 2 dimensional array containing the
+indices of beginnings and ends of contiguous segments of aspect data:
+
+\medskip\noindent
+\begin{verbatim}
+IDL> help,flive,isegs
+FLIVE           DOUBLE    = Array(7444)
+ISEGS           LONG      = Array(7, 2)
+IDL> print,isegs
+           0        1817        2674        3556        5343        5404
+        5533
+        1816        2673        3555        5342        5403        5532
+        7443
+\end{verbatim}
+The keyword ACTIME may be defined as a two dimensional array containing the
+beginnings and ends of the time intervals for which data should be
+returned. If ACTIME is not defined, then the good time intervals will be
+used (and returned as ACTIME, if desired). The time intervals will be
+corrected to include only those times for which the A1LL event rate is
+above a minimum value. The minimum value can be set using the keyword
+A1LLMIN. If A1LLMIN is not specified, then a default value of 30 is
+assumed. e.g., in this example there were 7 time intervals within the 5
+OBIs
+
+\medskip\noindent
+\begin{verbatim}
+IDL> help,actime
+ACTIME          DOUBLE    = Array(7, 2)
+IDL> print,actime
+       28220875.       28272489.       28273350.       28278295.
+       28295405.       28295468.       28295599.
+       28222692.       28273346.       28274232.       28280082.
+       28295466.       28295597.       28297510.
+\end{verbatim}
+The livetime factors and aspect offsets are returned for the times within
+the (corrected) ACTIME intervals. The value of the dead time constant used
+in calculating FLIVE can also be changed using the keyword DEADTP (default
+value = 234.).
+ 
+Note: RSGET{\_}EMAP{\_}DATA only works for PSPC files. ACTIME must be defined if
+the files are in the MPE formats. Also note that ACTIME is only corrected
+after the live time factors are calculated. If ACTIME is defined before
+starting the procedure, and the ACTIME intervals do not contain the
+intervals in the aspect and events rate files, then the procedure will end
+and no data will be returned.
+ 
+RSGET{\_}EMAP{\_}DATA is a subroutine called by MAKE{\_}EMAP (section 12.1.2).
+ 
+7) Read binned housekeeping data:
+
+\medskip\noindent
+\begin{verbatim}
+IDL> rsgethkb,1,0,sctime,hkdat,ob=obinfo
+ 
+IDL> help,hkdat
+HKDAT           STRUCT    = -> BINHKDATA Array(6432)
+IDL> help,hkdat,/struc
+ ** Structure BINHKDATA, 7 tags, length=14:
+   MHKB            INT            -33
+   TEMP            INT            -33
+   PRESS           INT            -33
+   HV              INT            -33
+   FWFLAG          INT            -33
+   FWPOS           INT             -3
+   INUSE           INT            -33
+\end{verbatim}
+MHKB, FWFLAG, and INUSE are the missing housekeeping data, filter wheel, and
+instrument in use flags. TEMP, PRESS, and HV are the PSPC temperature, pressure
+and high voltage. FWPOS is the filter wheel position (in degrees). SCTIME and
+OBINFO are as for the other routines above.
+ 
+8) Read housekeeping status flags:
+
+\medskip\noindent
+\begin{verbatim}
+IDL> rsgethksta,1,obinum,sctime,hkflags,ob=obinfo
+\end{verbatim}
+SCTIME and OBINFO are the same as for RSGETASPQU above. HKFLAGS is a structure
+variable:
+
+\medskip\noindent
+\begin{verbatim}
+IDL> help,hkflags
+HKFLAGS         STRUCT    = -> HKSTATFLAGS Array(26)
+IDL> help,hkflags,/struc
+ ** Structure HKSTATFLAGS, 10 tags, length=20:
+   HIGHV           INT            -33
+   CAROUSEL        INT            -33
+   GAS             INT            -33
+   DET             INT            -33
+   TEMP            INT            -33
+   LOWV            INT             -3
+   CURRENT         INT            -33
+   INUSE           INT            -33
+   FWPOS           INT            -33
+   TELEM           INT            -33
+\end{verbatim}
+HIGHV, GAS, DET, TEMP, LOWV, and CURRENT are the PSPC High Voltage, Gas System,
+Detector, Temperature, Low Voltage, and Current Status flags, CAROUSEL is the
+Carousel status flag, INUSE gives the Instrument In Use, FWPOS gives the Filter
+Wheel Position, and TELEM gives the Send Mode.
+ 
+
+\section{Accessing Information in Ancillary File FITS Headers:}
+ 
+General purpose routines for accessing information in FITS headers are
+discussed in Chapter 5. This chapter describes some of the special purpose
+routines written to get history information stored in the ancillary files.
+These routines ({\tt getnomasp}, {\tt rsgetseqinfo}, {\tt rsobitimes}) are subroutines
+called by higher level procedures.  All of these routines will work with MPE
+format files as well as with US format files.
+ 
+These routines do not use the parameter interface.
+ 
+For all of these procedures, you will first need to read the FITS header into
+IDL. You can do this using HEADFITS (see Chapter 5.1.1).
+ 
+
+\subsection{Getting the Nominal Aspect Data (from history records)}
+ 
+You can use the routine GETNOMASP to read the nominal aspect data stored
+within an OBI header:
+
+\medskip\noindent
+\begin{verbatim}
+IDL> hdr=headfits('$disk15:[rsgof.mydata]rp123456.cas',ext=1)
+IDL> hprint,hdr
+XTENSION= 'BINTABLE' /
+BITPIX  =                    8 /
+NAXIS   =                    2 /
+NAXIS1  =                   22 /
+NAXIS2  =                 1977 /
+PCOUNT  =                    0 /
+GCOUNT  =                    1 /
+TFIELDS =                    7 /
+EXTNAME = 'CORAS   ' /Corrected Aspect File (SPASP + Boresight)
+EXTVER  =                    1 /
+TFORM1  = '1J      ' /
+TTYPE1  = 'IT1_CAS ' /Time of corrected aspect in full seconds
+TUNIT1  = 'SEC     ' /
+TFORM2  = '1I      ' /
+TTYPE2  = 'IT2_CAS ' /Subsecond time of corrected aspect
+TUNIT2  = '1/64 SEC' /
+TFORM3  = '1J      ' /
+TTYPE3  = 'IRO_CAS ' /Corrected roll angle
+TUNIT3  = '0.5 ARCSEC' /
+TFORM4  = '1I      ' /
+TTYPE4  = 'IXN_CAS ' /X-translation in NS-system
+TUNIT4  = '0.5 ARCSEC' /
+TFORM5  = '1I      ' /
+TTYPE5  = 'IYN_CAS ' /Y-translation in NS-system
+TUNIT5  = '0.5 ARCSEC' /
+TFORM6  = '1E      ' /
+TTYPE6  = 'COS_CAS ' /Cosine of corrected roll angle
+TUNIT6  = '        ' /
+TFORM7  = '1E      ' /
+TTYPE7  = 'SIN_CAS ' /Sine of corrected roll angle
+TUNIT7  = '        ' /
+FILENAME= 'rp500013_1.cas' /Suggested filename
+HISTORY  SASS File = P$ROSCO_1:[OBI.US500013P001_1.N1.P1]CORAS.OBI;1
+HISTORY  Nominal Observation RA (units of 0.5 arcsec) =                 937368
+HISTORY  Nominal Observation DEC (units of 0.5 arcsec) =               -321408
+HISTORY  Nominal Observation Roll Angle (units of 0.5 arcsec) =        2506066
+HISTORY  OBI start time in spacecraft time (secs) =                   28220715
+HISTORY  OBI end time in spacecraft time (secs) =                     28222691
+HISTORY  OBI start time UTC (YYMMDD) =                                  910424
+HISTORY  OBI start within YYMMDD UTC (millisec) =                     43922000
+HISTORY  OBI end time UTC (YYMMDD) =                                    910424
+HISTORY  OBI end within YYMMDD UTC (millisec) =                       45898000
+HISTORY  Number of boresight parameters  =                                   3
+HISTORY  #     BOR                BORP
+HISTORY   1      0.0000000E+00      0.0000000E+00
+HISTORY   2      0.0000000E+00      0.0000000E+00
+HISTORY   3      0.0000000E+00      0.0000000E+00
+END
+ 
+IDL> getnomasp,hdr,nomra,nomdec,nomroll
+IDL> help,nomra,nomdec,nomroll
+NOMRA           DOUBLE    =        937368.00
+NOMDEC          DOUBLE    =       -321408.00
+NOMROLL         DOUBLE    =        348.06472
+\end{verbatim}
+NOMRA, NOMDEC, and NOMROLL are the nominal aspect R.A., Dec. (in units of 0.5
+arcsec), and Roll Angle (in degrees). To see the values:
+ 
+To print RA and Dec in degrees:
+
+\medskip\noindent
+\begin{verbatim}
+IDL> print,[nomra,nomdec]/2./3600.,nomroll
+       130.19000      -44.640000
+       348.06472
+\end{verbatim}
+You can also print R.A. and Dec in hr min sec, deg min sec format:
+
+\medskip\noindent
+\begin{verbatim}
+IDL> print,adstring([nomra,nomdec]/2./3600.),nomroll
+  8 40 45.6  -44 38 24.0       348.06472
+\end{verbatim}
+ 
+
+\subsection{Getting History Information from a Sequence Header}
+ 
+You can use the routine GETSEQINFO to read the relevant data stored within a
+ROSAT FITS file sequence header:
+
+\medskip\noindent
+\begin{verbatim}
+IDL> hdr=headfits('$disk15:[rsgof.mydata]rp123456.evr')
+IDL> rsgetseqinfo,hdr,nobi,actim,nomasp,seqbeg,seqend,obibeg,obiend
+ 
+IDL> help,nobi,actim,nomasp,seqbeg,seqend,obibeg,obiend
+NOBI            DOUBLE    =        5.0000000
+ACTIM           DOUBLE    =        7514.0000
+NOMASP          DOUBLE    = Array(3)
+SEQBEG          DOUBLE    = Array(4)
+SEQEND          DOUBLE    = Array(4)
+OBIBEG          DOUBLE    = Array(4, 5)
+OBIEND          DOUBLE    = Array(4, 5)
+\end{verbatim}
+Here NOBI is the number of OBIs in the sequence, and ACTIM is the active (or
+live) time. NOMASP is a vector whose elements are the nominal aspect RA, Dec
+(in 0.5 arcsec pixels), and Roll Angle in degrees. SEQBEG and SEQEND are
+vectors whose elements are the spacecraft time, year, day, and UT seconds of
+the beginnings and ends of the sequence, respectively. OBIBEG and OBIEND are
+two dimensional arrays, with one row for each OBI. Each row contains the
+spacecraft time, year, day, and UT seconds of the beginning and end of the OBI.
+
+\medskip\noindent
+\begin{verbatim}
+IDL> print,nomasp
+       937368.00      -321408.00      0.00000000
+IDL> forprint,seqbeg,seqend
+       28220715.       28297529.
+       1991.0000       1991.0000
+       114.00000       115.00000
+       43922.000       34335.000
+ 
+IDL> print,obibeg
+       28220715.       1991.0000       114.00000       43922.000
+       28270666.       1991.0000       115.00000       7472.0000
+       28273348.       1991.0000       115.00000       10155.000
+       28275883.       1991.0000       115.00000       12689.000
+       28293815.       1991.0000       115.00000       30621.000
+IDL> print,obiend
+       28222691.       1991.0000       114.00000       45898.000
+       28273345.       1991.0000       115.00000       10151.000
+       28274231.       1991.0000       115.00000       11037.000
+       28280081.       1991.0000       115.00000       16887.000
+       28297529.       1991.0000       115.00000       34335.000
+\end{verbatim}
+Note: In the sequence headers, the nominal roll angles are usually set to zero.
+This is (I believe) because the images made by SASS generally have North at the
+top and East to the left.
+ 
+
+\subsection{Getting History Information from an OBI Header}
+ 
+The start and stop times of the OBIs of a Rosat observation sequence are stored
+in the headers of the table extensions. To read this information, use the
+routine RSOBITIMES:
+
+\medskip\noindent
+\begin{verbatim}
+IDL> hdr=headfits('$disk15:[rsgof.mydata]rp123456.cas',ext=1)
+IDL> rsobitimes,hdr,sctbeg,sctend,utbeg,utend
+ 
+IDL> help,sctbeg,sctend,utbeg,utend
+SCTBEG          DOUBLE    =        28220715.
+SCTEND          DOUBLE    =        28222691.
+UTBEG           FLOAT     = Array(3)
+UTEND           FLOAT     = Array(3)
+\end{verbatim}
+SCTBEG and SCTEND are the (spacecraft) start and stop times of the OBI. UTBEG
+and UTEND are vectors containing the year, day number of year, and UT seconds
+of the beginning and end of the OBI.
+
+\medskip\noindent
+\begin{verbatim}
+IDL> print,sctbeg,sctend
+       28220715.       28222691.
+ 
+IDL> print,utbeg,utend
+      1991.00      114.000      43922.0
+      1991.00      114.000      45898.0
+\end{verbatim}
+Note: At present, the events rates ({\tt .evr}) file headers do not contain any
+information in history records. If you try to use RSOBITIMES for the header of
+an events rates table, you will get an error message:
+
+\medskip\noindent
+\begin{verbatim}
+IDL> hdr=headfits('$disk15:[rsgof.mydata]rp123456.evr',ext=1)
+IDL> rsobitimes,hdr,sctbeg,sctend,utbeg,utend
+ This is not an OBI header. Use a different procedure (getseqinfo?)
+\end{verbatim}
+ 
+
+\subsection{Getting Information from History Records in General}
+ 
+You can also use the general purpose routine GETHISTVAL to get information from
+history records in FITS headers. For a description of how to do this, with
+examples, see Chapter 5.1.4.
+ 
+\chapter{Basic Things You Can Do With Ancillary Data In IDL }
+
+\begin{itemize}
+\item  You can use HPRINT to print the FITS header information:
+\end{itemize}
+
+\medskip\noindent
+\begin{verbatim}
+IDL> hdr=headfits('$disk15:[rsgof.mydata]rp123456.fits')
+IDL> hprint,hdr
+\end{verbatim}
+See Chapter 5.1.2 for more details.
+
+\begin{itemize}
+\item  You can use FORPRINT to print the values of OBINFO:
+\end{itemize}
+
+\medskip\noindent
+\begin{verbatim}
+IDL> forprint,obinfo
+\end{verbatim}
+The values are printed in tag order, OBI by OBI.
+ 
+(For more information about the FORPRINT command, see Chapter 3.2.)
+
+\begin{itemize}
+\item  You can plot any one variable against any other. If the x-axis variable
+is not monotonic, then you will probably want to use a value for the {\tt psym}
+keyword which does not connect the plot symbols, e.g.,
+\end{itemize}
+
+\medskip\noindent
+\begin{verbatim}
+IDL> plot,counts.mvcount,rates.mvrate,psym=3,/xst,/yst,/yno
+                                ;plot mvrate vs mvcount, using dots for
+                                ;plotting symbol.
+\end{verbatim}
+See Chapter 3.3 for more information concerning the PLOT command.
+
+\begin{itemize}
+\item  You can plot variables against spacecraft time. Since OBIs may be separated
+by long times, it will probably be convenient to plot only one OBI at a time.
+You can do this in several ways:
+\end{itemize}
+1) By reading in data from only one OBI at a time.
+ 
+2) By using {\tt set{\_}xy} to restrict the plot range, e.g.,
+
+\medskip\noindent
+\begin{verbatim}
+IDL> ibeg = obinfo.ibeg
+IDL> iend = obinfo.iend
+IDL> set_xy,sctime(ibeg(0)),sctend(iend(0))
+\end{verbatim}
+will restrict the plot range to just the times for the first OBI. Type
+
+\medskip\noindent
+\begin{verbatim}
+IDL> set_xy,0,0
+\end{verbatim}
+to return to automatic scaling.
+ 
+3) By plotting only part of the data, e.g., continuing the example
+
+\medskip\noindent
+\begin{verbatim}
+IDL> plot,sctime(ibeg(0):iend(0)),roll(ibeg(0):iend(0))
+\end{verbatim}
+plots just the data from the first OBI (i.e., of those stored in sctime and
+roll).
+
+\begin{itemize}
+\item  You can print the information (or part of it) to an ASCII file:
+\end{itemize}
+For an extensive discussion of how to write information to ASCII files, see
+Chapter 3.2.3.
+ 
+\chapter{Tables From Sass Processing }
+ 
+This chapter tells how to access SASS processing information (e.g., lists of
+detected sources, etc.) that is stored in FITS tables. For more information as
+to the names and contents of these tables, consult the Data Products Guide.
+(Note: No claims are made as to the accuracy of the SASS results in these
+tables. Proceed with caution!)
+ 
+
+\section{SASS Detected Sources and SIMBAD Sky List Tables}
+ 
+You can use the routine RS{\_}SOURCES (which is called by RSCHECK{\_}SOURCES) to read
+the processing information for the entire list of SASS sources or SIMBAD
+objects. The command syntax is:
+
+\medskip\noindent
+\begin{verbatim}
+RS_SOURCES, filename, HDR, STRUCT
+\end{verbatim}
+FILENAME is the name of the table file (including directory, default extension
+is {\tt .fits}). HDR is the FITS header of the table, and STRUCT is the output
+structure.
+ 
+Examples:
+
+\medskip\noindent
+\begin{verbatim}
+IDL> rs_sources,'$disk15:[rsgof.mydata]rp123456_src',hdr,srcdat
+% READFITS: Reading FITS extension of type TABLE
+% READFITS: Now reading 447 by 97 array
+IDL> rs_sources,'$disk15:[rsgof.mydata]rp123456_sky',hdr,skydat
+% READFITS: Reading FITS extension of type TABLE
+% READFITS: Now reading 139 by 146 array
+ 
+IDL> help,srcdat,skydat
+SRCDAT          STRUCT    = -> SASSLIST Array(97)
+SKYDAT          STRUCT    = -> SKYLIST Array(146)
+ 
+IDL> help,srcdat,skydat,/struc
+ ** Structure SASSLIST, 31 tags, length=148:
+   SRC             DOUBLE           63.000000
+   MPLSX_SRC       DOUBLE           167.00000
+   RA              FLOAT           129.502
+   DEC             FLOAT          -44.8003
+   X               FLOAT           11198.0
+   Y               FLOAT           6509.90
+   IM_X            FLOAT           373.270
+   IM_Y            FLOAT           217.000
+   PIX_ERR         FLOAT          0.280000
+   OFFAX           FLOAT           30.8900
+   CCTS            FLOAT           1.75000
+   CCTS_ERR        FLOAT      3.040000e-02
+   CBKG            FLOAT      6.290000e-04
+   X_SIZE          FLOAT           480.000
+   Y_SIZE          FLOAT           480.000
+   EPT             FLOAT           4788.49
+   PSN0            FLOAT           918.900
+   SDIST           FLOAT           40.4000
+   RDIST           FLOAT           78.5000
+   REC             FLOAT           134.400
+   EXT_LIKE        FLOAT           2173.80
+   VARY            STRING    'POSSIBLE'
+   HR_1            FLOAT         -0.170000
+   HE_1            FLOAT      2.000000e-02
+   HR_2            FLOAT         -0.990000
+   HE_2            FLOAT      1.000000e-02
+   PRIORITY        STRING    '011000'
+   CHI_PL          FLOAT           2.51000
+   CHI_RS          FLOAT           1.77000
+   MDET            STRING    '-'
+   RADEC           STRING    ' 08 38  0.4  -44 48  1.0'
+ ** Structure SKYLIST, 13 tags, length=96:
+   SRC             DOUBLE           46.000000
+   RA              FLOAT           129.526
+   DEC             FLOAT          -44.8042
+   ID              DOUBLE          0.00000000
+   OBJ             STRING    'CD-44  4620'
+   ACC             STRING    'a'
+   VMAG            STRING    '-----'
+   BMAG            STRING    '10.00'
+   SPMOR           STRING    'A0'
+   RUXVN           STRING    '-----'
+   REF             DOUBLE          0.00000000
+   DIST            STRING    '-----'
+   RADEC           STRING    ' 08 38  6.2  -44 48 15.1'
+\end{verbatim}
+Excepting RADEC, the tag names are all quantities derived from the SASS
+processing and written to the FITS table files. For more information on these
+quantities, see the Data Products Guide. RADEC is an ASCII string which gives
+the RA and Dec in hr min sec, deg min sec format.
+ 
+In the above examples, a total of 97 SASS detected sources and 146 SIMBAD
+objects were found.
+ 
+(Note: RS{\_}SOURCES is based on routines contributed by R. Stern, JPL.)
+ 
+
+\section{Checking the Detected Sources against the Sky List Table}
+ 
+You can use the routine RSCHECK{\_}SOURCES to check the table of detected sources
+against the table of SIMBAD objects within the field. The command syntax is
+
+\medskip\noindent
+\begin{verbatim}
+RSCHECK_SOURCES,obseq,SRCDAT,SKYDAT,dir=dir,poserr=poserr,textout=textout
+\end{verbatim}
+OBSEQ is the observation sequence (or file root name), and DIR is the directory
+of the table and position ordered (``qp") data file. If DIR is not defined, then
+the current directory is assumed. TEXTOUT controls the display of the output
+(see RSCHECKTSI in Chapter 3). POSERR is the radius of the circle (in arcsec)
+within which the procedure searches for coincidences between detected sources
+and SIMBAD objects. If no value is given, a default of 150 arcsec is assumed.
+ 
+Example:
+
+\medskip\noindent
+\begin{verbatim}
+rscheck_sources,'rp123456',dir='$disk15:[rsgof.mydata]',srcdat,skydat
+\end{verbatim}
+RSCHECK{\_}SOURCES will first find those SIMBAD sources which coincide with SASS
+detected x-ray sources to within circles of position POSERR. If more than one
+coincidence is found, then the closest is chosen. RSCHECK{\_}SOURCES then lists
+the coincidences found, plots all of the SASS sources (with {\tt Xs}) and SIMBAD
+objects (with {\tt +s}), draws circles around the coincidences, and prints a final
+listing of information about the SASS sources and detected objects. The outputs
+SRCDAT and SKYDAT are structure variables:
+
+\medskip\noindent
+\begin{verbatim}
+IDL> help,srcdat,skydat
+SRCDAT          STRUCT    = -> SASSLIST Array(16)
+SKYDAT          STRUCT    = -> SKYLIST Array(16)
+\end{verbatim}
+In the above example, SRCDAT and SKYDAT are as described for RS{\_}SOURCES (see
+above), except that they contain information for only those detected sources
+and SIMBAD objects for which coincidences were found. Each element in SRCDAT
+corresponds to the same element in SKYDAT, and vice versa. In this example, 16
+coincidences were found.
+ 
+RSCHECK{\_}SOURCES assumes that the SASS source table, the SIMBAD table, and the
+data FITS file all have the same root name (with extensions {\tt {\_}src.fits},
+{\tt {\_}sky.fits}, and {\tt .fits}) and are in the same directory. If this convention is
+not followed, then you should first use the routine RS{\_}SOURCES (see above) to
+read the SASS source and SIMBAD object lists into SRCDAT and SKYDAT.
+RSCHECK{\_}SOURCES will truncate SRCDAT and SKYDAT to just those objects for which
+coincidences were found.
+ 
+\chapter{Basic Things You Can Do With Results of SASS Processing in IDL }
+ 
+You can use the routine ADXY (from the IDL Astronomical Users' Library) to
+convert the RA and Dec positions of the objects in the SIMBAD table to X and Y
+pixel positions, for comparison with the positions of the SASS detected
+sources. You will first need to read the header from the data position ordered
+event (``qp") file, for the astrometry information:
+
+\medskip\noindent
+\begin{verbatim}
+IDL> hdr=headfits('$disk15:[rsgof.mydata]rp123456.fits',ext=3)
+IDL> rs_sources,'$disk15:[rsgof.mydata]rp123456_sky',hdr,skydat
+IDL> adxy,hdr,skydat.ra,skydat.dec,xsky,ysky
+IDL> help,xsky,ysky
+XSKY            FLOAT     = Array(146)
+YSKY            FLOAT     = Array(146)
+\end{verbatim}
+XSKY and YSKY are the positions of the SIMBAD objects in SASS {\tt IMAGE}  (0.5
+arcsec) pixels.
+ 
+\chapter{Data in The Position Ordered Events FITS Files }
+ 
+This chapter tells you how to read the photon data from the position ordered
+events (``qp") FITS files, and lists some things that you can do with it in IDL.
+ 
+
+\section{Using READFITS}
+ 
+You can use READFITS (from the IDL Astronomical Users' Library) and FITS{\_}GET
+(or TBGET) to read a FITS ``qp" file.  See Chapter 5 for examples of how to do
+this.
+ 
+READFITS will read in the entire table, into a byte array. It's a useful
+routine if your field does not contain a large number of photons, or if you are
+only interested in one or two of the quantities in the ``qp" file.
+ 
+Remember: The speed with which things run in IDL is a strong function of how
+much you have stored in session memory. If you have read in (or try to read)
+tables for fields with large numbers of photons, your session can become
+vvveeerrrryyyyyyyyy sssssslllllllloooooowwwwwwwww. To avoid this, you may wish
+to use MAKE{\_}LIST.
+ 
+Be careful when reading very large arrays!! If you try to read too large a
+file, you can crash your IDL session, and/or fill up the page quota on HEASRC,
+and/or have trouble swapping memory on the Suns.
+ 
+
+\section{Using MAKE{\_}LIST}
+ 
+MAKE{\_}LIST was written to allow you the user to read just part of a FITS ``qp"
+file. The data may be selected by either SASS image or detector coordinates.
+(At present, only rectangular selection regions are allowed.) The data may also
+be filtered by time. The selected data are stored in a ``photon list" data
+structure, for ease in later filtering. In fact, many of the routines written
+for further data analysis expect a photon list data structure as input.
+ 
+MAKE{\_}LIST works by reading the photon table piece by piece (typically data for
+20,000 photons at a time). The image (or detector) coordinates for each section
+are checked against the spatial (and/or temporal) limits. For each section, the
+routine collects the numbers of the photons to be  included. When the entire
+table has been checked, the procedure then reads the table data for just those
+photons that are to be included, again section by section. The procedure ends
+when all of the photon data have  been accumulated into the data structure. The
+idea behind all of this is to minimize memory usage. This makes the program run
+MUCH faster, expecially for fields containing large numbers of photons. In
+fact, if you to try to read in too large a table at one time ($>$ 500,000
+photons, using READFITS) you can crash your session. This routine avoids
+crashing the session by reading in only part of the table at one time.
+ 
+The command syntax is:
+
+\medskip\noindent
+\begin{verbatim}
+MAKE_LIST, inputs, PLIST, PLINFO, PLHDR, [OPARMS=OPARMS]
+\end{verbatim}
+The procedure uses the parameter interface (see Chapter 4). {\tt Inputs} controls
+the values of
+
+\medskip\noindent
+\begin{verbatim}
+OBSEQ   the observation sequence, or root name, of the file, e.g. 'rp123456'
+DIR     the directory of the file, e.g., '$disk15:[rsgof.mydata]'
+EXTYP   the extension of the file, e.g., 'fits'
+INSTR   the instrument, 'P' for PSPC and 'H' for HRI
+PROC    the format of the processed files ('US' or 'MPE', default is 'US')
+TRIM    controls whether data will be trimmed to good time intervals ('Y')
+        or not ('N').
+CHATTER         controls procedure feedback to user. Set to 0 for nofeedback,
+                or 1.
+XMIN    the minimum value of the X coordinate to be included (0 for all)
+XMAX    the maximum     "                               "
+YMIN    the minimum value of the Y coordinate to be included (0 for all)
+YMAX    the maximum     "                               "
+PIXEL   tells whether XMIN, etc. are blocked (BL) or unblocked (BL) coords.s
+BLOCK   the blocking factor by which XMIN, etc. are blocked
+CTYP    tells whether the photons are to be selected by SKY or by DETECTOR
+        coordinates
+TMIN    the minimum value of time to be included (0 for all)
+TMAX    the maximum     "                                "
+\end{verbatim}
+Default values of the parameters controlled by {\tt inputs} are stored in the
+file {\tt zdef:make{\_}list.def}. The default values are {\tt fits} (EXTYP), P
+(INSTR), US (PROC), Y (TRIM), 1 (CHATTER), 0 for the entire field
+(XMIN, XMAX, YMIN, YMAX), UNBL for unblocked coordinates (PIXEL), 1 for
+unblocked coordinates (BLOCK), SKY for sky or image coordinates (CTYP), and
+0 for the entire observation (TMIN, TMAX).
+ 
+The outputs are: the photon list PLIST, the list information variable
+PLINFO, and the FITS header PLHDR. PLIST contains the events data while
+PLINFO contains information as to how the list was constructed. PLHDR is a
+string array which contains the FITS header from the events table of the
+``qp" file. OPARMS is the internally parsed version of INPUTS (as in Chapter
+4).
+ 
+MAKE{\_}LIST will read events data from MPE format ``qp" files if PROC is set to
+{\tt MPE}. However, in this case, if no initial values are provided, then the
+output parameters TBEG and TEND will be set to the beginning and end of the
+time interval used to filter the data (as specified by TMIN and TMAX). If no
+time filtering is specified, then TBEG and TEND will be set  to the first and
+last photon arrival times.
+ 
+ 
+Examples:
+ 
+1) Selecting a region in unblocked sky coordinates:
+
+\medskip\noindent
+\begin{verbatim}
+IDL> make_list,1,plist,plinfo,plhdr,op=oparms
+ 
+Enter parameters:  name=value
+Enter HELP for description of parameters, END when done
+Hit <CR> to review values, or type:   name=?
+? obseq=rp123456                        ;your inputs to the program
+? dir=$disk15:[rsgof.mydata]
+? xmin=7000.
+? xmax=8300.
+? ymin=7000.
+? ymax=8300.
+? end
+\end{verbatim}
+In this example, the data are to have unblocked sky X and Y coordinates
+between 7000 and 8300, and all times are to be included. The results are:
+
+\medskip\noindent
+\begin{verbatim}
+IDL> help,plist,plinfo,plhdr
+PLIST           STRUCT    = -> XEVENT Array(34120)
+PLINFO          STRUCT    = -> XEVINFO Array(1)
+PLHDR           STRING    = Array(94)
+IDL> help,plist,/struc
+ ** Structure XEVENT, 7 tags, length=20:
+   X               INT           7038
+   Y               INT           7000
+   PHA             INT             32
+   PI              INT             31
+   TIME            DOUBLE           28273367.
+   DX              INT           3842
+   DY              INT           4140
+\end{verbatim}
+PLIST is the photon list data structure. X and Y are the SASS image coordinates
+(0.5 arcsec pixels), DX and DY the detector coordinates (approximately 1 arcsec
+pixels), PHA and PI the pulse height analyzer and pulse invariant channels, and
+TIME the arrival times of the photons. There were 34,120 photons detected
+within the selection region. (A total of 941,518 photons were detected over the
+entire field.) The photons were selected by PLIST.X and PLIST.Y:
+
+\medskip\noindent
+\begin{verbatim}
+IDL> print,minmax(plist.x),minmax(plist.y)
+    7000    8301
+    7000    8301
+IDL> print,long(8301-7000+1)*long(8301-7000+1)
+     1695204
+\end{verbatim}
+PLINFO is a structure variable which contains information as to how the
+list was constructed:
+
+\medskip\noindent
+\begin{verbatim}
+IDL> help,plinfo,/struc
+ ** Structure XEVINFO, 14 tags, length=3274:
+   OBSEQ           STRING    'rp123456'
+   FILENAME        STRING    '$DISK15:[RSGOF.MYDATA]RP123456.FITS;2'
+   PROC            STRING    'US'
+   CTYP            STRING    'SKY'
+   XMIN            FLOAT           7000.00
+   XMAX            FLOAT           8301.00
+   YMIN            FLOAT           7000.00
+   YMAX            FLOAT           8301.00
+   REGION          STRING    'box (    7650.500,    7650.500,    1301.000,
+'...
+   NUMPIX          DOUBLE           1695204.0
+   TOTEXP          DOUBLE           7504.2733
+   NTIMES          INT              8
+   TBEG            DOUBLE    Array(200)
+   TEND            DOUBLE    Array(200)
+IDL> print,plinfo.region
+box (    7650.500,    7650.500,    1301.000,    1301.000)
+\end{verbatim}
+OBSEQ is the observation sequence, and FILENAME the name of the file from
+which the data were read. PROC, CTYP, XMIN, XMAX, YMIN, and YMAX are the
+inputs from the parameter interface. REGION is the ASCII descriptor of
+the selection region. NUMPIX is the number of spatial pixels in the
+selection region, and NTIMES is the number of (nonzero) spacecraft time
+intervals. TBEG and TEND give the beginnings and ends of the spacecraft
+time interval(s) included; space for up to 200 such intervals is allowed.
+ 
+Finally, PLHDR contains the information from the ``qp" FITS header:
+
+\medskip\noindent
+\begin{verbatim}
+IDL hprint,plhdr
+XTENSION= 'BINTABLE'  /  FITS 3D BINARY TABLE
+BITPIX  =                    8  /  Binary data
+NAXIS   =                    2  /  Table is a matrix
+NAXIS1  =                   20  /  Width of table in bytes
+NAXIS2  =               941518  /  Number of entries in table
+PCOUNT  =                    0  /  Random parameter count
+GCOUNT  =                    1  /  Group count
+TFIELDS =                    7  /  Number of fields in each row
+EXTNAME = 'EVENTS  '  /  Table name
+EXTVER  =                    1  /  Version number of table
+TFORM1  = '1I      '  /  Data type for field
+TTYPE1  = 'X       '  /  Label for field
+TUNIT1  = '        '  /  Physical units for field
+TFORM2  = '1I      '  /  Data type for field
+TTYPE2  = 'Y       '  /  Label for field
+TUNIT2  = '        '  /  Physical units for field
+TFORM3  = '1I      '  /  Data type for field
+TTYPE3  = 'PHA     '  /  Label for field
+TUNIT3  = '        '  /  Physical units for field
+TFORM4  = '1I      '  /  Data type for field
+TTYPE4  = 'PI      '  /  Label for field
+ 
+(etc.)
+\end{verbatim}
+ 
+2) Selecting a region in blocked sky coordinates:
+
+\medskip\noindent
+\begin{verbatim}
+IDL> make_list,1,plist,plinfo,plhdr,op=oparms
+ 
+Enter parameters:  name=value
+Enter HELP for description of parameters, END when done
+Hit <CR> to review values, or type:   name=?
+? obseq=rp123456                        ;your inputs to the program
+? dir=$disk15:[rsgof.mydata]
+? xmin=220.
+? xmax=290.
+? ymin=320.
+? ymax=390.
+? pixel=bl
+? block=30
+? end
+\end{verbatim}
+In this example, the data are to have blocked sky X coordinates between 220 and
+290, and blocked Y coordinates between 320 and 390, with a blocking factor of
+30, and all times are to be included. The blocked region limits correspond to
+unblocked region limits of 6600 and 8700 in X, 9600 and 11700 in Y. The results
+are:
+
+\medskip\noindent
+\begin{verbatim}
+IDL> help,plist
+PLIST           STRUCT    = -> XEVENT Array(26417)
+IDL> print,plinfo.region
+box (    7650.500,   10650.500,    2101.000,    2101.000)
+IDL> print,plinfo.numpix,plinfo.xmin,plinfo.xmax,plinfo.ymin,plinfo.ymax
+       4418404.0      6600.00      8701.00      9600.00      11701.0
+IDL> print,minmax(plist.x),minmax(plist.y)
+    6600    8701
+    9600   11701
+IDL> print,long(11701-9600+1)*long(8701-6600+1)
+     4418404
+\end{verbatim}
+There were 26,417 photons detected within this region of 4,418,404 pixels.
+ 
+3) Selecting a region in unblocked detector coordinates (with time filtering):
+
+\medskip\noindent
+\begin{verbatim}
+IDL> make_list,1,plist,plinfo,plhdr,op=oparms
+ 
+Enter parameters:  name=value
+Enter HELP for description of parameters, END when done
+Hit <CR> to review values, or type:   name=?
+? obseq=rp123456                        ;your inputs to the program
+? dir=$disk15:[rsgof.mydata]
+? xmin=4000
+? xmax=5000
+? ymin=4000
+? ymax=5000
+? ctyp=det
+? tmin=28273350.
+? tmax=28280082.
+? end
+\end{verbatim}
+In this example, the data are to have unblocked detector X and Y coordinates
+between 4000 and 5000, and only (spacecraft) times between 28273350. and
+28280082. are to be included. The results are:
+
+\medskip\noindent
+\begin{verbatim}
+IDL> help,plist
+PLIST           STRUCT    = -> XEVENT Array(19908)
+IDL> print,plinfo.ntimes
+       3
+IDL> tbeg=plinfo.tbeg & tend=plinfo.tend
+IDL> tbeg=tbeg(0:2) & tend=tend(0:2)
+IDL> forprint,tbeg,tend
+       28273350.       28274232.
+       28277173.       28277176.
+       28278279.       28280082.
+IDL> print,plinfo.region
+box (    4500.500,    4500.500,    1001.000,    1001.000)
+IDL> print,plinfo.numpix,plinfo.xmin,plinfo.xmax,plinfo.ymin,plinfo.ymax
+       1004004.0      4000.00      5001.00      4000.00      5001.00
+IDL> print,minmax(plist.x),minmax(plist.y)
+    7125    9889
+    5311    8018
+    4000    5001
+    4000    5001
+IDL> print,long(5001-4000+1)*long(5001-4000+1)
+     1004004
+\end{verbatim}
+Note that in this example NUMPIX refers to the number of DETECTOR pixels.
+19,906 photons were detected within this region of 1,004,004 detector pixels.
+ 
+4) Using READFITS to read in part of a ``qp" FITS file:
+ 
+If you are only interested in one or two quantities (say, X and Y
+coordinates), and you know approximately the numbers in the table of the
+photons that you want, then you can also use READFITS to read in part of a
+large ``qp" table. For information on how to do this, see Chapter 5.4.
+ 
+\chapter{Basic Things You Can Do With QP Events Data in IDL }
+ 
+
+\begin{itemize}
+\item  You can make a quickie plot of your image:
+\end{itemize}
+
+\medskip\noindent
+\begin{verbatim}
+IDL> plot,plist.x,plist.y,/yno,/xst,/yst,psym=3
+\end{verbatim}
+A dot is plotted wherever a photon was detected. This takes a while if your
+field contains a lot of photons.
+
+\begin{itemize}
+\item  You can also plot part of your image by:
+\end{itemize}
+1) Restricting the plot limits;
+
+\medskip\noindent
+\begin{verbatim}
+IDL> set_xy,7500.,7800.,8200.,8500.
+IDL> plot,plist.x,plist.y,/yno,/xst,/yst,psym=3
+\end{verbatim}
+2) Using MAKE{\_}LIST to select a region, then plotting;
+ 
+3) Plotting part of the data points;
+
+\medskip\noindent
+\begin{verbatim}
+IDL> rad = sqrt( (plist.x-xc)*(plist.x-xc) + (plist.y-yc)*(plist.y-yc) )
+IDL> ind = where( rad le 500.)
+IDL> xsel = plist.x & xsel = xsel(ind)
+IDL> ysel = plist.y & ysel = ysel(ind)
+IDL> plot,xsel,ysel,/yno,/xst,/yst,psym=3
+\end{verbatim}
+This plots a dot for every photon detected within a circle of 500 pixels
+centered on (XC, YC).
+
+\begin{itemize}
+\item  You can use the cursor to mark positions in your image, and compare these to
+other things. Say you would like to compare what you think you see in your
+image with the SASS detected source list. Make a plot, and then:
+\end{itemize}
+
+\medskip\noindent
+\begin{verbatim}
+IDL> cursor,sx,sy,1 & print,sx,sy       ;do this for each position that
+      12347.9      10906.8              ;you want to measure
+IDL> cursor,sx,sy,1 & print,sx,sy
+      10935.3      9815.70
+IDL> cursor,sx,sy,1 & print,sx,sy
+      8463.22      8858.16
+IDL> cursor,sx,sy,1 & print,sx,sy
+      3326.44      5451.10
+IDL> sx=[12347.9,10935.3,8463.22,3326.44]       ;put the numbers into
+IDL> sy=[10906.8,9815.70,8858.16,5451.10]       ;vectors for convenience
+\end{verbatim}
+Now read the data from your SASS detected sources file:
+
+\medskip\noindent
+\begin{verbatim}
+IDL> rs_sources,'$disk15:[rsgof.mydata]rp654321_src',hsrc,srcdat
+% READFITS: Reading FITS extension of type TABLE
+% READFITS: Now reading 447 by 40 array
+\end{verbatim}
+and find the sources that correspond to your marked positions
+
+\medskip\noindent
+\begin{verbatim}
+IDL> for i=0,3 do begin & dist=sqrt((srcdat.x-sx(i))^2+(srcdat.y-sy(i))^2) & $
+        print,where(dist eq min(dist)) & endfor
+           0
+           3
+           8
+          37
+IDL> ind=[0,3,8,37]     ;put the source numbers into a vector for convenience
+IDL> xsrc=srcdat.x & ysrc=srcdat.y
+IDL> forprint,sx,xsrc(ind),sy,ysrc(ind)
+      12347.9      12310.7      10906.8      10859.9
+      10935.3      10936.4      9815.70      9815.00
+      8463.22      8468.00      8858.16      8852.90
+      3326.44      3326.00      5451.10      5485.40
+\end{verbatim}
+
+\begin{itemize}
+\item  You can also compare the RA and Dec positions of your marked features with
+those of the SASS detected sources. Use XYAD (from the Astronomical Users'
+Library) to convert from X,Y coordinates to RA and Dec. You will need the
+header from the ``qp" file:
+\end{itemize}
+
+\medskip\noindent
+\begin{verbatim}
+IDL> xyad,hdr,sx,sy,sra,sdec
+IDL> for ii=0,3 do print,adstring(sra(ii),sdec(ii))+'   ',$
+        adstring(rasrc(ind(ii)),decsrc(ind(ii)))
+ 09 15 23.8   78 42  0.0    09 15 30.9   78 41 36.0
+ 09 19 31.1   78 33 28.6    09 19 31.3   78 33 27.0
+ 09 26 28.0   78 26  0.0    09 26 27.6   78 25 56.0
+ 09 40 13.4   77 56 44.2    09 40 14.0   77 57  0.0
+\end{verbatim}
+
+\begin{itemize}
+\item  You can filter by pi channel energy, and make an image array of the events
+within a selected region:
+\end{itemize}
+
+\medskip\noindent
+\begin{verbatim}
+IDL> ind = where((plist.pi ge 91) and (plist.pi le 130))  ;select events for
+IDL> plist2 = plist(ind)                                  ;channels 91 to 130
+IDL> xsel = plist2.x & ysel = plist2.y
+IDL> wid = 256.*10.
+IDL> x1 = xc - wid & x2 = xc + wid             ;define the endpoints of a
+IDL> y1 = yc - wid & y2 = yc + wid             ;square of side 2*wid pixels
+IDL> ind = where( (xsel ge x1) and (xsel lt x2) $    ;select the events
+IDL> and (ysel ge y1) and (ysel lt y2) )             ;within the square
+IDL> scale = 2.*5.                             ;the scale will be 5 arcsec
+                                               ;per pixel
+IDL> im = fltarr(512,512)
+IDL> ix = long((xsel-x1)/scale)         ;find the positions of each event
+IDL> iy = long((ysel-y1)/scale)         ;within the new image
+IDL> num = n_elements(ix)               ;the number of selected events
+IDL> for ii=0,num-1 do im(ix(ii),iy(ii)) = im(ix(ii),iy(ii)) + 1
+                                        ;accumulate the image
+IDL> tv,bytscl(im)                      ;plot the image on a TV device
+IDL> loadct,4                           ;load color table 4
+\end{verbatim}
+
+\begin{itemize}
+\item  You can find the centroid of a source. Say you have defined an image array,
+as in the previous example, and that you know the approximate FWHM of the
+point spread function (see section 12.1.1). Then use the routine CNTRD (from
+the IDL Astronomical Users' Library):
+\end{itemize}
+
+\medskip\noindent
+\begin{verbatim}
+IDL> cntrd,im,xc,yc,xcen,ycen,fwhm
+\end{verbatim}
+Here FWHM is the approximate FWHM of the psf (in pixels), and XC and YC are
+the approximate X and Y values of the center. CNTRD returns the X and Y
+positions of the centroid, XCEN and YCEN.
+ 
+\chapter{Further ROSAT Data Analysis in IDL }
+ 
+
+\section{Spatial Analysis}
+ 
+
+\subsection{Computing the point source response function}
+ 
+A procedure MAKE{\_}PSF exists which will allow you to compute the (on axis) point
+source response function (PSF) for either the PSPC or the HRI. The HRI PSF is
+an average over all energies; the PSPC PSF is spectrally dependent, and an
+input spectrum must be supplied. If desired, a two dimensional image of the PSF
+can be written to a simple FITS file, and/or a radially averaged profile can be
+written to an ST SDAS binary table file. Both of these files can be read using
+tasks in PROS/IRAF.
+ 
+The command syntax is
+
+\medskip\noindent
+\begin{verbatim}
+ MAKE_PSF, inputs, OFFANG, PROF, PSFIMG, HEADER, PROFHDR, TCB,
+           rate=rate, group=group, ecen=ecen, OPARMS=OPARMS
+\end{verbatim}
+MAKE{\_}PSF uses the parameter interface (see Chapter 4). {\tt Inputs} controls the
+values of
+
+\medskip\noindent
+\begin{verbatim}
+INSTR   the instrument, 'P' for PSPC and 'H' for HRI
+SPFIL   the (full) name of the input spectral file (if the spectrum is to
+        be read from a file)
+SPTYP   the type of the input spectral file. Valid choices are 'PROS', 'QDP',
+        'ASPC', and (eventually) 'PHA'.
+IMGFIL  the name of the output FITS file which contains the two dimensional
+        PSF image (or 'NONE'). If no extension is supplied, then '_psf.fits'
+        is assumed.
+PROFTAB the name of the output ST SDAS binary table file which contains the
+        radially averaged PSF profile (or 'NONE'). If no extension is
+        supplied, then '_psf.tab' is assumed.
+CHATTER controls procedure feedback to user. Set to 0 for nofeedback,
+        or 1.
+XCEN    the X coordinate (in detector pixels) of the center of the PSF
+YCEN    the Y coordinate        "                            "
+EMIN    the minimum channel energy (in keV) for the calculation
+EMAX    the maximum channel energy (in keV)  "               "
+PIXEL   tells whether XCEN, YCEN are blocked (BL) or unblocked (BL) coords.s
+BLOCK   the blocking factor by which XCEN, YCEN are blocked
+NBINS   the number of spatial bins in the output PSF image (NBINS by NBINS)
+        (must be an odd number)
+BINSIZ  the size of each PSF bin (in arcsec)
+BINRAT  the ratio of the number of internal pixels (for the calculation)
+        to output PSF bins (must be an odd number)
+RESCL   tells whether to rescale so that the peak values of PSFIMG and PROF
+        are = 1
+\end{verbatim}
+Default values of the parameters controlled by {\tt inputs} are stored in the file
+{\tt zdef:make{\_}psf.def}. The default values are {\tt P} (INSTR), {\tt QDP} (SPTYP), {\tt NONE}
+for no output profile table file (PROFTAB), 1 (CHATTER), 0 for the default
+center of the instrument (in detector pixels) (XCEN, YCEN), 0.07 keV (EMIN) and
+3.0 keV (EMAX), UNBL for unblocked coordinates (PIXEL), 1 for unblocked
+coordinates (BLOCK), 51 (NBINS), 16 arcsec (BINSIZ), 11 (BINRAT), and {\tt Y}
+(RESCL).
+ 
+As yet, MAKE{\_}PSF only calculates the on-axis PSFS. Nonzero values of XCEN and
+YCEN are not allowed; values of PIXEL and BLOCK are ignored.
+ 
+The outputs from MAKE{\_}PSF are as follows: PROF is the radially averaged PSF
+profile, measured at angular distances OFFANG from the center of the PSF (given
+by XCEN and YCEN). PSFIMG is the two dimensional PSF image PSFIMG, and HEADER
+the FITS header of the output FITS image. PROFHDR and TCB are the FITS-style
+header and table control block of the output profile table. OPARMS is the
+internally parsed version of INPUTS (as in Chapter 3).
+ 
+The PSF of the PSPC is spectrally dependent. Hence an input spectrum must be
+supplied when calculating the PSF for the PSPC. An input spectrum may be
+specified in a number of ways:
+
+\begin{itemize}
+\item  as a {\tt PROS} generated spectral table file (SPTYP = 'PROS')
+\item  as an ASCII file, generated by QDP within XSPEC (SPTYP = 'QDP')
+\item  as an ASCII file, generated within IDL using WRITE{\_}ASPC (SPTYP = 'ASPC')
+\item  as IDL vectors containing channel grouping and counts/grouping, using
+   keywords RATE and GROUP (set SPFIL to {\tt NONE}; SPTYP is ignored)
+\item  as IDL vectors containing central energy (in keV) and counts/grouping,
+   using keywords RATE and ECEN (set SPFIL to {\tt NONE}; SPTYP is ignored)
+\end{itemize}
+If the keyword RATE is used, then SPFIL must equal {\tt NONE}. If keywords GROUP
+and ECEN are not defined, then channel groupings defined by !group will be
+used. Eventually {\tt PHA} (for XSPEC format {\tt .pha} files) will also be an option.
+ 
+It is not necessary to supply an input spectrum when calculating the PSF
+for the HRI. In that case, any spectral information that is supplied will
+be ignored.
+ 
+MAKE{\_}LIST works by constructing a fine grid of pixels for the calculation of
+the PSF. The number of internal pixels is given by NBINS times BINRAT. [It is
+highly recommended that the number of internal pixels not be too large (say $<$
+600) else the speed of the calculation will suffer.] Within the fine grid, the
+routine determines all unique values of angular distance (from the center),
+calculates the PSF at each of these unique distances, and stores these within a
+two dimensional array. The PSPC PSF is a spectrally weighted average over all
+energies between EMIN and EMAX. The PSF calculated over the fine grid is
+rebinned to a grid of NBINS by NBINS pixels, each of BINSIZ arcsec. Finally,
+the PSF image and radially averaged profile are written to output files, if
+desired.
+ 
+Examples:
+ 
+1) Calculate the PSPC on axis psf, using all defaults. Read spectrum from
+a QDP ASCII file (written using QDP in XSPEC):
+
+\medskip\noindent
+\begin{verbatim}
+IDL> make_psf,1,offang,prof,psfimg,header,profhdr,tcb,op=oparms
+? spfil=mysource.plot
+? imgfil=mysource
+? proftab=mysource
+? end
+ 
+IDL> help,offang,prof,psfimg,header,profhdr,tcb
+OFFANG          FLOAT     = Array(5309)
+PROF            FLOAT     = Array(5309)
+PSFIMG          FLOAT     = Array(51, 51)
+HEADER          STRING    = Array(57)
+PROFHDR         STRING    = Array(10)
+TCB             LONG      = Array(16, 7)
+\end{verbatim}
+The output PSF image is 51 by 51 bins, each of 16 arcsec. OFFANG contains the
+unique radii within the fine grid (digitized to 0.1 of the bin size); PROF is
+the radially averaged PSF at each of these unique radii. The  maximum value of
+OFFANG is given by the diagonal of the grid. The image and  profile were
+rescaled to make the maximum values = 1. The scaling factors are written into
+the FITS headers. The PSF image was written to file {\tt mysource{\_}psf.fits}, and
+the profile to {\tt mysource{\_}psf.tab}.
+
+\medskip\noindent
+\begin{verbatim}
+IDL> print,max(offang),16.*51.*sqrt(2.)/2.
+      575.971      576.999
+IDL> print,max(prof),max(psfimg)
+      1.00000      1.00000
+ 
+IDL> hprint,header
+SIMPLE  =                    T /Written by IDL:  Thu Aug 20 15:45:31 1992
+BITPIX  =                   32 /
+NAXIS   =                    2 /
+NAXIS1  =                   51 /
+NAXIS2  =                   51 /
+DATATYPE= 'REAL*4'             /Type of data
+GROUPS  =                    F /No groups
+DATE    =                    0 /  FITS creation date
+BSCALE  = '1.0'                /  Real = data*BSCALE + BZERO
+BZERO   = '0.0'                /  Real = data*BSCALE + BZERO
+HISTORY
+HISTORY      51 bin by   51 bin PSF image calculated for Rosat PSPC
+HISTORY    Input spectrum : USR:[REICHERT]MYSOURCE.PLOT
+HISTORY          Spectrum is of type  ASPC
+HISTORY    PSF region = Square (  6864.00,  8496.00,  6864.00,  8496.00)
+HISTORY     Binsize =  16.00 arcsec   Bin to internal pixel ratio =   11.00
+HISTORY    PSF values were rescaled to make maximum value = 1.0
+HISTORY    Multiply values by   1.8705e-01 to recover probability/pixel
+HISTORY    Central energies used
+HISTORY
+HISTORY      9.425900e-02       0.000000
+ 
+(one line per channel grouping)
+ 
+END
+ 
+IDL> table_help,tcb,profhdr
+        mysource_psf.tab
+         nrows=        5309               ncols=           2
+       maxrows=        5309             maxcols=           5
+          npar=           4          row length=          12 words
+     max n_par=           5      max row length=          12 words
+    Table type=  Row-ordered
+ 
+ col. number    column_name            units     type    SPP format code
+ 
+     1              radius                        Real*8      -10d
+     2            counts_r                        Real*8      -10d
+ 
+IMNAME   = 'MYSOURCE_PSF.FITS' /
+REGION   = 'Square (  6864.00,  8496.00,  6864.00,  8496.00)'      /
+OFFANG   =                5309 /
+PROF     =                5309 /
+SCALEFAC =  9.6965e-04 /
+END
+\end{verbatim}
+ 
+2) Calculate on axis PSPC psf, using keywords to input spectrum:
+
+\medskip\noindent
+\begin{verbatim}
+IDL> make_psf,1,offang,prof,psfimg,r=rate
+? spfil=none
+? imgfil=mysource
+? binsiz=8
+? rescl=n
+? end
+ 
+IDL> print,max(offang),max(prof),max(psfimg)
+      287.985 8.698152e-04 5.047089e-02
+\end{verbatim}
+In this example, RESCL was set to {\tt N}, and PROF and PSFIMG were not rescaled.
+The radially averaged profile was not written to disk.
+ 
+3) Calculate on axis HRI psf:
+
+\medskip\noindent
+\begin{verbatim}
+IDL> make_psf,1,offang,prof,psfimg,op=oparms
+? instr=h
+? imgfil=mysource
+? binsiz=4
+? end
+\end{verbatim}
+Similar to example 2), except the HRI psf is calculated (for 4 arcsec bins),
+and the profiles and image are rescaled to set the maximum values to 1.
+ 
+
+\subsection{Computing mean exposure maps for PSPC observations}
+ 
+A preliminary version of a procedure MAKE{\_}MAP exists which will allow you
+to construct mean exposure maps for PSPC pointed mode observations. If
+desired, exposure maps for more than one channel band can be constructed for
+the same aspect data and over the same time intervals, and/or the output maps
+written to simple FITS files. The exposure map FITS files can be read using
+tasks in PROS/IRAF.
+ 
+As yet, MAKE{\_}EMAP works only for US format data files.
+ 
+The command syntax for MAKE{\_}EMAP is
+
+\medskip\noindent
+\begin{verbatim}
+MAKE_EMAP, inputs, EXPMAP, TOTEXP, EMAPHDR, actime=actime, bands=bands,$
+           OPARMS=OPARMS
+\end{verbatim}
+MAKE{\_}EMAP uses the parameter interface (see Chapter 4.) Inputs controls the
+values of
+
+\medskip\noindent
+\begin{verbatim}
+OBSEQ	the observation sequence, or root name, of the file, e.g. 'rp123456'
+DIR	the directory of the file, e.g., '$disk15:[rsgof.mydata]'
+INSTR   the instrument, 'P' for PSPC and 'H' for HRI
+PROC    the format of the processed files ('US' or 'MPE', default is 'US')
+TRIM	controls whether data will be trimmed to good time intervals ('Y')
+	or not ('N').
+ACTFIL  The (full) name of the input file containing the time intervals
+        to be included (or NONE, if defined by the keyword ACTIME)
+BAND    The number of the channel band of instrument map to be read (if
+        not defined by the keyword BANDS)
+MAPFIL  The name of the output FITS file for the exposure map (or NONE)
+CHATTER	procedure feedback to user. Set to 0 for nofeedback, or 1.
+\end{verbatim}
+Default values of the parameters controlled by {\tt inputs} are stored in the
+file {\tt zdef:make{\_}emap.def}. The default values are P (INSTR), US (PROC), NONE
+(ACTFIL), 1 (CHATTER). If input ACTFIL is set to NONE, then the time
+intervals are controlled using the keyword ACTIME in the command line. If
+ACTIME is not defined (and ACTFIL is set to NONE), then the good time
+intervals defined in the first table of the photon events (``qp") file are
+used. If input BAND is not defined, then the channel band of the instrument
+map must be defined using the keyword BANDS in the command line.
+ 
+As yet, only time interval files in ST SDAS binary table format (as written
+by PROS) are allowed. ASCII files may be read into IDL, and the time
+intervals specified using the ACTIME keyword in the command line
+(actime(*,0) = start times, actime(*,1) contains end times).
+ 
+The bands for the instrument maps are as follows: channels 8 to 19 (1), 20
+to 41 (2), 42 to 51 (3), 52 to 69 (4), 70 to 90 (5), 91 to 131 (6), 132 to
+201 (7).
+ 
+The outputs from MAKE{\_}EMAP are as follows: EXPMAP is the mean exposure map
+(for the last channel band calculated), TOTEXP is the total integrated
+exposure time (in seconds), and EMAPHDR is the FITS header of the (last)
+output map file. The default extension for MAPFIL is {\tt {\_}emap{\_}m{\_}n.fits},
+where m and n are the lower and upper channel bounds of the instrument map
+used. If MAPFIL is set to NONE, then an output file will not be written.
+MAPFIL may not be set to NONE if exposure maps for more than one channel
+band are to be computed.
+ 
+MAKE{\_}EMAP works by reading the energy instrument maps, which were
+constructed by S. Snowden (MPE) and written to FITS format by J. Mendenhall
+(Penn State Univ.). Aspect and event rate measurements are read from the
+history files, and live time fractions are calculated. The roll angles are
+binned in steps of 74.7366 arcsec, and the X and Y aspect offsets are
+binned in steps of 14.94733 arcsec. The unique values of binned roll angle
+are then found. For each unique value of (binned) roll angle, a rotated
+instrument map is calculated. The corresponding values of binned X and Y
+aspect offset are found, and the numbers of each unique value of vector
+offset (X offset, Y offset). For each unique vector offset, the rotated
+instrument map is multiplied by the total number of seconds at that offset,
+weighted by the livetime fractions, and added to the cumulative exposure
+map for that band.
+ 
+MAKE{\_}EMAP calls the routine RSGET{\_}EMAP{\_}DATA to read the aspect and events
+rates data and compute the live time factors. RSGET{\_}EMAP{\_}DATA can be used
+on its own (see section 6.3).
+ 
+MAKE{\_}EMAP is based on code contributed by J. Mendenhall (Penn State Univ.).
+ 
+Examples:
+ 
+1) Calculate the mean exposure map over channels 70 to 90 (band 5), over
+the good time intervals in the ``qp" file. Write the output map to a FITS
+file:
+
+\medskip\noindent
+\begin{verbatim}
+IDL> make_emap,1,expmap,totexp,emaphdr,ac=actime,op=oparms
+? obseq=rp123456
+? dir=$disk15:[rsgof.mydata]
+? actfil=none
+? band=5
+? mapfil=mysource
+\end{verbatim}
+In this example, the computed exposure map will be written to the file
+{\tt mysource{\_}emap{\_}70{\_}90.fits}. ACTIME was not defined before the program was
+run. Since ACTFIL was set to NONE, the map is computed over the good time
+intervals in the photon events file. After the program is run, the variable
+ACTIME contains the good time intervals: actime(*,0) contains the start
+times and actime(*,1) contains the end times.
+ 
+2) Calculate the mean exposure map over channels 20 to 41, 42 to 51, 52 to
+69, 70 to 90, and 132 to 201 (bands 2, 3, 4, 5, and 7). Read the time
+intervals from the ST SDAS binary table file ontimes.tab in directory
+{\tt \$disk15:[rsgof.mydata]}. Write the output maps to FITS files:
+
+\medskip\noindent
+\begin{verbatim}
+IDL> make_emap,1,expmap,totexp,emaphdr,bands=[2,3,4,5,7],op=oparms
+? obseq=rp123456
+? dir=$disk15:[rsgof.mydata]
+? actfil=$disk15:[rsgof.mydata]ontimes.tab
+? mapfil=srcon
+\end{verbatim}
+The computed exposure maps will be written to the files {\tt srcon{\_}emap{\_}20{\_}41.fits},
+{\tt srcon{\_}emap{\_}42{\_}51.fits}, etc. EXPMAP and EMAPHDR will contain the exposure
+map and FITS header for the last map computed (band 7). TOTEXP is the total
+time over the intervals read from {\tt ontimes.tab}.
+ 
+
+\section{Spectral Analysis}
+ 
+A number of procedures exist which will allow you to accumulate a spectrum from
+a photon list data structure, and to write an accumulated spectrum into an
+XSPEC format {\tt .pha} file. Further spectral analysis can be done within XSPEC.
+ 
+
+\subsection{How to accumulate a spectrum}
+ 
+You can use the procedure MAKE{\_}SPEC to accumulate a spectrum. Start by using
+MAKE{\_}LIST to store the photon events list in a data structure.
+
+\medskip\noindent
+\begin{verbatim}
+IDL> make_list,1,plist,numpix,tbeg,tend
+\end{verbatim}
+Now use MAKE{\_}SPEC to accumulate the spectrum:
+
+\medskip\noindent
+\begin{verbatim}
+IDL> make_spec,plist,rate,sigrate,pi=pi,group=group
+IDL> help,rate,sigrate,!group
+RATE            FLOAT     = Array(34)
+SIGRATE         FLOAT     = Array(34)
+<Expression>    INT       = Array(34, 2)
+\end{verbatim}
+Here RATE and SIGRATE are vectors containing the count rates and uncertainties
+for each of the channels defined by the keyword GROUP.  The keywords are as
+follows:
+
+\begin{itemize}
+\item  {\tt GROUP} is an n by 2 element array which specifies the lower and upper
+channel bounds for each of n spectral bins. If {\tt GROUP} is not defined, then
+the system variable !group is used. Upon starting IDL, !group is set to
+the bounds for the 34 channels used by SASS.
+ 
+\item  {\tt PI} controls whether a spectrum is accumulated based on pha channel ({\tt PI}=0)
+or on {\tt pi} channel ({\tt PI}=1, the default).
+\end{itemize}
+MAKE{\_}SPEC was contributed by M. Corcoran (GSFC).
+ 
+
+\subsection{How to write a spectrum to an XSPEC format {\tt .pha}  file}
+ 
+After you have created rate and sigrate, then you can use the procedure
+MAKE{\_}PHA to write the spectrum to an XSPEC format {\tt .pha} file:
+
+\medskip\noindent
+\begin{verbatim}
+IDL> make_pha,inputs,rate,sigrate,time,numpix,group=group
+\end{verbatim}
+This procedure uses the parameter interface (see Chapter 4). {\tt Inputs} controls
+the values of
+
+\medskip\noindent
+\begin{verbatim}
+FNAME           the name of output PHA file (without extension)
+BKFIL           the name of associated background file (default = NONE)
+RSPFIL          the name of associated response file (default = DEF)
+CORFIL          the name of associated correction file (default = NONE)
+\end{verbatim}
+Default values of the parameters controlled by {\tt inputs} are stored in the file
+{\tt zdef:make{\_}pha.def}.
+ 
+BKFIL, RSPFIL, and CORFIL are written into the output {\tt .pha} file (named
+{\tt FNAME.pha}) as pointers to the appropriate background, response, and
+correction files. The default value of RSPFIL will depend on your operating
+system. If you use LIST for RSPFIL, then you will be given a list of options
+and asked to choose.
+ 
+RATE, SIGRATE, and GROUP are as defined for MAKE{\_}SPEC. NUMPIX is the number of
+pixels within the region from which the spectrum was accumulated. NUMPIX is an
+output of the procedure MAKE{\_}LIST; however, if regions are subsequently
+excluded before the spectrum is accumulated, then NUMPIX should be reduced by
+the appropriate number of pixels. TIME is the total integration time, over the
+intervals from which the spectrum was accumulated.
+ 
+Example:
+ 
+1) Accumulate a source spectrum from the photons within a circle of radius 300
+(0.5 arcsec) pixels centered on (image) coordinates (7000,8000). Write the
+spectrum to file {\tt \$disk15:[rsgof.mydata]source1.pha}. Next accumulate a
+background spectrum from the photons within an annulus of inner radius 350
+pixels, and outer radius 500 pixels, also centered on (7000,8000). Write the
+spectrum to file {\tt \$disk15:[rsgof.mydata]source1{\_}bkg.pha}.
+
+\medskip\noindent
+\begin{verbatim}
+IDL> make_list,1,plist,plinfo,plhdr,op=oparms            ;create the list
+ 
+? obseq=rp123456
+? dir=$disk15:[rsgof.mydata]
+? xmin=6500
+? xmax=7500
+? ymin=7500
+? ymax=8500
+? end
+ 
+IDL> help,plist
+PLIST           STRUCT    = -> XEVENT Array(15219)
+ 
+IDL> texp = total(tend-tbeg)            ;calculate total inegration time
+IDL> print,numpix,texp
+     1004004       7495.4120
+ 
+IDL> ind=where(rad le 300)		
+IDL> slist=plist(ind)                   ;photon list for background region
+IDL> ind=where((rad ge 350) and (rad le 500))
+IDL> blist=plist(ind)                   ;photon list for background region
+IDL> mex=readfits('$disk15:[rsgof.us500013]rp500013_mex.fits',hmex)
+IDL> help,mex
+MEX             FLOAT     = Array(512, 512)
+IDL> print,minmax(mex)
+     0.000000      6352.92
+IDL> make_spec,slist,mex,srate,ssigr,bl=1       ;accumulate soure spectrum
+Accumulating PI spectrum
+IDL> numps=!pi*300.*300.                        ;pixel area of source region
+IDL> numpb=!pi*(500.*500.-300.*300.)            ;pixel area of background
+IDL> print,numps,numpb
+      282743.      502655.
+IDL> make_pha,1,srate,ssigr,texp,numps          ;write source spectrum to file
+? fname=$disk15:[rsgof.mydata]source1
+? bkfil=$disk15:[rsgof.mydata]source1_bkg
+? rspfil=def
+? end
+IDL> make_spec,blist,mex,brate,bsigr,bl=1       ;accumulate bkg spectrum
+Accumulating PI spectrum
+IDL> make_pha,1,brate,bsigr,texp,numpb          ;write bkg spectrum to file
+? fname=$disk15:[rsgof.mydata]source1_bkg
+? rspfil=def
+? end
+\end{verbatim}
+Spectral analysis can continue from this point using XSPEC.
+ 
+MAKE{\_}PHA was contributed by M. Corcoran (GSFC).

@@ -1,0 +1,33 @@
+pro obj_image_loc,hdr,sra,sdec,loc,sel=sel,xxp=xxp,yyp=yyp
+;+
+; get image pixel locations of objects 
+;
+; hdr - header of the image
+; sra, sdec - Ra dn Dec of the objects in deg
+; loc - image pixel location
+; sel - index of the objects that are within the image
+; xxp, yyp - x and y coodinates of the selected objects
+;
+; written by wqd, 1/23/04
+;-
+if n_params() eq 0 then begin
+print,"Calling Seq -  obj_image_loc,hdr,sra,sdec,loc'
+return
+endif
+
+get_headinfo,hdr,xsize,ysize,cra,cdec,cpx,cpy,delx,dely
+if abs(dely+delx) gt 1.e-6  then print,'***WARNING: delx not = dely: ',delx,dely
+trans_dist,cra,cdec,sra,sdec,xp,yp,/deg,pixsize=dely*3600.0d
+
+; get source pixel locations in the image:
+yyp=yp+(cpy-0.5)
+xxp=xp+(cpx-0.5)
+sel=where(xxp ge 0 and xxp lt xsize and yyp ge 0 and yyp lt ysize,nsel)
+if nsel ne 0 then begin
+    xxp=xxp(sel)
+    yyp=yyp(sel)
+    loc=long(yyp)*xsize+long(xxp)
+    endif else print,'nsel = 0!'
+
+return
+end
