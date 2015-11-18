@@ -7,6 +7,7 @@ setenv PUBDIR $progdir/addition/pub
 setenv IDLUTILS_DIR $progdir/itt/idl71/lib/idlutils
 setenv IDL_PATH \+${IDL_DIR}/lib:\+/Users/sunwei/data/pro
 setenv IDL_PATH ${IDL_PATH}:\+$IDLUTILS_DIR/pro:\+$IDLUTILS_DIR/godadard/pro
+
 alias xidl "source $PUBDIR/xrayidl/xidl_setup.v71"
 
 
